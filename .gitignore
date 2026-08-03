@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Env / secrets
+.env
+*.key
+
+# Data (büyük/binary dosyalar commit edilmeyecek)
+data/raw/*
+data/processed/*
+data/indexes/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/indexes/.gitkeep
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+
+# Build artifacts (mevcut deneme dosyaları)
+*.exe
+*.obj
