@@ -14,8 +14,15 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from app.ingestion.pdf_extract import extract_pages  # noqa: E402
-from app.ingestion.structure_detect import detect_structure_fiore, detect_structure_sadiku  # noqa: E402
-from app.ingestion.text_clean import clean_text, clean_text_sadiku, compute_page_offset  # noqa: E402
+from app.ingestion.structure_detect import (  # noqa: E402
+    detect_structure_fiore,
+    detect_structure_sadiku,
+)
+from app.ingestion.text_clean import (  # noqa: E402
+    clean_text,
+    clean_text_sadiku,
+    compute_page_offset,
+)
 
 # Sadiku, repo dışı ve bu makineye özgü bir yolda (telifli, gitignore'da) —
 # bu yüzden bilerek KNOWN_BOOKS'a eklenmiyor, her zaman --path zorunlu kalıyor.

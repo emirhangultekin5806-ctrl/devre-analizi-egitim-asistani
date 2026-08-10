@@ -3,7 +3,10 @@ from pathlib import Path
 import pytest
 
 from app.ingestion.pdf_extract import extract_pages
-from app.ingestion.structure_detect import detect_structure_fiore, detect_structure_sadiku
+from app.ingestion.structure_detect import (
+    detect_structure_fiore,
+    detect_structure_sadiku,
+)
 
 SADIKU_1 = Path(r"C:\Users\Sinemis\OneDrive\Masaüstü\ilovepdf_split\Devre analizi-1.pdf")
 SADIKU_2 = Path(r"C:\Users\Sinemis\OneDrive\Masaüstü\ilovepdf_split\Devre analizi-2.pdf")

@@ -1,0 +1,9 @@
+[tool.ruff]
+target-version = "py313"
+
+[tool.ruff.lint]
+# Varsayılan kural setine ek olarak E402 açılıyor: scripts/parse_books.py
+# bilerek sys.path.insert() sonrası import yapıyor (standalone çalıştırma
+# desteği için) ve bunu # noqa: E402 ile işaretliyor — bu kuralı açık
+# tutmak, o noqa'ların anlamlı kalmasını sağlıyor.
+extend-select = ["E402"]

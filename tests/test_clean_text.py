@@ -131,7 +131,7 @@ def test_compute_page_offset_returns_none_when_signal_too_sparse():
 
 
 def test_compute_page_offset_returns_none_when_no_dominant_winner():
-    pages = [_sadiku_verso_page(page_number=n, printed=n - 2) for n in range(0, 12)]
+    pages = [_sadiku_verso_page(page_number=n, printed=n - 2) for n in range(12)]
     pages += [_sadiku_verso_page(page_number=n, printed=n - 7) for n in range(20, 32)]
     assert compute_page_offset(pages) is None
 

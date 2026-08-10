@@ -16,7 +16,7 @@
 - Install: `python -m venv .venv` sonra `.venv\Scripts\pip install -r requirements.txt`
 - Run (PDF çıkarımı): `.venv\Scripts\python scripts\parse_books.py --book fiore_dc` (fiore_dc, fiore_ac; Sadiku için `--path` ile PDF yolu verilmeli)
 - Test: `.venv\Scripts\python -m pytest`
-- Lint: TBD
+- Lint: `.venv\Scripts\ruff check .`
 - Type-check: TBD
 
 # Code Standards
