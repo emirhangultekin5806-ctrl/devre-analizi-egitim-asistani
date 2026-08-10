@@ -14,18 +14,36 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from app.ingestion.pdf_extract import extract_pages  # noqa: E402
-from app.ingestion.structure_detect import detect_structure_fiore  # noqa: E402
+from app.ingestion.structure_detect import detect_structure_fiore, detect_structure_sadiku  # noqa: E402
+from app.ingestion.text_clean import clean_text, clean_text_sadiku, compute_page_offset  # noqa: E402
 
+# Sadiku, repo dışı ve bu makineye özgü bir yolda (telifli, gitignore'da) —
+# bu yüzden bilerek KNOWN_BOOKS'a eklenmiyor, her zaman --path zorunlu kalıyor.
 KNOWN_BOOKS = {
     "fiore_dc": ROOT / "data" / "raw" / "open" / "Fiore_DC_Electrical_Circuit_Analysis.pdf",
     "fiore_ac": ROOT / "data" / "raw" / "open" / "Fiore_AC_Electrical_Circuit_Analysis.pdf",
 }
 
-# document_id -> yapı tespit fonksiyonu (kitap bazlı; henüz yalnızca Fiore için var)
+# document_id -> yapı tespit fonksiyonu (kitap bazlı)
 STRUCTURE_DETECTORS = {
     "fiore_dc": detect_structure_fiore,
     "fiore_ac": detect_structure_fiore,
+    "sadiku_1": detect_structure_sadiku,
+    "sadiku_2": detect_structure_sadiku,
 }
+
+# document_id -> metin temizleme fonksiyonu (kitap bazlı)
+TEXT_CLEANERS = {
+    "fiore_dc": clean_text,
+    "fiore_ac": clean_text,
+    "sadiku_1": clean_text_sadiku,
+    "sadiku_2": clean_text_sadiku,
+}
+
+# Sadiku'nun temizleyicisi (clean_text_sadiku) Fiore'ninkinden (clean_text) farklı bir
+# imzaya sahip (üçüncü parametre: önceden hesaplanan sayfa no ofseti) — main() bu
+# yüzden çağrıdan önce hangi kitap grubunda olduğuna göre dallanıyor.
+SADIKU_BOOKS = {"sadiku_1", "sadiku_2"}
 
 OUTPUT_DIR = ROOT / "data" / "processed"
 
@@ -47,6 +65,18 @@ def main() -> None:
     detector = STRUCTURE_DETECTORS.get(args.book)
     if detector:
         pages = detector(pages)
+
+    cleaner = TEXT_CLEANERS.get(args.book)
+    if cleaner and args.book in SADIKU_BOOKS:
+        offset = compute_page_offset(pages)
+        for page in pages:
+            page["clean_text"] = cleaner(page["raw_text"], page["page_number"], offset)
+    elif cleaner:
+        for page in pages:
+            page["clean_text"] = cleaner(page["raw_text"], page["page_number"])
+    else:
+        for page in pages:
+            page["clean_text"] = None
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     out_path = OUTPUT_DIR / f"{args.book}.jsonl"
