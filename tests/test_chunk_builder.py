@@ -121,6 +121,9 @@ REQUIRED_SCHEMA_FIELDS = {
 }
 
 
+VALID_CONTENT_TYPES = {"concept", "example", "practice_problem", "learning_objectives", "chapter_summary"}
+
+
 def _assert_valid_chunks(chunks: list[dict], require_printed_page: bool = True) -> None:
     assert len(chunks) > 0
     ids = [c["chunk_id"] for c in chunks]
@@ -129,7 +132,7 @@ def _assert_valid_chunks(chunks: list[dict], require_printed_page: bool = True) 
     for chunk in chunks:
         assert REQUIRED_SCHEMA_FIELDS <= set(chunk.keys())
         assert chunk["chapter_number"] is not None
-        assert chunk["content_type"] == "concept"  # bu turda hep concept
+        assert chunk["content_type"] in VALID_CONTENT_TYPES
         assert len(chunk["text"]) > 0
         if require_printed_page:
             assert chunk["printed_page"] is not None

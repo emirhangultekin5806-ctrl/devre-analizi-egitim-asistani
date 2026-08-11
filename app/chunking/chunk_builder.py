@@ -1,12 +1,19 @@
 """Section'ları token bütçesine göre chunk'lara paketler ve spec §15'in
 21 alanlık metadata şemasını doldurur.
 
-Bu turda (Adım 1) tüm chunk'lar tek bir hedef aralık kullanır — spec'in
-"tanım/kavram" hedefine en yakın genel amaçlı değer (250-650 token) —
-çünkü content_type sınıflandırması henüz yok (Adım 2), her chunk şimdilik
-`"concept"` olarak etiketleniyor. `difficulty`, `learning_objective`,
-`prerequisites`, `keywords` alanları da aynı nedenle bilinçli olarak
-`None` bırakılıyor; sonraki adımlarda dolduruluyor.
+`content_type` (Adım 2, bkz. app/chunking/classify.py) her section içinde
+paragraf-seviyesinde tespit edilir: bir section'ın paragrafları önce
+content_type'a göre bloklara ayrılır (concept/example/practice_problem/
+learning_objectives/chapter_summary), her blok kendi içinde ayrı ayrı token
+bütçesine paketlenir — böylece bir Example bloğu bitişikteki concept
+metniyle aynı chunk'a karışmaz. `chapter_summary` bilinçli olarak
+section_title'a değil paragraf içindeki "Summary" başlığına dayanıyor (bkz.
+classify.py docstring'i — Sadiku'da section_title=="Summary" bazen 100+
+sayfalık yanlış bir bölgeyi kapsıyor, upstream bir ingestion kusuru).
+
+`difficulty`, `learning_objective` (chunk alanı), `prerequisites`, `keywords`
+alanları hâlâ bilinçli olarak `None` bırakılıyor; bunlar content_type'tan
+bağımsız, ayrı bir yöntem gerektiriyor (sonraki adımlar).
 
 `printed_page` iki farklı stratejiyle türetilir (bkz. app/ingestion/text_clean.py):
 Fiore'de `page_number + 1` sabit; Sadiku'da sabit ofset yok, bu yüzden
@@ -16,6 +23,7 @@ uydurulmaz, `None` bırakılır — `chunk_id` o durumda `page_number`'a düşer
 """
 
 from app.chunking.book_metadata import get_book_metadata
+from app.chunking.classify import group_by_content_type, split_embedded_headings
 from app.chunking.segment import build_segments
 from app.chunking.tokenizer import estimate_tokens
 from app.ingestion.text_clean import compute_page_offset
@@ -90,38 +98,42 @@ def build_chunks_for_book(pages: list[dict], document_id: str) -> list[dict]:
     for section in sections:
         if not section["paragraphs"]:
             continue
-        for seq, (text, start_page, _end_page) in enumerate(
-            _pack_paragraphs(section["paragraphs"]), start=1
-        ):
-            printed_page = _compute_printed_page(document_id, start_page, sadiku_offset)
-            chunks.append(
-                {
-                    "chunk_id": _build_chunk_id(
-                        document_id, section["chapter_number"], section["section_number"],
-                        printed_page if printed_page is not None else start_page, seq,
-                    ),
-                    "document_id": document_id,
-                    "book_title": book_meta["book_title"],
-                    "edition": book_meta.get("edition"),
-                    "authors": book_meta["authors"],
-                    "subject": book_meta["subject"],
-                    "course_level": book_meta["course_level"],
-                    "language": book_meta["language"],
-                    "source_url": book_meta.get("source_url"),
-                    "license": book_meta["license"],
-                    "retrieved_date": book_meta["retrieved_date"],
-                    "chapter_number": section["chapter_number"],
-                    "chapter_title": section["chapter_title"],
-                    "section_number": section["section_number"],
-                    "section_title": section["section_title"],
-                    "page_number": start_page,
-                    "printed_page": printed_page,
-                    "content_type": "concept",
-                    "difficulty": None,
-                    "learning_objective": None,
-                    "prerequisites": None,
-                    "keywords": None,
-                    "text": text,
-                }
-            )
+
+        blocks = group_by_content_type(split_embedded_headings(section["paragraphs"]))
+
+        seq = 0
+        for content_type, paragraphs in blocks:
+            for text, start_page, _end_page in _pack_paragraphs(paragraphs):
+                seq += 1
+                printed_page = _compute_printed_page(document_id, start_page, sadiku_offset)
+                chunks.append(
+                    {
+                        "chunk_id": _build_chunk_id(
+                            document_id, section["chapter_number"], section["section_number"],
+                            printed_page if printed_page is not None else start_page, seq,
+                        ),
+                        "document_id": document_id,
+                        "book_title": book_meta["book_title"],
+                        "edition": book_meta.get("edition"),
+                        "authors": book_meta["authors"],
+                        "subject": book_meta["subject"],
+                        "course_level": book_meta["course_level"],
+                        "language": book_meta["language"],
+                        "source_url": book_meta.get("source_url"),
+                        "license": book_meta["license"],
+                        "retrieved_date": book_meta["retrieved_date"],
+                        "chapter_number": section["chapter_number"],
+                        "chapter_title": section["chapter_title"],
+                        "section_number": section["section_number"],
+                        "section_title": section["section_title"],
+                        "page_number": start_page,
+                        "printed_page": printed_page,
+                        "content_type": content_type,
+                        "difficulty": None,
+                        "learning_objective": None,
+                        "prerequisites": None,
+                        "keywords": None,
+                        "text": text,
+                    }
+                )
     return chunks
