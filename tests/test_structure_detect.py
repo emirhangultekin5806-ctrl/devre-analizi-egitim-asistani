@@ -180,6 +180,42 @@ def test_sadiku_mismatched_verso_chapter_number_does_not_clobber_state():
     assert result[2]["chapter_title"] == "Basic Concepts"
 
 
+def test_sadiku_appendix_footer_clears_stale_numbered_section():
+    """Review Questions/Problems eki N.M numarası taşımıyor, bu yüzden
+    recto/verso kalıplarına hiç uymuyor. Bunlar ayrıca yakalanmazsa en son
+    bilinen numaralı section (örn. "1.5 Power and Energy") gerçek veride
+    100+ sayfa boyunca yanlışlıkla taşınmaya devam ediyordu."""
+    pages = _pages(
+        [
+            "c h a p t e r\n1\nSome inspirational quote line.",
+            "5\nChapter 1\nBasic Concepts",
+            "1.5\nPower and Energy\n11",
+            "13.1 What is the value of...\nProblems\n605",
+        ]
+    )
+    result = detect_structure_sadiku(pages)
+    assert result[2]["section_number"] == "1.5"
+    assert result[3]["section_number"] is None
+    assert result[3]["section_title"] == "Problems"
+    assert result[3]["chapter_number"] == 1  # bolum bilgisi korunur
+
+
+def test_sadiku_numbered_section_after_appendix_footer_updates_normally():
+    pages = _pages(
+        [
+            "c h a p t e r\n1\nSome inspirational quote line.",
+            "5\nChapter 1\nBasic Concepts",
+            "1.5\nPower and Energy\n11",
+            "Problems\n605",
+            "1.9\nSummary\n15",
+        ]
+    )
+    result = detect_structure_sadiku(pages)
+    assert result[3]["section_title"] == "Problems"
+    assert result[4]["section_number"] == "1.9"
+    assert result[4]["section_title"] == "Summary"
+
+
 # --- Gerçek PDF doğrulama (yalnızca bu makinede, dosya varsa) ---
 
 
@@ -201,3 +237,32 @@ def test_sadiku_2_real_pdf_starts_at_thirteen_reaches_nineteen():
     assert chapter_numbers[0] == 13
     assert max(chapter_numbers) == 19
     assert chapter_numbers == sorted(chapter_numbers)
+
+
+def _max_pages_per_summary_section(pages: list[dict]) -> int:
+    from collections import defaultdict
+
+    groups: dict = defaultdict(int)
+    for p in pages:
+        if p.get("section_title") == "Summary":
+            groups[(p["chapter_number"], p.get("section_number"))] += 1
+    return max(groups.values(), default=0)
+
+
+@skip_no_sadiku_1
+def test_sadiku_1_real_pdf_summary_sections_stay_short():
+    """Regresyon testi: appendix-footer duzeltmesinden once "Summary"
+    section'lari bolum sonu Problems/Review Questions sayfalarini yutup
+    6-16 sayfaya kadar sisiyordu."""
+    pages = extract_pages(SADIKU_1, "sadiku_1")
+    pages = detect_structure_sadiku(pages)
+    assert _max_pages_per_summary_section(pages) <= 3
+
+
+@skip_no_sadiku_2
+def test_sadiku_2_real_pdf_summary_sections_stay_short():
+    """Ayni regresyon, sadiku_2 icin — duzeltmeden once bir section 136
+    sayfaya kadar sismisti."""
+    pages = extract_pages(SADIKU_2, "sadiku_2")
+    pages = detect_structure_sadiku(pages)
+    assert _max_pages_per_summary_section(pages) <= 3

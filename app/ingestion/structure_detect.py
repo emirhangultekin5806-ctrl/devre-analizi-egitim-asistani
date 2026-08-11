@@ -74,6 +74,14 @@ _VERSO_RE = re.compile(r"^Chapter (\d+)\Z")
 _RECTO_RE = re.compile(r"^(\d+)\.(\d+)\Z")
 _LONE_DIGIT_RE = re.compile(r"^\d+\Z")
 
+# Bölüm sonu eki (Review Questions / Problems / Comprehensive Problems) N.M
+# numarası TAŞIMIYOR — çalışan başlığı yalnızca bu kelime + basılı sayfa no
+# (örn. "Problems\n605"). _RECTO_RE/_VERSO_RE'nin beklediği 3 satırlık
+# numaralı kalıba hiç uymadığı için, numaralandırma bulunamayınca algoritma
+# gerçek veride en son bilinen numaralı section'ı ("13.10 Summary" gibi)
+# 100+ sayfa boyunca yanlışlıkla taşımaya devam ediyordu (doğrulandı).
+_APPENDIX_SECTION_TITLES = {"Review Questions", "Problems", "Comprehensive Problems"}
+
 _BOOTSTRAP_LOOKAHEAD = 40  # sayfa; gerçek bir bölüm başlangıcının kaç sayfa
 # içinde çalışan-başlık pekiştirmesiyle teyit edilmesi beklendiği — kitabın
 # yapısal bir garantisi değil, gözlemlenen en geniş boşluğun (1 sayfa) çok
@@ -120,6 +128,13 @@ def detect_structure_sadiku(pages: list[dict]) -> list[dict]:
     değişiyor (`sadiku_1` 1'den, `sadiku_2` 13'ten başlıyor), o yüzden sabit
     bir başlangıç varsayımı yok; teyit edilen ilk bölümden sonra yalnızca
     ardışık artan numaralar kabul ediliyor.
+
+    Her bölümün sonundaki ek (Review Questions/Problems/Comprehensive
+    Problems) numaralandırma taşımaz, bu yüzden yukarıdaki recto/verso
+    kalıplarının hiçbirine uymaz; `_APPENDIX_SECTION_TITLES` ile ayrıca
+    yakalanıp `section_number=None` yapılır — yoksa en son bilinen numaralı
+    section (örn. "13.10 Summary") o bölümün sonuna kadar (bazen 100+ sayfa)
+    yanlışlıkla taşınmaya devam ediyordu (gerçek veride doğrulandı).
     """
     candidates = []
     for page in pages:
@@ -166,6 +181,10 @@ def detect_structure_sadiku(pages: list[dict]) -> list[dict]:
                 ):
                     section_number = f"{m.group(1)}.{m.group(2)}"
                     section_title = b
+            for line in lines:
+                if line in _APPENDIX_SECTION_TITLES:
+                    section_number = None
+                    section_title = line
 
         page["chapter_number"] = chapter_number
         page["chapter_title"] = chapter_title
