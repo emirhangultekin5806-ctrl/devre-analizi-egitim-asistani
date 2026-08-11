@@ -19,10 +19,13 @@
 
 ## Mimari Kararlar (sohbette netleşen)
 
-- **Dil modeli**: local LLM (Ollama), hangi model olacağı proje ilerledikçe netleştirilecek (henüz seçilmedi).
-- **Görsel okuma (devre tanıma)**: local vision-language model. Aday: **Qwen3-VL** (Ollama'da 4B/8B mevcut, OCR/diyagram okumada güçlü), karşılaştırma için **MiniCPM-V** de denenecek (proje dokümanının "en az 2 model karşılaştır" şartını da karşılar).
+- **Dil modeli**: local LLM (Ollama), **qwen3:4b** aday olarak indirildi; RAG/quiz/ipucu görevlerinde kalite testi henüz yapılmadı, kesinleşmiş değil.
+- **Görsel okuma (devre tanıma)**: local vision-language model olarak **MiniCPM-V (4.5, 8B)** seçildi. Karar, bu donanımda (GTX 1650, 4GB VRAM) yapılan gerçek karşılaştırmaya dayanıyor (bkz. `docs/vlm-karsilastirma-sonuclari.md`):
+  - **Qwen3-VL:4b** denendi — Ollama'daki entegrasyonu bu sürümde ("thinking" moduna girip hiç çıkamıyor) sorunlu çıktı: tek bir görsel için 516 saniye (8.6 dakika) sürdü, `qwen3-vl:2b` ise hiç cevap üretemedi (context limitini "düşünmeyle" dolduruyor, boş dönüyor). Saf CPU'ya zorlamak da (731s) daha kötü sonuç verdi.
+  - **MiniCPM-V:8b** aynı görseli 67.7 saniyede, dolu bir cevapla işledi — kullanılabilir bir hız.
+  - **Doğruluk sınırı ikisinde de aynı**: her iki model de basit bir 2 kaynaklı seri devrede (Fiore Figure 3.8) terminal polaritesini yanlış okudu — bu model seçiminden bağımsız, VLM'lere özgü bilinen bir zaaf (bkz. SINA, arXiv:2607.01609). Bu yüzden aşağıdaki zorunlu onay adımı bir "nice-to-have" değil, tasarımın zorunlu parçası.
   - Kitaptaki devreler için: önceden bir kere elle doğrulanmış netlist'ler kullanılacak (canlı okumaya güvenilmeyecek).
-  - Kullanıcının kendi yüklediği devreler için: canlı VLM okuma + **zorunlu onay/düzeltme adımı** (topoloji/bağlantı okuma tek başına güvenilir değil, araştırmalar da bunu doğruluyor — bkz. SINA, arXiv:2607.01609).
+  - Kullanıcının kendi yüklediği devreler için: canlı VLM okuma + **zorunlu onay/düzeltme adımı** (topoloji/bağlantı okuma tek başına güvenilir değil — kendi testimiz de dahil birden fazla kaynak bunu doğruluyor).
 - **Simülasyon motoru**: ngspice / PySpice gibi hazır bir kütüphane kullanılacak (fizik/matematik burada yeniden icat edilmeyecek).
 - **Arayüz**: sıfırdan kendi yazacağımız bir arayüz. CircuitJS/Falstad gibi araçlara yalnızca referans/ilham için bakılabilir; kod adapte edilmeyecek veya gömülmeyecek — kullanıcının net talebi bu.
 
