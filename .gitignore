@@ -12,9 +12,11 @@ venv/
 data/raw/*
 data/processed/*
 data/indexes/*
+data/chunks/*
 !data/raw/.gitkeep
 !data/processed/.gitkeep
 !data/indexes/.gitkeep
+!data/chunks/.gitkeep
 
 # IDE
 .vscode/*
