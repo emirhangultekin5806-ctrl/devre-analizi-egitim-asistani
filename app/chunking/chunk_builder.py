@@ -7,15 +7,34 @@ Bu turda (Adım 1) tüm chunk'lar tek bir hedef aralık kullanır — spec'in
 `"concept"` olarak etiketleniyor. `difficulty`, `learning_objective`,
 `prerequisites`, `keywords` alanları da aynı nedenle bilinçli olarak
 `None` bırakılıyor; sonraki adımlarda dolduruluyor.
+
+`printed_page` iki farklı stratejiyle türetilir (bkz. app/ingestion/text_clean.py):
+Fiore'de `page_number + 1` sabit; Sadiku'da sabit ofset yok, bu yüzden
+`compute_page_offset()` ile kitap genelinde çoğunluk oyuyla bir ofset
+hesaplanır. Ofset güvenilir çıkmazsa (yetersiz sinyal) `printed_page`
+uydurulmaz, `None` bırakılır — `chunk_id` o durumda `page_number`'a düşer.
 """
 
 from app.chunking.book_metadata import get_book_metadata
 from app.chunking.segment import build_segments
 from app.chunking.tokenizer import estimate_tokens
+from app.ingestion.text_clean import compute_page_offset
 
 TARGET_TOKENS = 500
 MAX_TOKENS = 650
 MIN_TAIL_TOKENS = 80
+
+# Sadiku'da sabit +1 ofseti geçerli değil (bkz. text_clean.py docstring'i);
+# parse_books.py'deki SADIKU_BOOKS ile aynı gerekçe/kapsam.
+SADIKU_BOOKS = {"sadiku_1", "sadiku_2"}
+
+
+def _compute_printed_page(document_id: str, page_number: int, sadiku_offset: int | None) -> int | None:
+    if document_id in SADIKU_BOOKS:
+        if sadiku_offset is None:
+            return None
+        return page_number - sadiku_offset
+    return page_number + 1
 
 
 def _pack_paragraphs(paragraphs: list[tuple[str, int]]) -> list[tuple[str, int, int]]:
@@ -63,13 +82,9 @@ def _build_chunk_id(document_id: str, chapter_number: int, section_number: str |
 
 
 def build_chunks_for_book(pages: list[dict], document_id: str) -> list[dict]:
-    """Bu turda yalnızca Fiore kitapları için doğru: basılı sayfa no
-    = page_number + 1 (bkz. app/ingestion/text_clean.py::clean_text).
-    Sadiku'ya genelleme (compute_page_offset yeniden kullanılarak)
-    sonraki bir adımın kapsamında.
-    """
     book_meta = get_book_metadata(document_id)
     sections = build_segments(pages)
+    sadiku_offset = compute_page_offset(pages) if document_id in SADIKU_BOOKS else None
 
     chunks = []
     for section in sections:
@@ -78,12 +93,12 @@ def build_chunks_for_book(pages: list[dict], document_id: str) -> list[dict]:
         for seq, (text, start_page, _end_page) in enumerate(
             _pack_paragraphs(section["paragraphs"]), start=1
         ):
-            printed_page = start_page + 1
+            printed_page = _compute_printed_page(document_id, start_page, sadiku_offset)
             chunks.append(
                 {
                     "chunk_id": _build_chunk_id(
                         document_id, section["chapter_number"], section["section_number"],
-                        printed_page, seq,
+                        printed_page if printed_page is not None else start_page, seq,
                     ),
                     "document_id": document_id,
                     "book_title": book_meta["book_title"],

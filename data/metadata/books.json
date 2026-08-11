@@ -9,5 +9,38 @@
     "source_url": "https://open.umn.edu/opentextbooks/textbooks/884",
     "license": "CC BY-NC-SA",
     "retrieved_date": "2026-08-03"
+  },
+  "fiore_ac": {
+    "book_title": "AC Electrical Circuit Analysis: A Practical Approach",
+    "authors": ["James M. Fiore"],
+    "edition": null,
+    "subject": "electrical_engineering",
+    "course_level": "undergraduate_introductory",
+    "language": "en",
+    "source_url": "https://open.umn.edu/opentextbooks/textbooks/883",
+    "license": "CC BY-NC-SA",
+    "retrieved_date": "2026-08-03"
+  },
+  "sadiku_1": {
+    "book_title": "Fundamentals of Electric Circuits",
+    "authors": ["C.K. Alexander", "M.N.O. Sadiku"],
+    "edition": null,
+    "subject": "electrical_engineering",
+    "course_level": "undergraduate_introductory",
+    "language": "en",
+    "source_url": null,
+    "license": "proprietary_personal_use",
+    "retrieved_date": "2026-08-03"
+  },
+  "sadiku_2": {
+    "book_title": "Fundamentals of Electric Circuits",
+    "authors": ["C.K. Alexander", "M.N.O. Sadiku"],
+    "edition": null,
+    "subject": "electrical_engineering",
+    "course_level": "undergraduate_introductory",
+    "language": "en",
+    "source_url": null,
+    "license": "proprietary_personal_use",
+    "retrieved_date": "2026-08-03"
   }
 }
