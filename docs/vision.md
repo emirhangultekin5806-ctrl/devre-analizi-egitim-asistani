@@ -19,7 +19,7 @@
 
 ## Mimari Kararlar (sohbette netleşen)
 
-- **Dil modeli**: local LLM (Ollama), **qwen3:4b** aday olarak indirildi; RAG/quiz/ipucu görevlerinde kalite testi henüz yapılmadı, kesinleşmiş değil.
+- **Dil modeli**: local LLM (Ollama), **qwen3:4b** seçildi. Gerçekçi bir RAG senaryosuyla test edildi (kaynak metin + Türkçe soru, sistem promptu "yalnızca kaynağı kullan"): (1) kaynakta olan bir soruda formülü (η=Pout/Pin×100%) ve hesabı (%60) doğru verdi, (2) kaynakta OLMAYAN bir soruda (kapasitör zaman sabiti) uydurmadı, "Seçilen ders kitaplarında bu bilgiye ulaşamadım." dedi — halüsinasyon riski testi geçildi. Metin-only olduğu için VLM'lerden belirgin hızlı (18.8-88.7s, VLM'lerde 67-238s).
 - **Görsel okuma (devre tanıma)**: local vision-language model olarak **MiniCPM-V (4.5, 8B)** seçildi. Karar, bu donanımda (GTX 1650, 4GB VRAM) yapılan gerçek karşılaştırmaya dayanıyor (bkz. `docs/vlm-karsilastirma-sonuclari.md`):
   - **Qwen3-VL:4b** denendi — Ollama'daki entegrasyonu bu sürümde ("thinking" moduna girip hiç çıkamıyor) sorunlu çıktı: tek bir görsel için 516 saniye (8.6 dakika) sürdü, `qwen3-vl:2b` ise hiç cevap üretemedi (context limitini "düşünmeyle" dolduruyor, boş dönüyor). Saf CPU'ya zorlamak da (731s) daha kötü sonuç verdi.
   - **MiniCPM-V:8b** aynı görseli 67.7 saniyede, dolu bir cevapla işledi — kullanılabilir bir hız.
