@@ -25,7 +25,25 @@
   - **Seçilen çözüm — model metin ÜRETMİYOR, cümle SEÇİYOR:** kaynak chunk'ların cümleleri numaralanıp modele veriliyor, model yalnızca numara seçiyor; cevabın metni koddaki gerçek kaynak listesinden alınıyor. Uydurma bu yüzden **yapısal olarak imkansız** (sahte bir cümlenin numarası olamaz). Ardından ikinci bir çağrı yalnızca seçilen gerçek cümleleri Türkçeye çeviriyor.
   - **Prompt injection savunması:** soru içine gömülü "talimatları unut, kendi bildiğini yaz" saldırısı tek-adımlı mimaride başarılı oluyordu; numaralı seçim mimarisinde model istismar edilse bile yalnızca gerçek cümleler arasından seçim yapabildiği için metin uyduramıyor (gerçek veriyle doğrulandı).
   - **Sonuç:** cevap süresi **25-50 saniye** (5-7x hızlanma), halüsinasyon yok, kaynak dışı sorularda doğru şekilde "bu bilgiye ulaşamadım" diyor.
-  - **Bilinen sınırlama:** Türkçe çeviri kalitesi basit tanım sorularında iyi, karmaşık/çok cümleli cevaplarda hâlâ yer yer bozuk. Bu, 3B'lik bir modelin Türkçe kapasitesinin sınırı — daha güçlü donanımda (RTX 4050) daha büyük bir çeviri modeli bu adımı iyileştirebilir.
+
+### Model kademeleri (fast / balanced / quality)
+
+Kademe kullanıcıya sorulmuyor, **göreve bağlanıyor** (`TASK_TIERS`): sohbet → `balanced`, ipucu → `fast`, quiz üretimi → `quality`. Gelişmiş ayardan `tier=` ile elle değiştirilebilir. Gerekçe: öğrenci "hangi modeli seçsem" diye düşünmek zorunda kalmasın ve 4 GB VRAM'de pahalı olan model takası gereksiz yere tetiklenmesin.
+
+| Kademe | Model | Süre | Not |
+|---|---|---|---|
+| `fast` | qwen2.5:3b-instruct | 25-50s | Türkçesi zayıf (terimleri İngilizce bırakabiliyor), zayıf donanım için yedek |
+| `balanced` (varsayılan) | gemma4:e4b, `think=False` | **23-56s** | En iyi Türkçe, hızı `fast` ile hemen hemen aynı |
+| `quality` | gemma4:e4b, `think="medium"` | 166-279s | Yalnızca kullanıcıyı bekletmeyen arka plan işleri için |
+
+**Kritik bulgu — Gemma 4'ün gizli "thinking" modu:** `gemma4:e4b` varsayılan olarak her yanıttan önce görünmez bir akıl yürütme adımı çalıştırıyor. Tek karakterlik (`"2"`) bir cevap için **244 token / 30.7 saniye** harcadı; `think: False` ile aynı cevap **2 token / 4.2 saniye**. Tam pipeline'da bu fark 166-279 saniyeyi **23-56 saniyeye** indirdi. Bu yüzden her kademede `think` açıkça belirtiliyor — varsayılana bırakılırsa model sessizce yavaşlıyor. (Gemma 4 ayrıca `low`/`medium`/`high`/`max` düşünme kademelerini destekliyor; qwen3:4b'de aynı parametre etkisizdi.)
+
+**Elenen alternatifler:**
+- **gemma3:4b tek başına:** Türkçesi iyi ve hızlı (71-78s) ama *seçim* adımında güvenilmez — kaynak dışı bir soruda "bulamadım" demek yerine alakasız cümleler seçti (Butterworth filtresi, elektron yörüngeleri). Projenin en kritik gereksinimini kırdığı için elendi.
+- **qwen seçim + gemma3 çeviri (hibrit):** kalite iyiydi ama her istekte model takası gerektiği için 93-112s — tek modelli Gemma 4'ten hem yavaş hem daha düşük kaliteli.
+- **Embedding ile ön eleme + `keep_alive`:** Gemma 4'ü hızlandırmak için denendi, **işe yaramadı** (cold 189s, warm 279s). Darboğazın prompt uzunluğu değil gizli thinking olduğu böyle anlaşıldı — 15 cümlelik kısa promptta bile seçim adımı 168 saniye sürüyordu.
+
+**Bilinen sınırlama:** Gemma 4 (10 GB) bu makinede %82 CPU / %18 GPU çalışıyor; 4 GB VRAM'e sığmıyor. RTX 4050'li makinede belirgin şekilde daha hızlı olması bekleniyor.
 - **Görsel okuma (devre tanıma)**: local vision-language model olarak **MiniCPM-V (4.5, 8B)** seçildi. Karar, bu donanımda (GTX 1650, 4GB VRAM) yapılan gerçek karşılaştırmaya dayanıyor (bkz. `docs/vlm-karsilastirma-sonuclari.md`):
   - **Qwen3-VL:4b** denendi — Ollama'daki entegrasyonu bu sürümde ("thinking" moduna girip hiç çıkamıyor) sorunlu çıktı: tek bir görsel için 516 saniye (8.6 dakika) sürdü, `qwen3-vl:2b` ise hiç cevap üretemedi (context limitini "düşünmeyle" dolduruyor, boş dönüyor). Saf CPU'ya zorlamak da (731s) daha kötü sonuç verdi.
   - **MiniCPM-V:8b** aynı görseli 67.7 saniyede, dolu bir cevapla işledi — kullanılabilir bir hız.

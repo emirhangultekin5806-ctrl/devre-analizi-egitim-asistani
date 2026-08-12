@@ -1,4 +1,14 @@
-from app.rag.generate import _format_context, _is_prose, _split_sentences
+import pytest
+
+from app.rag.generate import (
+    DEFAULT_TIER,
+    TASK_TIERS,
+    TIERS,
+    _format_context,
+    _is_prose,
+    _split_sentences,
+    resolve_tier,
+)
 
 
 def test_format_context_includes_book_and_chapter_label():
@@ -60,3 +70,33 @@ def test_is_prose_rejects_too_few_words():
 
 def test_is_prose_accepts_normal_sentence():
     assert _is_prose("Capacitance is directly proportional to the plate area.") is True
+
+
+# --- Model kademeleri ---
+
+
+def test_resolve_tier_uses_task_default():
+    assert resolve_tier(task="quiz") == TIERS[TASK_TIERS["quiz"]]
+    assert resolve_tier(task="hint") == TIERS[TASK_TIERS["hint"]]
+
+
+def test_resolve_tier_explicit_overrides_task():
+    # Gelismis ayar: gorevin varsayilanini elle gecersiz kilma
+    assert resolve_tier(tier="fast", task="quiz") == TIERS["fast"]
+
+
+def test_resolve_tier_falls_back_to_default_for_unknown_task():
+    assert resolve_tier(task="bilinmeyen_gorev") == TIERS[DEFAULT_TIER]
+
+
+def test_resolve_tier_rejects_unknown_tier():
+    with pytest.raises(ValueError, match="Bilinmeyen kademe"):
+        resolve_tier(tier="ultra")
+
+
+def test_every_tier_sets_think_explicitly():
+    # gemma4 varsayilan olarak gizli "thinking" calistiriyor (244 token /
+    # 30.7s vs 2 token / 4.2s). Kademeler bunu asla varsayilana birakmamali.
+    for name, config in TIERS.items():
+        assert "think" in config, f"{name} kademesinde 'think' belirtilmemis"
+        assert "model" in config

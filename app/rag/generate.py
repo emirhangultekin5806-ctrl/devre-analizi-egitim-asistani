@@ -1,4 +1,4 @@
-"""Retrieval + local LLM (Ollama, qwen2.5:3b-instruct) ile kaynaklı cevap üretimi.
+"""Retrieval + local LLM (Ollama) ile kaynaklı cevap üretimi.
 
 Mimari geçmişi (üç deneme, sırayla elendi — hepsi gerçek veride test edildi):
 
@@ -33,6 +33,10 @@ uyduramaz.
 
 Son adım (`_TRANSLATE_SYSTEM_PROMPT`): yalnızca seçilen gerçek cümleleri
 Türkçeye çevirir.
+
+**Model kademeleri (`TIERS`):** Kademe kullanıcıya sorulmaz, göreve bağlanır
+(`TASK_TIERS`) — gelişmiş ayardan `tier=` ile geçersiz kılınabilir. Ölçümler
+ve kademe gerekçeleri aşağıdaki `TIERS` tanımında.
 """
 
 import re
@@ -42,8 +46,41 @@ import requests
 from app.retrieval.search import search
 
 OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
-GENERATION_MODEL = "qwen2.5:3b-instruct"
-CALL_TIMEOUT_SECONDS = 90
+CALL_TIMEOUT_SECONDS = 400
+
+# Model kademeleri. Hepsi bu makinede (GTX 1650, 4GB VRAM) gerçek veriyle
+# ölçüldü — ölçümler ve elenen alternatifler için: docs/vision.md.
+#
+# En kritik bulgu: gemma4:e4b varsayılan olarak gizli bir "thinking" adımı
+# çalıştırıyor. Tek karakterlik ("2") bir cevap için 244 token üretti (30.7s);
+# `think: False` ile aynı cevap 2 token / 4.2s. Tam pipeline'da bu, 166-279
+# saniyeyi 23-56 saniyeye indirdi. Bu yüzden `think` her kademede AÇIKÇA
+# belirtiliyor — varsayılana bırakılırsa model sessizce yavaşlıyor.
+TIERS = {
+    # En hızlı, en düşük kalite. Türkçesi zayıf (teknik terimleri İngilizce
+    # bırakabiliyor) ama halüsinasyon yapmıyor. Zayıf donanım için yedek.
+    "fast": {"model": "qwen2.5:3b-instruct", "think": False},
+    # Varsayılan: Gemma 4, düşünme kapalı. Türkçesi belirgin en iyi,
+    # hızı "fast" ile hemen hemen aynı — bu yüzden varsayılan.
+    "balanced": {"model": "gemma4:e4b", "think": False},
+    # Düşünme açık: ~3-5 kat yavaş. Yalnızca kullanıcıyı bekletmeyen
+    # (arka planda toplu üretim gibi) işler için.
+    "quality": {"model": "gemma4:e4b", "think": "medium"},
+}
+DEFAULT_TIER = "balanced"
+
+# Kademe kullanıcıya sorulmuyor, göreve bağlanıyor: öğrenci "hangi modeli
+# seçsem" diye düşünmek zorunda kalmasın, gereksiz model takası (4GB VRAM'de
+# pahalı) tetiklenmesin. Gelişmiş ayarlardan elle geçersiz kılınabilir.
+TASK_TIERS = {
+    "chat": "balanced",  # öğrenci soru soruyor, bekliyor
+    "hint": "fast",  # kademeli ipucu: kısa metin, hız öncelikli
+    "quiz": "quality",  # arka planda toplu üretim, süre önemsiz
+}
+
+# Modeli bellekte tutar; aksi halde Ollama 5 dakika sonra atıyor ve 10 GB'lık
+# model her soruda yeniden yükleniyor.
+KEEP_ALIVE = "30m"
 MAX_SELECTED_SENTENCES = 5
 MIN_SENTENCE_LENGTH = 15
 NOT_FOUND_MESSAGE = "Seçilen ders kitaplarında bu bilgiye ulaşamadım."
@@ -86,13 +123,24 @@ _MIN_LETTER_RATIO = 0.75
 _MIN_WORD_COUNT = 6
 
 
-def _call(messages: list[dict], temperature: float = 0.1) -> str:
+def resolve_tier(tier: str | None = None, task: str | None = None) -> dict:
+    """Kademe seçimi: açık `tier` > görevin varsayılanı > genel varsayılan."""
+    if tier is None:
+        tier = TASK_TIERS.get(task, DEFAULT_TIER)
+    if tier not in TIERS:
+        raise ValueError(f"Bilinmeyen kademe: {tier!r}. Secenekler: {sorted(TIERS)}")
+    return TIERS[tier]
+
+
+def _call(messages: list[dict], tier_config: dict, temperature: float = 0.1) -> str:
     response = requests.post(
         OLLAMA_CHAT_URL,
         json={
-            "model": GENERATION_MODEL,
+            "model": tier_config["model"],
             "messages": messages,
             "stream": False,
+            "think": tier_config["think"],
+            "keep_alive": KEEP_ALIVE,
             "options": {"temperature": temperature},
         },
         timeout=CALL_TIMEOUT_SECONDS,
@@ -140,7 +188,15 @@ def _format_context(hits: list[dict]) -> str:
     return "\n\n".join(parts)
 
 
-def answer_question(question: str, top_k: int = 5) -> dict:
+def answer_question(
+    question: str, top_k: int = 5, tier: str | None = None, task: str = "chat"
+) -> dict:
+    """Soruyu kaynaklara dayanarak cevaplar.
+
+    `task` kademeyi belirler (bkz. TASK_TIERS); `tier` verilirse görevin
+    varsayılanını geçersiz kılar (gelişmiş ayar).
+    """
+    tier_config = resolve_tier(tier, task)
     hits = search(question, top_k=top_k)
 
     all_sentences: list[str] = []
@@ -152,7 +208,8 @@ def answer_question(question: str, top_k: int = 5) -> dict:
         [
             {"role": "system", "content": _SELECT_SYSTEM_PROMPT},
             {"role": "user", "content": f"CÜMLELER:\n{numbered}\n\nSORU: {question}\n\nNumaralar:"},
-        ]
+        ],
+        tier_config=tier_config,
     )
     selected_numbers = [int(n) for n in _SENTENCE_NUMBER_RE.findall(selection)]
     valid_numbers = [n for n in selected_numbers if 1 <= n <= len(all_sentences)]
@@ -169,7 +226,8 @@ def answer_question(question: str, top_k: int = 5) -> dict:
             [
                 {"role": "system", "content": _TRANSLATE_SYSTEM_PROMPT},
                 {"role": "user", "content": quote},
-            ]
+            ],
+            tier_config=tier_config,
         )
 
     return {
