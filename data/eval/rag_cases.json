@@ -93,6 +93,27 @@
       "must_not_contain": []
     },
     {
+      "id": "formul-induktans",
+      "question": "İndüktans nedir?",
+      "expect": "answer",
+      "must_contain": ["di/dt"],
+      "must_not_contain": ["50 mh", "200a"]
+    },
+    {
+      "id": "formul-kapasitor-akim",
+      "question": "Kapasitörde akım gerilim ilişkisi nedir?",
+      "expect": "answer",
+      "must_contain": ["dv/dt"],
+      "must_not_contain": []
+    },
+    {
+      "id": "formul-ohm",
+      "question": "Ohm yasasının formülü nedir?",
+      "expect": "answer",
+      "must_contain": ["="],
+      "must_not_contain": []
+    },
+    {
       "id": "red-kuantum",
       "question": "Kuantum bilgisayarlarda kübit nasıl çalışır?",
       "expect": "refuse",

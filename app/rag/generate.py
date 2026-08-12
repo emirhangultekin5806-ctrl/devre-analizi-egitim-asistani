@@ -90,16 +90,18 @@ MAX_SELECTED_SENTENCES = 5
 MIN_SENTENCE_LENGTH = 15
 NOT_FOUND_MESSAGE = "Seçilen ders kitaplarında bu bilgiye ulaşamadım."
 
-# Tanım sorularında yalnızca anlatım chunk'ları aranır; çözümlü örnekler
-# (`example`) ve alıştırmalar (`practice_problem`) dışarıda bırakılır.
-# Gerekçe (gerçek kullanımda tekrar tekrar yakalandı): "Bobinin reaktansı
-# nedir?" sorusunda en yakın chunk bir çözümlü örnekti ve cevap o örneğe
-# özgü sayıları döküyordu ("XL = j2π(1kHz)(50mH) ≈ j314.2 Ω ... vb'yi
-# bulmak için bir gerilim bölücü kullanılabilir"). Prompt'ta "örnek
-# değerleri yazma" demek yetmedi; kaynak seviyesinde elemek gerekiyor.
-# Bu, chunking aşamasında konulan `content_type` metadata'sının ilk
-# somut kullanımı.
-CONCEPT_CONTENT_TYPES = ["concept", "chapter_summary", "learning_objectives"]
+# Yalnızca saf alıştırma chunk'ları (`practice_problem`) dışarıda bırakılır.
+#
+# `example` BİLEREK dahil: bir zamanlar o da dışlanıyordu ve bu, öğrenci için
+# en değerli cümleleri kaybettiriyordu. Örnek: indüktörün tanımlayıcı
+# bağıntısı ("The fundamental current-voltage relationship of the inductor
+# is: v = L di/dt") `example` etiketli bir chunk'ın içinde duruyor — chunk
+# öyle etiketlenmiş çünkü içinde bir "Example" başlığı da geçiyor. Chunk
+# seviyesinde elemek fazla kaba: bir chunk hem tanımı hem örneği taşıyabilir.
+#
+# Örneğe özgü sayılar artık cümle seviyesinde eleniyor (bkz.
+# `_is_worked_example_step`) — asıl sorun buydu, chunk türü değil.
+CONCEPT_CONTENT_TYPES = ["concept", "chapter_summary", "learning_objectives", "example"]
 
 _SELECT_SYSTEM_PROMPT = (
     "Sana numaralı cümleler ve bir soru verilecek. Soruyu cevaplayan "
@@ -157,6 +159,7 @@ device = cihaz, circuit = devre, equivalent = eşdeğer
 KURALLAR:
 - YALNIZCA kaynak cümlelerdeki bilgiyi kullan. Kaynakta olmayan bilgi, tarih, isim EKLEME.
 - Kısa ol: en fazla 3 cümle. Ana sonucu/formülü öne çıkar, ayrıntı dökme.
+- Kaynak cümlelerde bir TANIM FORMÜLÜ varsa (örn. v = L di/dt, i = C dv/dt, XL = j2πfL) onu MUTLAKA cevaba yaz. Öğrencinin pratikte kullanacağı şey formüldür; yalnızca sözel tanımla yetinme.
 - SADECE sorulan konuyu anlat. Soruda geçmeyen başka bir bileşeni (örn. bobin sorulduysa kapasitörü) ANLATMA.
 - Genel formülü ver; kaynak cümlede geçen örnek sayıları (örn. "XL = j68 Ω", "1 kHz", "50 mH") cevaba KOYMA.
 - Formülleri DÜZ METİN yaz, LaTeX/dolar işareti KULLANMA. Doğru: XL = j2πfL   Yanlış: $X_L = j2\\pi f L$
@@ -222,6 +225,14 @@ def _split_sentences(text: str) -> list[str]:
     return [
         s.strip()
         for s in re.split(r"(?<=[.!?])\s+", normalized)
+        # NOT: burada bir ara `_is_worked_example_step` filtresi de vardı
+        # (sayı+birim içeren cümleleri ele). Kaldırıldı: genel formülü veren
+        # cümle çoğu zaman aynı satırda bir örnek değer de taşıyor
+        # ("XL = +j2πfL (1.9) An example would be XL = j68 Ω") ve filtre bu
+        # cümleyi tümden eleyip doğru cevabı "bulunamadı"ya çeviriyordu.
+        # Saf hesap zincirleri zaten `_is_prose`'un harf-oranı eşiğine
+        # takılıyor; örnek sayılarının cevaba yazılmaması sentez promptunun
+        # işi.
         if len(s.strip()) >= MIN_SENTENCE_LENGTH and _is_prose(s.strip())
     ]
 
