@@ -7,8 +7,8 @@ Kullanım:
 (`chroma run --path data/indexes/chroma --port 8123`), index kurulmuş
 olmalı (`scripts/build_index.py --all`).
 
-Not: qwen3:4b'nin "thinking" modu kapatılamıyor (bkz. app/rag/generate.py
-docstring'i) — bir cevap 3-5 dakika sürebilir.
+Not: bir cevap yaklaşık 25-50 saniye sürüyor (iki LLM çağrısı: cümle
+seçimi + çeviri, bkz. app/rag/generate.py).
 """
 
 import argparse
