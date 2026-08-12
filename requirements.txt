@@ -2,3 +2,5 @@ pymupdf
 pypdf
 pytest
 ruff
+chromadb
+requests

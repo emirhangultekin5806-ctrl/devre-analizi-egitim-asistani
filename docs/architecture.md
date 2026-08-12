@@ -38,13 +38,43 @@ scripts/parse_books.py (orkestra şefi / CLI giriş noktası)
 
 `tests/test_pdf_extract.py` — Fiore DC üzerinde bir smoke test: sayfa sayısı doğru mu, metin okunabilir mi, temel alanlar dolu mu. Sadiku'ya bağımlı değil (o dosyalar repo dışında).
 
+## Retrieval (embedding + vector arama)
+
+```
+data/chunks/<document_id>.jsonl (chunking asamasinin ciktisi)
+    │
+    ▼
+app/retrieval/embed.py → embed_texts()
+    - Ollama'nin /api/embed'ine (toplu istek) bge-m3 modeliyle istek atar
+    - Cok dilli: Turkce soru -- Ingilizce kaynak eslesmesi icin secildi
+    │
+    ▼
+app/retrieval/index.py → index_chunks()
+    - Metadata'yi Chroma'nin kabul ettigi sekle indirger (None/liste alanlar)
+    - HttpClient uzerinden calisan Chroma sunucusuna upsert eder
+    │
+    ▼
+app/retrieval/search.py → search(query, top_k)
+    - Soru metnini embed eder, cosine similarity ile en yakin chunk'lari doner
+```
+
+**Chroma sunucu modu (onemli):** ChromaDB'nin gomulu/dosya modu
+(`PersistentClient`) bu makinede gercek indeksleme yukunde index
+dosyalarini bozdu (bkz. `app/retrieval/index.py` docstring'i). Bu yuzden
+Chroma, Ollama gibi ayri bir arka plan servisi olarak calistiriliyor:
+`chroma run --path data/indexes/chroma --port 8123`. Uygulama HttpClient
+ile bu sunucuya baglaniyor -- index dosyalarina yalnizca sunucu process'i
+erisiyor.
+
+**CLI:** `scripts/build_index.py --all` (chunk'lari sunucuya yazar,
+`--book <id>` tek kitap icin).
+
 ## Henüz boş olan klasörler (planlanan, kodu yazılmamış)
 
 Proje dokümanının önerdiği klasör yapısına göre önceden açıldı; her biri gelecekteki bir görevi temsil ediyor:
 
 | Klasör | Gelecekteki rolü |
 |---|---|
-| `app/retrieval/` | Soruya göre doğru metin parçalarını (chunk) bulma |
 | `app/reranking/` | Bulunan parçaları alaka düzeyine göre yeniden sıralama |
 | `app/llm/` | Local LLM (Ollama) çağrıları |
 | `app/rag/` | Retrieval + LLM'i birleştirip kaynaklı cevap üretme |
@@ -52,5 +82,4 @@ Proje dokümanının önerdiği klasör yapısına göre önceden açıldı; her
 | `app/hints/` | Kademeli (3 seviyeli) ipucu mantığı |
 | `app/api/` | Backend endpoint'leri (FastAPI) |
 | `app/ui/` | Kullanıcı arayüzü |
-
 Ürün/özellik düzeyindeki vizyon için: `docs/vision.md`.
