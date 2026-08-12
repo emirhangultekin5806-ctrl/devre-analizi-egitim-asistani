@@ -40,6 +40,7 @@ ve kademe gerekçeleri aşağıdaki `TIERS` tanımında.
 """
 
 import re
+import time
 
 import requests
 
@@ -197,13 +198,17 @@ def answer_question(
     varsayılanını geçersiz kılar (gelişmiş ayar).
     """
     tier_config = resolve_tier(tier, task)
+
+    t_start = time.perf_counter()
     hits = search(question, top_k=top_k)
+    t_retrieval = time.perf_counter() - t_start
 
     all_sentences: list[str] = []
     for hit in hits:
         all_sentences.extend(_split_sentences(hit["text"]))
     numbered = "\n".join(f"[{i}] {s}" for i, s in enumerate(all_sentences, start=1))
 
+    t_mark = time.perf_counter()
     selection = _call(
         [
             {"role": "system", "content": _SELECT_SYSTEM_PROMPT},
@@ -211,10 +216,13 @@ def answer_question(
         ],
         tier_config=tier_config,
     )
+    t_selection = time.perf_counter() - t_mark
+
     selected_numbers = [int(n) for n in _SENTENCE_NUMBER_RE.findall(selection)]
     valid_numbers = [n for n in selected_numbers if 1 <= n <= len(all_sentences)]
     selected_sentences = [all_sentences[n - 1] for n in valid_numbers[:MAX_SELECTED_SENTENCES]]
 
+    t_mark = time.perf_counter()
     if not selected_sentences:
         answer_text = NOT_FOUND_MESSAGE
     else:
@@ -230,6 +238,8 @@ def answer_question(
             tier_config=tier_config,
         )
 
+    t_translation = time.perf_counter() - t_mark
+
     return {
         "question": question,
         "answer": answer_text,
@@ -240,7 +250,23 @@ def answer_question(
                 "chapter_number": hit["metadata"].get("chapter_number"),
                 "chapter_title": hit["metadata"].get("chapter_title"),
                 "section_number": hit["metadata"].get("section_number"),
+                "printed_page": hit["metadata"].get("printed_page"),
+                "content_type": hit["metadata"].get("content_type"),
+                "distance": hit.get("distance"),
+                "text": hit["text"],
             }
             for hit in hits
         ],
+        # Arayüzün "ne oldu" bölümünü besleyen şeffaflık bilgileri
+        # (docs/vision.md: getirilen chunk'ları şeffaf gösterme hedefi).
+        "selected_sentences": selected_sentences,
+        "candidate_sentence_count": len(all_sentences),
+        "tier": tier_config,
+        "task": task,
+        "timings": {
+            "retrieval": t_retrieval,
+            "selection": t_selection,
+            "translation": t_translation,
+            "total": t_retrieval + t_selection + t_translation,
+        },
     }
