@@ -122,7 +122,12 @@ if ask and question.strip():
     elapsed = time.perf_counter() - started
 
     st.markdown("#### Cevap")
-    st.markdown(f'<div class="da-answer">{result["answer"]}</div>', unsafe_allow_html=True)
+    # HTML sarmalayıcı KULLANILMIYOR: cevaplar formül içerebiliyor
+    # (örn. $X_C = 1/(2\\pi f C)$) ve LaTeX yalnızca normal st.markdown
+    # içinde işleniyor; unsafe_allow_html ile div içine konursa ham
+    # metin olarak görünüyor.
+    with st.container(border=True):
+        st.markdown(result["answer"])
 
     tier_cfg = result["tier"]
     st.markdown(
@@ -153,12 +158,12 @@ if ask and question.strip():
         c1, c2, c3 = st.columns(3)
         c1.metric("Kaynak arama", f"{t['retrieval']:.1f} sn")
         c2.metric("Cümle seçimi", f"{t['selection']:.1f} sn")
-        c3.metric("Çeviri", f"{t['translation']:.1f} sn")
+        c3.metric("Cevap üretimi", f"{t['synthesis']:.1f} sn")
 
         st.caption(
             f"{result['candidate_sentence_count']} aday cümleden "
-            f"{len(result['selected_sentences'])} tanesi seçildi. "
-            "Model metin üretmez, yalnızca gerçek cümleleri seçer — bu yüzden uydurma yapamaz."
+            f"{len(result['selected_sentences'])} tanesi seçildi. Cevap yalnızca "
+            "aşağıdaki gerçek kaynak cümlelerine dayanılarak üretildi:"
         )
         for sentence in result["selected_sentences"]:
             st.markdown(f"- {sentence}")

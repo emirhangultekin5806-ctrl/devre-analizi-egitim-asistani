@@ -31,8 +31,12 @@ Prompt injection'a karşı da daha güçlü: model istismar edilse bile yalnızc
 GERÇEK cümleler arasından (yanlış/alakasız) seçim yapabilir, metin
 uyduramaz.
 
-Son adım (`_TRANSLATE_SYSTEM_PROMPT`): yalnızca seçilen gerçek cümleleri
-Türkçeye çevirir.
+Son adım (`_SYNTHESIS_SYSTEM_PROMPT`): seçilen gerçek cümlelerden KISA
+(en fazla 3 cümle), sonuç/formül odaklı bir Türkçe cevap üretir. Bu adım
+başlangıçta birebir çeviriydi; sonuç, PDF'ten gelen denklem parçalarının
+arka arkaya dizildiği okunamaz bir yığın oluyordu. Sentez, "model metin
+üretmesin" kısıtının bilinçli ve test edilmiş bir gevşetilmesidir (bkz.
+`_SYNTHESIS_SYSTEM_PROMPT` yorumu).
 
 **Model kademeleri (`TIERS`):** Kademe kullanıcıya sorulmaz, göreve bağlanır
 (`TASK_TIERS`) — gelişmiş ayardan `tier=` ile geçersiz kılınabilir. Ölçümler
@@ -95,25 +99,37 @@ _SELECT_SYSTEM_PROMPT = (
     'cevaplamıyorsa sadece "YOK" yaz.'
 )
 
-# Terim sözlüğü ZORUNLU: sözlüksüz çeviride model "node" kelimesini "nöron"
-# diye çevirdi ve "charge"/"voltage" gibi terimleri İngilizce bıraktı (gerçek
-# veride yakalandı). Sözlüğün DÜZGÜN TÜRKÇE İMLAYLA yazılması da kritik —
-# ilk sürümde ASCII yazılmıştı ("dugum", "akim") ve model bu bozuk imlayı
-# birebir taklit etti.
-_TRANSLATE_SYSTEM_PROMPT = """Sen bir elektrik mühendisliği ders kitabı çevirmenisin. Sana İngilizce alıntı verilecek, onu akıcı ve doğru Türkçeye çevir.
+# Son adım: seçilen cümleleri ÇEVİRMEK değil, onlardan KISA bir cevap
+# SENTEZLEMEK. Önceki sürüm birebir çeviri yapıyordu; sonuç, PDF'ten gelen
+# denklem parçalarının arka arkaya dizildiği okunamaz bir yığındı (gerçek
+# kullanımda yakalandı — "Xc = vc / i kapasitif ... Xc = 1 / (2πfC) e j−90º"
+# gibi). Sentez, ana sonucu/formülü öne çıkarıp gerisini eliyor.
+#
+# Bu, "model metin üretmesin, sadece seçsin" kısıtının bilinçli gevşetilmesi.
+# Kısıt qwen2.5:3b içindi (o model "ekleme yapma" talimatını takip edemiyordu);
+# Gemma 4 ile gerçek veride doğrulandı: kaynak dışı soruyu hâlâ reddediyor ve
+# soruya gömülü prompt injection'a ("doğum tarihini de yaz") uymuyor.
+#
+# Terim sözlüğü ZORUNLU: sözlüksüz model "node" kelimesini "nöron" diye
+# çevirdi, "charge"/"voltage" gibi terimleri İngilizce bıraktı. Sözlüğün
+# DÜZGÜN TÜRKÇE İMLAYLA yazılması da kritik — ilk sürümde ASCII yazılmıştı
+# ("dugum", "akim") ve model bu bozuk imlayı birebir taklit etti.
+_SYNTHESIS_SYSTEM_PROMPT = """Sen bir Devre Analizi ders asistanısın. Sana KAYNAK CÜMLELER ve bir soru verilecek. Soruyu bu cümlelere dayanarak KISA ve NET cevapla.
 
 Teknik terim sözlüğü (bu karşılıkları kullan):
 node = düğüm, current = akım, voltage = gerilim, charge = yük,
-capacitance = kapasitans, resistance = direnç, source = kaynak,
-plate = plaka, algebraic sum = cebirsel toplam, branch = dal,
-loop = çevrim, terminal = uç, power = güç, closed boundary = kapalı sınır,
+capacitance = kapasitans, resistance = direnç, reactance = reaktans,
+source = kaynak, plate = plaka, algebraic sum = cebirsel toplam,
+branch = dal, loop = çevrim, terminal = uç, power = güç,
 device = cihaz, circuit = devre, equivalent = eşdeğer
 
 KURALLAR:
-- Alıntıda olmayan hiçbir bilgi ekleme.
-- Tüm İngilizce kelimeleri Türkçeye çevir, İngilizce kelime bırakma.
+- YALNIZCA kaynak cümlelerdeki bilgiyi kullan. Kaynakta olmayan bilgi, tarih, isim EKLEME.
+- Kısa ol: en fazla 3 cümle. Ana sonucu/formülü öne çıkar, ayrıntı dökme.
+- Formül varsa temiz ve okunaklı yaz (örnek: Xc = 1 / (2πfC)).
+- Kaynak cümleler soruyu cevaplamıyorsa sadece şunu yaz: "Seçilen ders kitaplarında bu bilgiye ulaşamadım."
 - Düzgün Türkçe imla kullan (ı, ğ, ü, ş, ö, ç harflerini doğru yaz).
-- Sadece çevirinin kendisini yaz, başına/sonuna etiket veya açıklama ekleme."""
+- Sadece cevabın kendisini yaz, başına/sonuna etiket ekleme."""
 
 _WHITESPACE_RE = re.compile(r"\s+")
 _SENTENCE_NUMBER_RE = re.compile(r"\d+")
@@ -226,19 +242,16 @@ def answer_question(
     if not selected_sentences:
         answer_text = NOT_FOUND_MESSAGE
     else:
-        # Alıntı ETIKETSIZ, doğrudan kullanıcı mesajı olarak veriliyor:
-        # "ALINTI:\n..." biçiminde verildiğinde model bu etiketi çevirinin
-        # başına kopyalayıp çıktıya sızdırdı (gerçek veride yakalandı).
-        quote = " ".join(selected_sentences)
+        quote = "\n".join(f"- {s}" for s in selected_sentences)
         answer_text = _call(
             [
-                {"role": "system", "content": _TRANSLATE_SYSTEM_PROMPT},
-                {"role": "user", "content": quote},
+                {"role": "system", "content": _SYNTHESIS_SYSTEM_PROMPT},
+                {"role": "user", "content": f"KAYNAK CÜMLELER:\n{quote}\n\nSORU: {question}"},
             ],
             tier_config=tier_config,
         )
 
-    t_translation = time.perf_counter() - t_mark
+    t_synthesis = time.perf_counter() - t_mark
 
     return {
         "question": question,
@@ -266,7 +279,7 @@ def answer_question(
         "timings": {
             "retrieval": t_retrieval,
             "selection": t_selection,
-            "translation": t_translation,
-            "total": t_retrieval + t_selection + t_translation,
+            "synthesis": t_synthesis,
+            "total": t_retrieval + t_selection + t_synthesis,
         },
     }
