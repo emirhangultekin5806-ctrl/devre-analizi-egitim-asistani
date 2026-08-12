@@ -1,0 +1,17 @@
+# Arayüz YALNIZCA bu makineden erişilebilir olmalı.
+# Streamlit varsayılanı 0.0.0.0'a bağlanmak ve bir "External URL" duyurmak;
+# bu, telifli ders kitabı içeriğini (Sadiku) yerel ağa/dışarı açardı.
+# docs/kaynaklar.md: telifli kaynak paylaşılamaz, yalnızca kişisel kullanım.
+[server]
+address = "127.0.0.1"
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#0d2149"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f5f8fd"
+textColor = "#16213d"

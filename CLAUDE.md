@@ -15,9 +15,23 @@
 # Commands
 - Install: `python -m venv .venv` sonra `.venv\Scripts\pip install -r requirements.txt`
 - Run (PDF çıkarımı): `.venv\Scripts\python scripts\parse_books.py --book fiore_dc` (fiore_dc, fiore_ac; Sadiku için `--path` ile PDF yolu verilmeli)
+- Chunking: `.venv\Scripts\python scripts\chunk_books.py --book fiore_dc`
 - Test: `.venv\Scripts\python -m pytest`
 - Lint: `.venv\Scripts\ruff check .`
 - Type-check: TBD
+
+## Arka plan servisleri (uygulama çalışmadan önce ikisi de açık olmalı)
+- Ollama: `ollama serve` (modeller: gemma4:e4b, qwen2.5:3b-instruct, bge-m3)
+- Chroma: `.venv\Scripts\chroma run --path data\indexes\chroma --port 8123`
+  (gömülü/dosya modu bu makinede index'i bozuyordu — bkz. `app/retrieval/index.py`)
+
+## Uygulama
+- Index kurma: `.venv\Scripts\python scripts\build_index.py --all`
+  (birden fazla kitap için her zaman `--all`, tek process içinde)
+- Arayüz: `.venv\Scripts\streamlit run app\ui\streamlit_app.py` → http://localhost:8501
+- CLI soru: `.venv\Scripts\python scripts\ask.py "Kirchhoff akım yasası nedir?"`
+- Cevap kalitesi regresyon seti: `.venv\Scripts\python scripts\evaluate_rag.py`
+  (prompt/model değiştirdiysen bunu çalıştır — sessiz gerilemeleri yakalar)
 
 # Code Standards
 - Follow existing naming and folder conventions (bkz. Önerilen Klasör Yapısı).

@@ -22,7 +22,14 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
-from app.rag.generate import TASK_TIERS, TIERS, answer_question  # noqa: E402
+from app.rag.generate import (  # noqa: E402
+    CONCEPT_CONTENT_TYPES,
+    TASK_TIERS,
+    TIERS,
+    answer_question,
+)
+
+EXAMPLE_CONTENT_TYPES = ["example", "practice_problem"]
 
 NAVY = "#0d2149"
 NAVY_LIGHT = "#1c3a6e"
@@ -91,6 +98,14 @@ with st.sidebar:
 
     top_k = st.slider("Getirilecek kaynak sayısı", 3, 10, 5)
 
+    # Tanım sorularında çözümlü örnekler bilerek dışlanıyor (cevaba örneğe
+    # özgü sayılar sızıyordu). Örnek istemek yine de mümkün olmalı.
+    search_examples = st.checkbox(
+        "Çözümlü örneklerde ara",
+        help="Kapalıyken yalnızca konu anlatımı taranır (tanım soruları için önerilir).",
+    )
+    content_types = EXAMPLE_CONTENT_TYPES if search_examples else CONCEPT_CONTENT_TYPES
+
     st.divider()
     st.caption("Ollama ve Chroma sunucusu çalışıyor olmalı.")
 
@@ -106,7 +121,11 @@ if ask and question.strip():
     with st.spinner("Kaynaklar taranıyor ve cevap hazırlanıyor…"):
         try:
             result = answer_question(
-                question.strip(), top_k=top_k, tier=tier if override else None, task=task
+                question.strip(),
+                top_k=top_k,
+                tier=tier if override else None,
+                task=task,
+                content_types=content_types,
             )
         # Arayüzün en dış sınırı: hangi hata olursa olsun çökmek yerine
         # kullanıcıya ne yapması gerektiğini söylemeli (servis kapalı,
@@ -160,6 +179,7 @@ if ask and question.strip():
         c2.metric("Cümle seçimi", f"{t['selection']:.1f} sn")
         c3.metric("Cevap üretimi", f"{t['synthesis']:.1f} sn")
 
+        st.caption(f"Arama sorgusu (İngilizceye çevrildi): _{result['search_query']}_")
         st.caption(
             f"{result['candidate_sentence_count']} aday cümleden "
             f"{len(result['selected_sentences'])} tanesi seçildi. Cevap yalnızca "
