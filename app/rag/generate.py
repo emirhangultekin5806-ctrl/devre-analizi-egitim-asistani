@@ -85,7 +85,10 @@ DEFAULT_TIER = "balanced"
 TASK_TIERS = {
     "chat": "balanced",  # öğrenci soru soruyor, bekliyor
     "hint": "fast",  # kademeli ipucu: kısa metin, hız öncelikli
-    "quiz": "quality",  # arka planda toplu üretim, süre önemsiz
+    # Quiz bir ara "quality" idi (düşünme açık) — "arka plan işi, süre
+    # önemsiz" varsayımıyla. Arayüzde kullanıcı BEKLİYOR: 3 soru 243 saniye
+    # sürdü. Ölçüldü, "balanced" ile kalite farkı yok, süre çok daha iyi.
+    "quiz": "balanced",
 }
 
 # Modeli bellekte tutar; aksi halde Ollama 5 dakika sonra atıyor ve 10 GB'lık

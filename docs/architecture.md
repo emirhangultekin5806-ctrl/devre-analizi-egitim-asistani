@@ -106,13 +106,42 @@ yavaşlıyor.
 (vakalar: `data/eval/rag_cases.json`) — tanım soruları, kaynak-dışı
 reddetme, prompt injection. Prompt/model değiştiren her turda çalıştırılır.
 
+## Quiz
+
+`app/quiz/generate.py → generate_quiz()` — konu bazlı çoktan seçmeli quiz.
+RAG ile aynı zemini kullanır (sorgu çevirisi → arama → cümle sıralama), ama
+quiz doğası gereği modelin metin üretmesini gerektirir. Bu yüzden koruma
+"uydurma imkansız" değil, **sınırlandırılmış**:
+
+- Sorular yalnızca kaynak cümlelerden üretilir.
+- Çıktı JSON istenir ve `_parse_quiz` ile katı doğrulanır; biçime uymayan
+  veya eksik seçenekli sorular sessizce atılır (8 birim testi).
+- Her sorunun doğru cevabı için dayandığı kaynak cümle ("kanıt") kullanıcıya
+  gösterilir, öğrenci doğrulayabilsin.
+
+Ölçüm: 5 soru ≈ 160 sn (`balanced`). `quality` kademesiyle 3 soru 243 sn
+sürüyordu — arayüzde kullanıcı beklediği için `TASK_TIERS["quiz"]`
+`balanced` yapıldı, kalite farkı gözlenmedi.
+
 ## Arayüz
 
-`app/ui/streamlit_app.py` — beyaz-lacivert tek ekran. Cevabın yanında boru
-hattının her adımını gösterir (getirilen kaynaklar, kaç adaydan kaçının
-seçildiği, seçilen cümleler, adım süreleri, kullanılan model). `.streamlit/
-config.toml` sunucuyu `127.0.0.1`'e sabitler — telifli kaynak dışarı
-açılmamalı.
+`app/ui/streamlit_app.py` — beyaz-lacivert, soldan ekran seçmeli.
+`docs/vision.md`'deki 6 ana ekranı listeler; kodu yazılmamış olanlar
+gizlenmez, "hazır değil" durumuyla gösterilir.
+
+| Ekran | Durum |
+|---|---|
+| 📖 Konu Anlatımı | Çalışıyor (RAG) |
+| 📝 Quiz | Çalışıyor |
+| 📚 Kaynaklar | Çalışıyor (işlenmiş içerik istatistikleri) |
+| 💡 İpucu Modu | Hazır değil (`app/hints/`) |
+| ⚡ Devre Simülatörü | Hazır değil |
+| 📷 Kendi Devreni Yükle | Hazır değil (`app/vision/` + onay akışı) |
+
+Çalışan her ekranda kaynak gösterimi ve "Ne oldu?" şeffaflık paneli vardır
+(getirilen kaynaklar, kaç adaydan kaçının seçildiği, adım süreleri, model).
+`.streamlit/config.toml` sunucuyu `127.0.0.1`'e sabitler — telifli kaynak
+dışarı açılmamalı.
 
 ## Henüz boş olan klasörler (planlanan, kodu yazılmamış)
 
@@ -120,7 +149,7 @@ açılmamalı.
 |---|---|
 | `app/reranking/` | Bulunan parçaları alaka düzeyine göre yeniden sıralama |
 | `app/llm/` | Local LLM çağrıları (şu an `generate.py` içinde) |
-| `app/quiz/` | Quiz soruları üretimi |
+
 | `app/hints/` | Kademeli (3 seviyeli) ipucu mantığı |
 | `app/api/` | Backend endpoint'leri (FastAPI) |
 
