@@ -122,6 +122,76 @@ def solve_dc(netlist: Netlist) -> Solution:
     return Solution(node_voltages=voltages, source_currents=currents)
 
 
+@dataclass(frozen=True)
+class ElementResult:
+    """Tek bir eleman için sonuçlar — öğrencinin asıl sorduğu şey bu.
+
+    İşaret kuralı **pasif işaret kuralı** (ders kitabı standardı):
+    akım, elemanın `nodes[0]→nodes[1]` yönünde pozitif; gerilim aynı yönde
+    düşüş olarak alınır. Buna göre `power > 0` eleman güç HARCIYOR,
+    `power < 0` güç VERİYOR demektir (kaynaklar tipik olarak negatiftir).
+    """
+
+    name: str
+    kind: str
+    current: float
+    voltage: float
+    power: float
+
+    def describe(self) -> str:
+        rol = "harcıyor" if self.power >= 0 else "veriyor"
+        return (
+            f"{self.name}: I = {self.current:.4g} A, V = {self.voltage:.4g} V, "
+            f"P = {abs(self.power):.4g} W ({rol})"
+        )
+
+
+def element_results(netlist: Netlist, solution: Solution) -> dict[str, ElementResult]:
+    """Her eleman için akım, gerilim ve gücü hesaplar.
+
+    Eşdeğer direnç/toplam akım gibi devre geneli büyüklüklerin yanında,
+    ders kitabı sorularının çoğu ELEMAN BAZLI şeyler sorar: "R3'ten geçen
+    akım", "R2 üzerindeki gerilim", "kaynağın verdiği güç". Bu fonksiyon
+    onları tek yerde üretir.
+    """
+    results: dict[str, ElementResult] = {}
+    for element in netlist.elements:
+        a, b = element.nodes
+        voltage = solution.voltage_across(a, b)
+
+        if element.kind == "resistor":
+            current = voltage / element.value
+        elif element.kind == "current_source":
+            current = element.value
+        elif element.kind == "voltage_source":
+            # solve_dc kaynaktan ÇIKAN akımı pozitif veriyor; bu, kaynağın
+            # içinden - ucundan + ucuna akan akımdır, yani nodes[0]→nodes[1]
+            # yönünün TERSİ. Pasif işaret kuralına çevirmek için ters çevrilir.
+            current = -solution.source_currents.get(element.name, 0.0)
+        else:
+            # Kapasitör DC'de açık devre, bobin kısa devre.
+            current = 0.0 if element.kind == "capacitor" else voltage / 1e-9
+
+        results[element.name] = ElementResult(
+            name=element.name,
+            kind=element.kind,
+            current=current,
+            voltage=voltage,
+            power=voltage * current,
+        )
+    return results
+
+
+def power_balance(results: dict[str, ElementResult]) -> float:
+    """Tüm elemanların güçlerinin toplamı — korunum gereği 0 olmalı.
+
+    Tellegen teoremi: harcanan güç = verilen güç. Sıfırdan belirgin sapma
+    çözümün ya da netlist'in bozuk olduğunu gösterir; bu yüzden bağımsız
+    bir tutarlılık kontrolü olarak kullanılabilir.
+    """
+    return sum(result.power for result in results.values())
+
+
 def verify_answer(computed: float, expected: float, tolerance: float = 0.02) -> bool:
     """Hesaplanan değer kitabın cevabıyla uyuşuyor mu (bağıl tolerans).
 
