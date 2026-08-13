@@ -5,3 +5,4 @@ ruff
 chromadb
 requests
 streamlit
+PySpice
