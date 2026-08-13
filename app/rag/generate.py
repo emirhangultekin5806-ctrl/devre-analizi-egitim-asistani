@@ -48,6 +48,7 @@ import time
 
 import requests
 
+from app.retrieval.embed import embed_texts
 from app.retrieval.search import search
 
 OLLAMA_CHAT_URL = "http://localhost:11434/api/chat"
@@ -88,6 +89,17 @@ TASK_TIERS = {
 KEEP_ALIVE = "30m"
 MAX_SELECTED_SENTENCES = 5
 MIN_SENTENCE_LENGTH = 15
+
+# Aday cümleler modele verilmeden önce embedding ile soruya yakınlığa göre
+# sıralanır ve yalnızca ilk N tanesi gösterilir.
+#
+# Gerekçe (gerçek veride ölçüldü): "Bobinin reaktansı nedir?" sorusunda doğru
+# chunk 1. sırada geliyordu ve 81 aday cümle üretiliyordu, ama seçim modeli
+# doğru cümleyi ("The inductive reactance, XL, can be found using:
+# XL=+j2πfL") bu yığın içinde bulamayıp kapasitif reaktansla ilgili cümleler
+# seçiyordu. Aynı 81 cümle embedding'e göre sıralandığında doğru cümle 3.
+# sıraya çıkıyor. Yani sorun modelin muhakemesi değil, samanlığın büyüklüğü.
+MAX_CANDIDATE_SENTENCES = 20
 NOT_FOUND_MESSAGE = "Seçilen ders kitaplarında bu bilgiye ulaşamadım."
 
 # Yalnızca saf alıştırma chunk'ları (`practice_problem`) dışarıda bırakılır.
@@ -237,6 +249,34 @@ def _split_sentences(text: str) -> list[str]:
     ]
 
 
+def _cosine(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = sum(x * x for x in a) ** 0.5
+    norm_b = sum(x * x for x in b) ** 0.5
+    return dot / (norm_a * norm_b) if norm_a and norm_b else 0.0
+
+
+def _rank_candidates(query: str, sentences: list[str], limit: int) -> list[str]:
+    """Aday cümleleri soruya yakınlığa göre sıralar, ilk `limit` tanesini döner.
+
+    Embedding hatası cevabı engellememeli — sıralama yapılamazsa cümleler
+    olduğu gibi (ilk `limit` tanesi) döner.
+    """
+    if len(sentences) <= limit:
+        return sentences
+    try:
+        embeddings = embed_texts([query, *sentences])
+    except requests.RequestException:
+        return sentences[:limit]
+    query_embedding, sentence_embeddings = embeddings[0], embeddings[1:]
+    ranked = sorted(
+        zip(sentences, sentence_embeddings),
+        key=lambda pair: _cosine(query_embedding, pair[1]),
+        reverse=True,
+    )
+    return [sentence for sentence, _ in ranked[:limit]]
+
+
 def _translate_query_for_search(question: str, tier_config: dict) -> str:
     """Soruyu arama için İngilizceye çevirir; çeviri başarısızsa orijinali döner.
 
@@ -290,9 +330,10 @@ def answer_question(
     hits = search(search_query, top_k=top_k, content_types=content_types or CONCEPT_CONTENT_TYPES)
     t_retrieval = time.perf_counter() - t_start
 
-    all_sentences: list[str] = []
+    candidate_pool: list[str] = []
     for hit in hits:
-        all_sentences.extend(_split_sentences(hit["text"]))
+        candidate_pool.extend(_split_sentences(hit["text"]))
+    all_sentences = _rank_candidates(search_query, candidate_pool, MAX_CANDIDATE_SENTENCES)
     numbered = "\n".join(f"[{i}] {s}" for i, s in enumerate(all_sentences, start=1))
 
     t_mark = time.perf_counter()
@@ -351,7 +392,8 @@ def answer_question(
         # (docs/vision.md: getirilen chunk'ları şeffaf gösterme hedefi).
         "search_query": search_query,
         "selected_sentences": selected_sentences,
-        "candidate_sentence_count": len(all_sentences),
+        "candidate_sentence_count": len(candidate_pool),
+        "ranked_candidate_count": len(all_sentences),
         "tier": tier_config,
         "task": task,
         "timings": {

@@ -181,7 +181,8 @@ if ask and question.strip():
 
         st.caption(f"Arama sorgusu (İngilizceye çevrildi): _{result['search_query']}_")
         st.caption(
-            f"{result['candidate_sentence_count']} aday cümleden "
+            f"{result['candidate_sentence_count']} aday cümle bulundu, "
+            f"benzerliğe göre en iyi {result['ranked_candidate_count']} tanesi modele verildi, "
             f"{len(result['selected_sentences'])} tanesi seçildi. Cevap yalnızca "
             "aşağıdaki gerçek kaynak cümlelerine dayanılarak üretildi:"
         )
