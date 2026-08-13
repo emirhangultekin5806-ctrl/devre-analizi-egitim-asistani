@@ -97,7 +97,7 @@ Kaynakta cevap yoksa: "Seçilen ders kitaplarında bu bilgiye ulaşamadım."
 ```
 
 **Model kademeleri:** göreve bağlı (`TASK_TIERS`) — sohbet `balanced`
-(gemma4:e4b), ipucu `fast` (qwen2.5:3b), quiz `quality`. Gerekçeler ve
+(gemma4:e4b), ipucu `fast` (qwen2.5:3b), quiz `balanced`. Gerekçeler ve
 ölçümler: `docs/vision.md`. **Kritik ayar:** `think` her kademede açıkça
 belirtilir; gemma4 varsayılanda gizli "thinking" çalıştırıp 3-5 kat
 yavaşlıyor.
@@ -149,7 +149,6 @@ dışarı açılmamalı.
 |---|---|
 | `app/reranking/` | Bulunan parçaları alaka düzeyine göre yeniden sıralama |
 | `app/llm/` | Local LLM çağrıları (şu an `generate.py` içinde) |
-
 | `app/hints/` | Kademeli (3 seviyeli) ipucu mantığı |
 | `app/api/` | Backend endpoint'leri (FastAPI) |
 
