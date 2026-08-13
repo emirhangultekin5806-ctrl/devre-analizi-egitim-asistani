@@ -93,10 +93,11 @@
       "must_not_contain": []
     },
     {
+      "_not": "Bir ara must_contain: ['di/dt'] idi. Kullanici (devre analizi alaninda uzman) v = L di/dt'nin pratikte neredeyse hic kullanilmadigini belirtti; bu beklenti benim varsayimimdi. Tanim + birim yeterli.",
       "id": "formul-induktans",
       "question": "İndüktans nedir?",
       "expect": "answer",
-      "must_contain": ["di/dt"],
+      "must_contain": ["henry"],
       "must_not_contain": ["50 mh", "200a"]
     },
     {
