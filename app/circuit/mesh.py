@@ -18,9 +18,15 @@ Yöntem:
 4. Doğrusal sistem çözülür; eleman akımı, o elemandan geçen çevre
    akımlarının işaretli toplamıdır.
 
-Kapsam: dirençler + DC gerilim kaynakları. Akım kaynağı çevre analizinde
-"süpermesh" gerektirir; desteklenmiyor ve sessizce yanlış sonuç vermek
-yerine açık hata veriliyor.
+Kapsam: dirençler + DC gerilim ve akım kaynakları.
+
+**Süpermesh.** Klasik çevre analizinde iki çevrenin paylaştığı bir akım
+kaynağı "süpermesh" gerektirir (iki çevreyi birleştir, ayrıca kısıt
+denklemi yaz). Burada bu, ağaç seçimiyle kendiliğinden çözülüyor: kapsayan
+ağaç akım kaynaklarını dışarıda bırakacak şekilde kurulduğu için her akım
+kaynağı kendi temel çevresini tanımlar ve o çevrenin akımı doğrudan
+bilinir. Bilinen çevre akımlarının katkısı denklemin sağ tarafına geçer,
+yalnızca kalan bilinmeyenler için sistem çözülür.
 """
 
 from app.circuit.netlist import Element, Netlist
@@ -31,7 +37,13 @@ class MeshAnalysisError(RuntimeError):
 
 
 def _spanning_tree(netlist: Netlist) -> tuple[list[Element], dict[str, list[tuple[str, Element]]]]:
-    """Kapsayan ağacı ve komşuluk listesini döndürür."""
+    """Kapsayan ağacı ve komşuluk listesini döndürür.
+
+    Akım kaynakları BİLEREK ağacın dışında bırakılır (önce diğer elemanlarla
+    ağaç kurulur). Böylece her akım kaynağı kendi temel çevresini tanımlar ve
+    o çevrenin akımı doğrudan bilinir — süpermesh'in klasik "iki çevreyi
+    birleştir + kısıt denklemi yaz" işlemi bu seçimle kendiliğinden çözülür.
+    """
     adjacency: dict[str, list[tuple[str, Element]]] = {n: [] for n in netlist.nodes()}
     for element in netlist.elements:
         a, b = element.nodes
@@ -41,14 +53,24 @@ def _spanning_tree(netlist: Netlist) -> tuple[list[Element], dict[str, list[tupl
     start = next(iter(sorted(netlist.nodes())))
     visited = {start}
     tree: list[Element] = []
-    stack = [start]
-    while stack:
-        node = stack.pop()
-        for neighbour, element in adjacency[node]:
-            if neighbour not in visited:
-                visited.add(neighbour)
-                tree.append(element)
-                stack.append(neighbour)
+
+    # İki geçiş: önce akım kaynağı olmayanlarla ağacı büyüt, sonra
+    # (zorunlu kalırsa) akım kaynaklarıyla tamamla.
+    for allow_current_sources in (False, True):
+        changed = True
+        while changed:
+            changed = False
+            # list() ZORUNLU: döngü içinde `visited` büyüyor, küme üzerinde
+            # doğrudan dönmek "set changed size during iteration" verir.
+            for node in list(visited):  # noqa: PERF101
+                for neighbour, element in adjacency[node]:
+                    if neighbour in visited:
+                        continue
+                    if not allow_current_sources and element.kind == "current_source":
+                        continue
+                    visited.add(neighbour)
+                    tree.append(element)
+                    changed = True
 
     if visited != netlist.nodes():
         raise MeshAnalysisError(
@@ -119,11 +141,11 @@ def solve_mesh(netlist: Netlist) -> dict[str, float]:
     """
     import numpy as np
 
-    if any(e.kind == "current_source" for e in netlist.elements):
-        raise MeshAnalysisError(
-            "Akım kaynağı çevre analizinde süpermesh gerektirir; bu modül desteklemiyor"
-        )
-    unsupported = {e.kind for e in netlist.elements} - {"resistor", "voltage_source"}
+    unsupported = {e.kind for e in netlist.elements} - {
+        "resistor",
+        "voltage_source",
+        "current_source",
+    }
     if unsupported:
         raise MeshAnalysisError(f"Desteklenmeyen eleman türü: {sorted(unsupported)}")
     if any(e.value is None for e in netlist.elements):
@@ -133,28 +155,51 @@ def solve_mesh(netlist: Netlist) -> dict[str, float]:
     if not loops:
         raise MeshAnalysisError("Devrede kapalı çevre yok")
 
-    size = len(loops)
-    impedance = np.zeros((size, size))
-    voltages = np.zeros(size)
+    # Akım kaynağı ağacın dışında bırakıldığı için (bkz. _spanning_tree)
+    # onun tanımladığı çevrenin akımı doğrudan bilinir: süpermesh kısıtı.
+    known: dict[int, float] = {}
+    for index, loop in enumerate(loops):
+        link, sign = loop[0]  # temel çevrenin ilk elemanı ağaç dışı olandır
+        if link.kind == "current_source":
+            known[index] = sign * link.value
 
-    for i, loop_i in enumerate(loops):
-        for j, loop_j in enumerate(loops):
-            signs_j = {id(e): s for e, s in loop_j}
-            shared = 0.0
-            for element, sign in loop_i:
-                if element.kind == "resistor" and id(element) in signs_j:
-                    shared += sign * signs_j[id(element)] * element.value
-            impedance[i][j] = shared
-        for element, sign in loop_i:
-            if element.kind == "voltage_source":
-                # nodes = (+, -). Çevre elemanı +→- geçiyorsa gerilim düşüşü
-                # +V'dir; KVL'de karşı tarafa geçince işareti döner.
-                voltages[i] -= sign * element.value
+    unknown = [i for i in range(len(loops)) if i not in known]
+    if not unknown:
+        loop_currents = np.array([known.get(i, 0.0) for i in range(len(loops))])
+    else:
+        impedance = np.zeros((len(unknown), len(unknown)))
+        voltages = np.zeros(len(unknown))
 
-    try:
-        loop_currents = np.linalg.solve(impedance, voltages)
-    except np.linalg.LinAlgError as exc:
-        raise MeshAnalysisError(f"Denklem sistemi çözülemedi: {exc}") from exc
+        def coupling(loop_a, loop_b) -> float:
+            signs_b = {id(e): s for e, s in loop_b}
+            return sum(
+                sign * signs_b[id(element)] * element.value
+                for element, sign in loop_a
+                if element.kind == "resistor" and id(element) in signs_b
+            )
+
+        for row, i in enumerate(unknown):
+            for column, j in enumerate(unknown):
+                impedance[row][column] = coupling(loops[i], loops[j])
+            for element, sign in loops[i]:
+                if element.kind == "voltage_source":
+                    # nodes = (+, -). Çevre elemanı +→- geçiyorsa gerilim
+                    # düşüşü +V'dir; KVL'de karşı tarafa geçince işaret döner.
+                    voltages[row] -= sign * element.value
+            # Bilinen (akım kaynağı) çevre akımlarının katkısı sağ tarafa geçer.
+            for j, value in known.items():
+                voltages[row] -= coupling(loops[i], loops[j]) * value
+
+        try:
+            solved = np.linalg.solve(impedance, voltages)
+        except np.linalg.LinAlgError as exc:
+            raise MeshAnalysisError(f"Denklem sistemi çözülemedi: {exc}") from exc
+
+        loop_currents = np.zeros(len(loops))
+        for row, i in enumerate(unknown):
+            loop_currents[i] = solved[row]
+        for i, value in known.items():
+            loop_currents[i] = value
 
     currents: dict[str, float] = {}
     for element in netlist.elements:

@@ -54,11 +54,9 @@ def test_rejects_disconnected_circuit():
         solve_mesh(net)
 
 
-def test_rejects_current_source_needing_supermesh():
-    net = Netlist(
-        [V("s", "a", "gnd", 10), R("1", "a", "gnd", 5), Element("I1", "current_source", ("a", "gnd"), 1)]
-    )
-    with pytest.raises(MeshAnalysisError, match="süpermesh"):
+def test_rejects_unsupported_element_kind():
+    net = Netlist([V("s", "a", "gnd", 10), Element("C1", "capacitor", ("a", "gnd"), 1e-6)])
+    with pytest.raises(MeshAnalysisError, match="Desteklenmeyen"):
         solve_mesh(net)
 
 
@@ -100,9 +98,67 @@ def test_nodal_and_mesh_agree(label, elements):
 
 def test_disagreement_is_reported_not_hidden():
     """Yontemlerden biri uygulanamiyorsa sessizce 'uyustu' sayilmamali."""
-    net = Netlist(
-        [V("s", "a", "gnd", 10), R("1", "a", "gnd", 5), Element("I1", "current_source", ("a", "gnd"), 1)]
-    )
+    net = Netlist([V("s", "a", "gnd", 10), Element("C1", "capacitor", ("a", "gnd"), 1e-6)])
     result = cross_check_methods(net)
     assert result.agree is False
     assert "çevre analizi" in result.error
+
+
+# --- SUPERMESH: akim kaynagi destegi ---------------------------------------
+
+
+def I(name, a, b, value):
+    return Element(name, "current_source", (a, b), value)
+
+
+def _resistor_currents_from_nodal(net):
+    """Dugum gerilimlerinden direnc akimlarini hesaplar (karsilastirma icin)."""
+    solution = solve_dc(net)
+    currents = {}
+    for element in net.elements:
+        if element.kind != "resistor":
+            continue
+        a, b = element.nodes
+        va = 0.0 if a == "gnd" else solution.node_voltages[a]
+        vb = 0.0 if b == "gnd" else solution.node_voltages[b]
+        currents[element.name] = (va - vb) / element.value
+    return currents
+
+
+@pytest.mark.parametrize(
+    ("label", "elements"),
+    [
+        ("tek akim kaynagi", [I("i1", "gnd", "a", 2), R("1", "a", "gnd", 5), R("2", "a", "gnd", 5)]),
+        (
+            "supermesh: akim kaynagi iki cevrede ortak",
+            [
+                V("s", "a", "gnd", 10),
+                R("1", "a", "b", 2),
+                I("i1", "b", "c", 3),
+                R("2", "c", "gnd", 4),
+                R("3", "b", "gnd", 6),
+            ],
+        ),
+        (
+            "akim + gerilim kaynagi birlikte",
+            [
+                V("s", "a", "gnd", 12),
+                R("1", "a", "b", 3),
+                R("2", "b", "gnd", 6),
+                I("i1", "gnd", "b", 1),
+            ],
+        ),
+    ],
+)
+def test_supermesh_matches_nodal_analysis(label, elements):
+    """Akim kaynagi iceren devrelerde de iki yontem ayni sonucu vermeli.
+
+    Supermesh, agac secimiyle cozuluyor: akim kaynaklari agacin disinda
+    birakildigi icin her biri kendi cevresini tanimliyor ve o cevrenin
+    akimi dogrudan biliniyor.
+    """
+    net = Netlist(list(elements))
+    expected = _resistor_currents_from_nodal(net)
+    actual = solve_mesh(net)
+    for name, value in expected.items():
+        assert actual[name] == pytest.approx(value, abs=1e-6), f"{label}: {name}"
