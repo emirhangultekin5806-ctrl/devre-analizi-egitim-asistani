@@ -69,17 +69,59 @@ erisiyor.
 **CLI:** `scripts/build_index.py --all` (chunk'lari sunucuya yazar,
 `--book <id>` tek kitap icin).
 
-## Henüz boş olan klasörler (planlanan, kodu yazılmamış)
+## Cevap üretimi (RAG)
 
-Proje dokümanının önerdiği klasör yapısına göre önceden açıldı; her biri gelecekteki bir görevi temsil ediyor:
+`app/rag/generate.py → answer_question()` dört adımda çalışır:
+
+```
+Türkçe soru
+    │
+    ▼ 1. Sorgu çevirisi (LLM)
+"What is inductive reactance?"        ← kaynaklar İngilizce; kısa Türkçe
+    │                                   sorgular çok kötü eşleşiyordu
+    │                                   ("Direnç nedir?" 0.43 → "What is
+    │                                   resistance?" 0.67). Soruya gömülü
+    │                                   prompt injection de burada ayıklanır.
+    ▼ 2. Arama (app/retrieval/search.py)
+en yakın N chunk  (content_type ile filtrelenebilir)
+    │
+    ▼ 3. Cümle seçimi
+chunk'ların cümleleri → embedding ile soruya yakınlığa göre sıralanır →
+ilk 20 numaralanıp modele verilir → model yalnızca NUMARA döner.
+Model bu adımda metin ÜRETMEZ; seçilen cümleler koddaki gerçek listeden
+birebir alınır (bu adımda uydurma yapısal olarak imkansız).
+    │
+    ▼ 4. Sentez (LLM)
+Seçilen gerçek cümlelerden kısa, formül odaklı Türkçe cevap (LaTeX).
+Kaynakta cevap yoksa: "Seçilen ders kitaplarında bu bilgiye ulaşamadım."
+```
+
+**Model kademeleri:** göreve bağlı (`TASK_TIERS`) — sohbet `balanced`
+(gemma4:e4b), ipucu `fast` (qwen2.5:3b), quiz `quality`. Gerekçeler ve
+ölçümler: `docs/vision.md`. **Kritik ayar:** `think` her kademede açıkça
+belirtilir; gemma4 varsayılanda gizli "thinking" çalıştırıp 3-5 kat
+yavaşlıyor.
+
+**Cevap kalitesi regresyon seti:** `scripts/evaluate_rag.py`
+(vakalar: `data/eval/rag_cases.json`) — tanım soruları, kaynak-dışı
+reddetme, prompt injection. Prompt/model değiştiren her turda çalıştırılır.
+
+## Arayüz
+
+`app/ui/streamlit_app.py` — beyaz-lacivert tek ekran. Cevabın yanında boru
+hattının her adımını gösterir (getirilen kaynaklar, kaç adaydan kaçının
+seçildiği, seçilen cümleler, adım süreleri, kullanılan model). `.streamlit/
+config.toml` sunucuyu `127.0.0.1`'e sabitler — telifli kaynak dışarı
+açılmamalı.
+
+## Henüz boş olan klasörler (planlanan, kodu yazılmamış)
 
 | Klasör | Gelecekteki rolü |
 |---|---|
 | `app/reranking/` | Bulunan parçaları alaka düzeyine göre yeniden sıralama |
-| `app/llm/` | Local LLM (Ollama) çağrıları |
-| `app/rag/` | Retrieval + LLM'i birleştirip kaynaklı cevap üretme |
+| `app/llm/` | Local LLM çağrıları (şu an `generate.py` içinde) |
 | `app/quiz/` | Quiz soruları üretimi |
 | `app/hints/` | Kademeli (3 seviyeli) ipucu mantığı |
 | `app/api/` | Backend endpoint'leri (FastAPI) |
-| `app/ui/` | Kullanıcı arayüzü |
+
 Ürün/özellik düzeyindeki vizyon için: `docs/vision.md`.

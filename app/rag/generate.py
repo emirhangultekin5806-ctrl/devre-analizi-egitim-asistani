@@ -20,23 +20,27 @@ Mimari geçmişi (üç deneme, sırayla elendi — hepsi gerçek veride test edi
    parafraza atladı, bu da doğrulamadan geçemeyip yanlışlıkla "bulunamadı"
    sonucuna yol açtı (gerçekten cevaplanabilir sorularda bile).
 
-**Şu anki mimari — numaralı cümle SEÇİMİ (üretim değil):** Kaynak
-chunk'lardaki tüm cümleler numaralanır, modelden soruyu cevaplayan
-cümlelerin NUMARALARINI seçmesi istenir (en fazla `MAX_SELECTED_SENTENCES`
-tane). Model hiçbir zaman serbest metin üretmiyor, yalnızca rakam
-seçiyor — bu yüzden uydurma/parafraz yapısal olarak imkansız: seçilen her
-cümle, koddaki gerçek kaynak listesinden birebir alınıyor (doğrulama
-katmanına gerek kalmıyor, çünkü sahte bir cümlenin "numarası" olamaz).
-Prompt injection'a karşı da daha güçlü: model istismar edilse bile yalnızca
-GERÇEK cümleler arasından (yanlış/alakasız) seçim yapabilir, metin
-uyduramaz.
+**Şu anki mimari — dört adım:**
 
-Son adım (`_SYNTHESIS_SYSTEM_PROMPT`): seçilen gerçek cümlelerden KISA
-(en fazla 3 cümle), sonuç/formül odaklı bir Türkçe cevap üretir. Bu adım
-başlangıçta birebir çeviriydi; sonuç, PDF'ten gelen denklem parçalarının
-arka arkaya dizildiği okunamaz bir yığın oluyordu. Sentez, "model metin
-üretmesin" kısıtının bilinçli ve test edilmiş bir gevşetilmesidir (bkz.
-`_SYNTHESIS_SYSTEM_PROMPT` yorumu).
+1. `_translate_query_for_search`: soru İngilizceye çevrilir. Kaynaklar
+   İngilizce ve kısa/genel Türkçe sorgular çok kötü eşleşiyordu ("Direnç
+   nedir?" 0.43 ile alakasız chunk'lar getirirken "What is resistance?"
+   0.67 ile doğru bölümü getiriyor). Çeviri adımı ayrıca soruya gömülü
+   prompt injection metnini de ayıklıyor.
+2. `search`: chunk'lar getirilir (`content_types` ile filtrelenebilir).
+3. Cümle seçimi: getirilen chunk'ların cümleleri `_rank_candidates` ile
+   soruya yakınlığa göre sıralanıp ilk `MAX_CANDIDATE_SENTENCES` tanesi
+   numaralanır; modelden yalnızca NUMARA seçmesi istenir. Model bu adımda
+   metin üretmez — seçilen her cümle koddaki gerçek listeden birebir alınır,
+   dolayısıyla bu adımda uydurma yapısal olarak imkansızdır.
+4. `_SYNTHESIS_SYSTEM_PROMPT`: seçilen gerçek cümlelerden kısa, sonuç/formül
+   odaklı bir Türkçe cevap üretilir (formüller LaTeX ile dizilir).
+
+4. adım bir zamanlar birebir çeviriydi; sonuç, PDF'ten gelen denklem
+parçalarının arka arkaya dizildiği okunamaz bir yığın oluyordu. Sentez,
+"model hiç metin üretmesin" kısıtının bilinçli ve ölçülmüş bir
+gevşetilmesi: kaynak dışı soruyu hâlâ reddediyor ve soruya gömülü
+injection'a uymuyor (bkz. `data/eval/rag_cases.json`).
 
 **Model kademeleri (`TIERS`):** Kademe kullanıcıya sorulmaz, göreve bağlanır
 (`TASK_TIERS`) — gelişmiş ayardan `tier=` ile geçersiz kılınabilir. Ölçümler
