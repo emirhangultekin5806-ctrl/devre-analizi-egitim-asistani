@@ -46,7 +46,17 @@ ollama pull bge-m3              :: embedding (çok dilli)
 
 ## Çalıştırma
 
-Önce iki arka plan servisi (ayrı terminallerde, açık kalmalı):
+**Kolay yol:** `baslat.bat` dosyasına çift tıklayın. Gerekli üç servisi
+(Ollama, Chroma, arayüz) açar — zaten çalışanları tekrar başlatmaz — ve
+tarayıcıda http://localhost:8501 adresini açar.
+
+> Masaüstüne kısayol: `baslat.bat` üzerine sağ tık → **Kısayol oluştur**,
+> kısayolu masaüstüne taşıyın. Başlat menüsüne sabitlemek için kısayola
+> sağ tık → **Başlangıç ekranına sabitle**.
+
+### Elle çalıştırma
+
+İki arka plan servisi (ayrı terminallerde, açık kalmalı):
 
 ```bat
 ollama serve
