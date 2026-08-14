@@ -34,48 +34,85 @@ class Solution:
 
     node_voltages: dict[str, float] = field(default_factory=dict)
     source_currents: dict[str, float] = field(default_factory=dict)
+    # Gerilimlerin ölçüldüğü referans düğüm. Toprak sembolü olmayan
+    # şekillerde bu, çağıranın seçtiği düğümdür; çözümde 0 V'tur ve
+    # ngspice çıktısında yer almaz.
+    reference: str | None = None
 
     def voltage_across(self, node_a: str, node_b: str) -> float:
-        """İki düğüm arasındaki gerilim farkı (toprak 0 kabul edilir)."""
+        """İki düğüm arasındaki gerilim farkı (referans 0 kabul edilir)."""
         return self._v(node_a) - self._v(node_b)
 
     def _v(self, node: str) -> float:
-        if node.lower() in GROUND_NODES:
+        if node.lower() in GROUND_NODES or node == self.reference:
             return 0.0
         if node not in self.node_voltages:
             raise KeyError(f"{node!r} düğümü çözümde yok")
         return self.node_voltages[node]
 
 
-def _ground_of(netlist: Netlist) -> str:
+def _ground_of(netlist: Netlist, reference: str | None = None) -> str:
     """Devrenin referans (toprak) düğümü.
 
     ngspice bir referans düğüm ister. Netlist'te bilinen bir toprak adı
     yoksa çözüm anlamsız olur — sessizce rastgele bir düğüm seçmek yerine
     açık hata veriyoruz.
+
+    `reference` verilirse o düğüm referans alınır. Ders kitabı şekillerinin
+    çoğunda toprak sembolü ÇİZİLMEZ (soru "şu daldaki akım" biçiminde
+    sorulur); referansın seçimi düğüm gerilimlerini kaydırır ama eleman
+    akım/gerilim/güçlerini değiştirmez, o yüzden çağıran taraf serbestçe
+    seçebilir. Yine de varsayılan olarak seçmiyoruz: sessiz varsayım yerine
+    açık tercih.
     """
+    if reference is not None:
+        if reference not in netlist.nodes():
+            raise SolverError(
+                f"{reference!r} düğümü devrede yok. Mevcut: {sorted(netlist.nodes())}"
+            )
+        return reference
     for node in netlist.nodes():
         if node.lower() in GROUND_NODES:
             return node
     raise SolverError(
         f"Devrede referans (toprak) düğümü yok. Beklenen adlardan biri kullanılmalı: "
-        f"{sorted(GROUND_NODES)}. Mevcut düğümler: {sorted(netlist.nodes())}"
+        f"{sorted(GROUND_NODES)}. Mevcut düğümler: {sorted(netlist.nodes())}. "
+        f"Şekilde toprak çizilmemişse `reference=` ile bir düğüm seçin."
     )
 
 
-def solve_dc(netlist: Netlist) -> Solution:
+def solve_dc(netlist: Netlist, reference: str | None = None) -> Solution:
     """DC çalışma noktasını çözer (dirençler + DC kaynaklar).
 
     Kapasitör açık devre, bobin kısa devre kabul edilir — DC analizinin
     ders kitabı tanımı budur.
+
+    `reference`: şekilde toprak çizilmemişse referans alınacak düğüm
+    (bkz. `_ground_of`).
     """
     from PySpice.Spice.Netlist import Circuit  # ağır bağımlılık, gerektiğinde yüklensin
 
-    ground = _ground_of(netlist)
+    ground = _ground_of(netlist, reference)
     circuit = Circuit("devre")
 
     def node(name: str):
         return circuit.gnd if name == ground else name
+
+    # CCVS/CCCS gibi AKIM kontrollü kaynaklar SPICE'ta yalnızca bir gerilim
+    # kaynağının dal akımını referans alabilir. Kontrol edilen eleman bir
+    # direnç olduğunda, klasik "hayalet ampermetre" hilesi kullanılır: o
+    # direncin bir ucu, aralarına 0 V'luk bir kaynak konarak hayali bir ara
+    # düğüme kaydırılır. Bu kaynağın dal akımı, direncin GERÇEK akımına
+    # eşittir (0 V'luk kaynak ideal, düğümde başka çıkış yok). Öğrenciye
+    # gösterilen sonuçlar etkilenmez: hayalet düğümün gerilimi, direncin asıl
+    # ikinci ucuyla (0 V'luk kaynak üzerinden) her zaman aynıdır.
+    sensed = {e.control_element for e in netlist.elements if e.control_element is not None}
+    resistor_names = {e.name for e in netlist.elements if e.kind == "resistor"}
+    if sensed - resistor_names:
+        raise SolverError(
+            "Kontrol akımı yalnızca bir DİRENCİN üzerinden ölçülebiliyor (bu sürümde); "
+            f"eşleşmeyen: {sorted(sensed - resistor_names)}"
+        )
 
     has_source = False
     for element in netlist.elements:
@@ -84,7 +121,12 @@ def solve_dc(netlist: Netlist) -> Solution:
             raise SolverError(f"{element.name}: değer verilmemiş, çözülemez")
 
         if element.kind == "resistor":
-            circuit.R(element.name, node(a), node(b), element.value)
+            if element.name in sensed:
+                phantom = f"__amm_{element.name}"
+                circuit.R(element.name, node(a), phantom, element.value)
+                circuit.V(f"amm_{element.name}", phantom, node(b), 0)
+            else:
+                circuit.R(element.name, node(a), node(b), element.value)
         elif element.kind == "voltage_source":
             circuit.V(element.name, node(a), node(b), element.value)
             has_source = True
@@ -95,8 +137,20 @@ def solve_dc(netlist: Netlist) -> Solution:
             continue  # DC'de açık devre
         elif element.kind == "inductor":
             circuit.R(element.name, node(a), node(b), 1e-9)  # DC'de kısa devre
+        elif element.kind == "vcvs":
+            nc_plus, nc_minus = element.control_nodes
+            circuit.VCVS(
+                element.name, node(a), node(b), node(nc_plus), node(nc_minus), element.value
+            )
+            has_source = True
+        elif element.kind == "ccvs":
+            circuit.CCVS(
+                element.name, node(a), node(b), f"vamm_{element.control_element}", element.value
+            )
+            has_source = True
         else:
             raise SolverError(f"{element.name}: {element.kind} DC çözümde desteklenmiyor")
+
 
     if not has_source:
         raise SolverError("Devrede kaynak yok; çözülecek bir şey yok")
@@ -109,17 +163,23 @@ def solve_dc(netlist: Netlist) -> Solution:
     voltages = {str(name): float(value[0]) for name, value in analysis.nodes.items()}
 
     # ngspice dal akımlarını kendi adlandırmasıyla döndürür: "R1" adlı gerilim
-    # kaynağı "vr1" olur. Çağıran tarafın bunu bilmesi gerekmesin diye kendi
-    # eleman adlarımıza geri eşliyoruz.
+    # kaynağı "vr1" olur, VCVS ise "er1" (SPICE eleman öneki + isim). Çağıran
+    # tarafın bunu bilmesi gerekmesin diye kendi eleman adlarımıza geri
+    # eşliyoruz.
     # Ayrıca ngspice akımı kaynağa GİREN yönde verir; ders kitabı gösteriminde
     # kaynaktan ÇIKAN akım pozitiftir, o yüzden işaret çevriliyor.
     raw = {str(name).lower(): -float(value[0]) for name, value in analysis.branches.items()}
     currents = {
-        element.name: raw[f"v{element.name}".lower()]
+        element.name: raw[f"{_BRANCH_PREFIX[element.kind]}{element.name}".lower()]
         for element in netlist.elements
-        if element.kind == "voltage_source" and f"v{element.name}".lower() in raw
+        if element.kind in _BRANCH_PREFIX
+        and f"{_BRANCH_PREFIX[element.kind]}{element.name}".lower() in raw
     }
-    return Solution(node_voltages=voltages, source_currents=currents)
+    return Solution(node_voltages=voltages, source_currents=currents, reference=ground)
+
+
+# SPICE eleman öneki: ngspice dal akımını bu önek + eleman adıyla adlandırır.
+_BRANCH_PREFIX = {"voltage_source": "v", "vcvs": "e", "ccvs": "h"}
 
 
 @dataclass(frozen=True)
@@ -163,10 +223,13 @@ def element_results(netlist: Netlist, solution: Solution) -> dict[str, ElementRe
             current = voltage / element.value
         elif element.kind == "current_source":
             current = element.value
-        elif element.kind == "voltage_source":
+        elif element.kind in ("voltage_source", "vcvs", "ccvs"):
             # solve_dc kaynaktan ÇIKAN akımı pozitif veriyor; bu, kaynağın
             # içinden - ucundan + ucuna akan akımdır, yani nodes[0]→nodes[1]
             # yönünün TERSİ. Pasif işaret kuralına çevirmek için ters çevrilir.
+            # VCVS ve CCVS için de aynı kural geçerli — ngspice "e"/"h"
+            # dallarını da "v" ile aynı yönde raporluyor (gerçek devrede
+            # doğrulandı, bkz. solve.py testleri).
             current = -solution.source_currents.get(element.name, 0.0)
         else:
             # Kapasitör DC'de açık devre, bobin kısa devre.

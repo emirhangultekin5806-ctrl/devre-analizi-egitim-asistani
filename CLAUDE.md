@@ -30,6 +30,8 @@
   (birden fazla kitap için her zaman `--all`, tek process içinde)
 - Arayüz: `.venv\Scripts\streamlit run app\ui\streamlit_app.py` → http://localhost:8501
 - CLI soru: `.venv\Scripts\python scripts\ask.py "Kirchhoff akım yasası nedir?"`
+- Kitap şeklini oku ve çöz: `.venv\Scripts\python scripts\read_figure.py --page 79 --figure "Figure 2.36" --expected 6`
+  (şekil PDF'in vektör verisinden geometrik olarak okunur — görsel model yok; `--page` 0'dan başlayan indeks)
 - Cevap kalitesi regresyon seti: `.venv\Scripts\python scripts\evaluate_rag.py`
   (prompt/model değiştirdiysen bunu çalıştır — sessiz gerilemeleri yakalar)
 

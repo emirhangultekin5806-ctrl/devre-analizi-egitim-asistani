@@ -29,8 +29,8 @@ def C(name, a, b, value):
     return Element(f"C{name}", "capacitor", (a, b), value)
 
 
-def V(name, plus, minus, value):
-    return Element(name, "voltage_source", (plus, minus), value)
+def V(name, plus, minus, value, phase=0.0):
+    return Element(name, "voltage_source", (plus, minus), value, phase=phase)
 
 
 # --- empedans --------------------------------------------------------------
@@ -170,3 +170,47 @@ def test_polar_conversion():
     assert magnitude == pytest.approx(1.0)
     assert angle == pytest.approx(90.0)
     assert ACSolution.polar(cmath.rect(5, math.radians(30)))[1] == pytest.approx(30.0)
+
+
+# --- faz kaydırmalı kaynaklar ------------------------------------------------
+#
+# PySpice'ın SinusoidalVoltageSource/SinusoidalCurrentSource sarmalayıcıları
+# AC faz parametresini desteklemiyor (yalnızca genlik) — bu yüzden faz≠0
+# olduğunda ham SPICE satırı ("DC 0 AC genlik faz") kullanılıyor
+# (bkz. `app/circuit/ac.py` `_add_phased_source`). Faz=0 durumu (varsayılan)
+# değişmedi, mevcut testler onu zaten kapsıyor.
+
+
+def test_a_phased_source_reproduces_its_own_phase_on_a_resistive_load():
+    """Saf dirençli yükte faz kayması olmaz: çıkış, kaynağın fazının aynısı olmalı."""
+    net = Netlist([V("s", "n1", "gnd", 10.0, phase=30.0), R("1", "n1", "gnd", 1000.0)])
+    magnitude, angle = ACSolution.polar(solve_ac(net, 1e3).node_voltages["n1"])
+    assert magnitude == pytest.approx(10.0, rel=1e-6)
+    assert angle == pytest.approx(30.0, abs=1e-3)
+
+
+def test_series_phased_sources_add_as_phasors():
+    """İki faz kaydırmalı kaynak seri bağlıyken toplam gerilim FAZÖR toplamı olmalı.
+
+    V1=10∠0°, V2=10∠90° seri: toplam = 10+j10 = 14.142∠45° (temel fazör
+    cebiri — Sadiku Bölüm 9). Faz yanlış uygulansaydı bu toplam tutmazdı.
+    """
+    net = Netlist(
+        [
+            V("1", "n1", "gnd", 10.0, phase=0.0),
+            V("2", "n2", "n1", 10.0, phase=90.0),
+            R("load", "n2", "gnd", 1000.0),
+        ]
+    )
+    expected = cmath.rect(10.0, 0.0) + cmath.rect(10.0, math.radians(90.0))
+    magnitude, angle = ACSolution.polar(solve_ac(net, 1e3).node_voltages["n2"])
+    assert magnitude == pytest.approx(abs(expected), rel=1e-6)
+    assert angle == pytest.approx(cmath.phase(expected) * 180 / cmath.pi, abs=1e-3)
+
+
+def test_default_phase_is_zero_and_unaffected():
+    """Faz belirtilmeyen (varsayılan) kaynaklar eskisi gibi 0° davranmalı —
+    yeni alanın geriye dönük uyumluluğu."""
+    net = Netlist([V("s", "n1", "gnd", 5.0), R("1", "n1", "gnd", 500.0)])
+    _, angle = ACSolution.polar(solve_ac(net, 1e3).node_voltages["n1"])
+    assert angle == pytest.approx(0.0, abs=1e-6)

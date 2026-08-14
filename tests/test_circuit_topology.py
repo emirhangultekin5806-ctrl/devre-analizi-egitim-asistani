@@ -2,10 +2,14 @@ import pytest
 
 from app.circuit.netlist import Element, Netlist
 from app.circuit.topology import (
+    delta_to_wye,
     equivalent_resistance,
     find_parallel_pair,
     find_series_pair,
+    find_wye_center,
     reduce_resistors,
+    transform_wye_to_delta,
+    wye_to_delta,
 )
 
 
@@ -91,9 +95,9 @@ def test_parallel_reduction_uses_product_over_sum():
     assert reduced.elements[0].value == pytest.approx(2.0)
 
 
-def test_bridge_circuit_is_not_fully_reducible():
-    """Wheatstone koprusu seri/paralel ile indirgenemez -- sessizce yanlis
-    sonuc vermek yerine indirgenemedigi anlasilmali."""
+def test_bridge_circuit_needs_wye_delta_not_just_series_parallel():
+    """Wheatstone koprusunde seri/paralel TEK BASINA tikanir (b ve c'nin
+    ucer direnci var, hicbiri ne seri ne paralel kosulunu saglar)."""
     net = Netlist(
         [
             R("R1", "a", "b", 1),
@@ -103,9 +107,86 @@ def test_bridge_circuit_is_not_fully_reducible():
             R("R5", "b", "c", 1),  # kopru kolu
         ]
     )
-    reduced, _ = reduce_resistors(net, protected_nodes=("a", "d"))
-    assert len(reduced.elements) > 1
-    assert equivalent_resistance(net, "a", "d") is None
+    assert find_series_pair(net, protected_nodes=("a", "d")) is None
+    assert find_parallel_pair(net) is None
+
+
+def test_bridge_circuit_reduces_via_wye_delta():
+    """Ayni kopru, yildiz-ucgen devreye girince tam indirgenir.
+
+    Dengeli koprude (R1/R3 = R2/R4) teorik sonuc bilinir: kopru kolundan
+    (R5) akim gecmez, Rad = (R1+R3) ∥ (R2+R4) = 2 ∥ 2 = 1 Ω. Y-Δ
+    donusumunun kendisi bir yaklastirma degil TAM bir denklik oldugu icin
+    bu deger her R5 icin ayni cikmali; testte R5=1 ile dogrulaniyor.
+    """
+    net = Netlist(
+        [
+            R("R1", "a", "b", 1),
+            R("R2", "a", "c", 1),
+            R("R3", "b", "d", 1),
+            R("R4", "c", "d", 1),
+            R("R5", "b", "c", 1),
+        ]
+    )
+    reduced, steps = reduce_resistors(net, protected_nodes=("a", "d"))
+    assert len(reduced.elements) == 1
+    assert reduced.elements[0].value == pytest.approx(1.0)
+    assert equivalent_resistance(net, "a", "d") == pytest.approx(1.0)
+    assert any(hasattr(step, "center_node") for step in steps), "Y-Δ adımı beklenirdi"
+
+
+# --- yildiz-ucgen (Y-Delta) donusumu ----------------------------------------
+#
+# Formuller Sadiku Bolum 2.7'den; sayisal degerler kitabin kendi
+# ornekleriyle birebir dogrulandi (asagida).
+
+
+def test_delta_to_wye_matches_example_2_14():
+    """Sadiku Example 2.14: Rab=10, Rbc=25, Rca=15 -> Y = {3, 5, 7.5} Ω."""
+    r_a, r_b, r_c = delta_to_wye(10, 25, 15)
+    assert sorted((r_a, r_b, r_c)) == pytest.approx(sorted((3.0, 5.0, 7.5)))
+
+
+def test_wye_to_delta_matches_practice_problem_2_14():
+    """Sadiku Practice Problem 2.14: Ra=10, Rb=20, Rc=40 -> Δ = {140, 70, 35} Ω."""
+    r_ab, r_bc, r_ca = wye_to_delta(10, 20, 40)
+    assert sorted((r_ab, r_bc, r_ca)) == pytest.approx(sorted((140.0, 70.0, 35.0)))
+
+
+def test_delta_to_wye_and_back_round_trips():
+    """İki dönüşüm birbirinin tersi olmalı — bağımsız bir tutarlılık kontrolü."""
+    original = (12.0, 7.0, 19.0)
+    wye = delta_to_wye(*original)
+    back = wye_to_delta(*wye)
+    assert sorted(back) == pytest.approx(sorted(original))
+
+
+def test_find_wye_center_requires_exactly_three_resistors():
+    net = Netlist([R("R1", "a", "n", 1), R("R2", "b", "n", 1), R("R3", "c", "n", 1)])
+    assert find_wye_center(net) == "n"
+
+    # 4. direnc eklenince artik "tam olarak 3" kosulu bozulur.
+    net_with_four = Netlist([*net.elements, R("R4", "d", "n", 1)])
+    assert find_wye_center(net_with_four) is None
+
+
+def test_find_wye_center_respects_protected_nodes():
+    """Dis uc bir yildiz merkezi gibi gorunse bile kaldirilamaz."""
+    net = Netlist([R("R1", "a", "n", 1), R("R2", "b", "n", 1), R("R3", "c", "n", 1)])
+    assert find_wye_center(net, protected_nodes=("n",)) is None
+
+
+def test_transform_wye_to_delta_removes_the_center_node():
+    net = Netlist([R("R1", "a", "n", 10), R("R2", "b", "n", 20), R("R3", "c", "n", 40)])
+    new_netlist, step = transform_wye_to_delta(net, "n", counter=1)
+    assert "n" not in new_netlist.nodes()
+    assert len(new_netlist.elements) == 3
+    assert sorted(e.value for e in new_netlist.elements) == pytest.approx(
+        sorted((140.0, 70.0, 35.0))
+    )
+    assert step.center_node == "n"
+    assert step.combined == ("R1", "R2", "R3")
+    assert "yıldız→üçgen" in step.describe()
 
 
 # --- gercek devre: oturumda kullanicinin dogruladigi ornek ------------------

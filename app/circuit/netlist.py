@@ -18,8 +18,28 @@ deterministiktir (bkz. `topology.py`) — orada model/tahmin yoktur.
 from dataclasses import dataclass
 
 # Desteklenen eleman türleri. `value` birimi türe göre değişir:
-# resistor -> ohm, voltage_source -> volt, current_source -> amper.
-ELEMENT_KINDS = {"resistor", "voltage_source", "current_source", "capacitor", "inductor"}
+# resistor -> ohm, voltage_source -> volt, current_source -> amper,
+# vcvs/ccvs -> kazanç (birimsiz "2vx" ya da direnç boyutlu "4Io"/Io katsayısı, ohm).
+#
+# Desteklenen bağımlı kaynaklar:
+#   - "vcvs" (gerilim kontrollü gerilim kaynağı): kontrol büyüklüğü netlist'teki
+#     BAŞKA bir elemanın iki ucu arasındaki GERİLİM (`control_nodes`).
+#   - "ccvs" (akım kontrollü gerilim kaynağı): kontrol büyüklüğü netlist'teki
+#     BAŞKA bir elemanın üzerinden geçen AKIM (`control_element` — o elemanın
+#     kendi nodes[0]→nodes[1] yönünde ölçülür).
+# VCCS ve CCCS (çıkışı akım olan bağımlı kaynaklar) henüz desteklenmiyor.
+ELEMENT_KINDS = {
+    "resistor",
+    "voltage_source",
+    "current_source",
+    "capacitor",
+    "inductor",
+    "vcvs",
+    "ccvs",
+}
+CONTROLLED_BY_NODES = {"vcvs"}
+CONTROLLED_BY_ELEMENT = {"ccvs"}
+CONTROLLED_KINDS = CONTROLLED_BY_NODES | CONTROLLED_BY_ELEMENT
 
 
 @dataclass(frozen=True)
@@ -29,12 +49,27 @@ class Element:
     `nodes` sırası yön taşıyan elemanlar için anlamlıdır (kaynaklarda
     (+, −), diyot benzeri elemanlarda (anot, katot) sırası). Direnç gibi
     yönsüz elemanlarda sıra önemsizdir.
+
+    `control_nodes`: yalnızca `CONTROLLED_BY_NODES` türlerinde (VCVS) —
+    kontrol gerilimini SAĞLAYAN düğüm çifti (nc+, nc−). "2vx" gibi bağımlı
+    bir kaynakta `value` katsayıdır (2), `control_nodes` ise vx'in ölçüldüğü
+    elemanın kendi (+, −) uçlarıdır.
+
+    `control_element`: yalnızca `CONTROLLED_BY_ELEMENT` türlerinde (CCVS) —
+    kontrol akımını SAĞLAYAN elemanın adı. "4Io" gibi bir kaynakta `value`
+    katsayıdır (4), Io ise o elemanın kendi nodes[0]→nodes[1] yönündeki akımı.
     """
 
     name: str
     kind: str
     nodes: tuple[str, str]
     value: float | None = None
+    control_nodes: tuple[str, str] | None = None
+    control_element: str | None = None
+    # Yalnızca AC analizinde (bkz. `app/circuit/ac.py`) kaynaklar için
+    # anlamlıdır: fazörün derece cinsinden faz açısı ("10∠30° V" gibi).
+    # DC çözücü ve diğer eleman türleri bu alanı yok sayar.
+    phase: float = 0.0
 
     def __post_init__(self) -> None:
         if self.kind not in ELEMENT_KINDS:
@@ -43,6 +78,20 @@ class Element:
             raise ValueError(f"{self.name}: bir eleman tam olarak 2 düğüme bağlanır, verilen: {self.nodes}")
         if self.nodes[0] == self.nodes[1]:
             raise ValueError(f"{self.name}: iki ucu da aynı düğüme ({self.nodes[0]}) bağlı — kısa devre")
+
+        if self.kind in CONTROLLED_BY_NODES:
+            if self.control_nodes is None or len(self.control_nodes) != 2:
+                raise ValueError(f"{self.name}: {self.kind} için control_nodes (nc+, nc-) gerekli")
+            if self.control_nodes[0] == self.control_nodes[1]:
+                raise ValueError(f"{self.name}: control_nodes iki farklı düğüm olmalı")
+        elif self.control_nodes is not None:
+            raise ValueError(f"{self.name}: {self.kind} için control_nodes verilemez")
+
+        if self.kind in CONTROLLED_BY_ELEMENT:
+            if not self.control_element:
+                raise ValueError(f"{self.name}: {self.kind} için control_element gerekli")
+        elif self.control_element is not None:
+            raise ValueError(f"{self.name}: {self.kind} için control_element verilemez")
 
     def other_node(self, node: str) -> str:
         """Verilen düğümün karşısındaki ucu döndürür."""
@@ -95,7 +144,13 @@ class Netlist:
         lines = []
         for e in self.elements:
             value = "" if e.value is None else f" = {e.value:g}"
-            lines.append(f"{e.name}{value}: {e.nodes[0]}-{e.nodes[1]}")
+            if e.control_nodes is not None:
+                control = f" (kontrol: {e.control_nodes[0]}-{e.control_nodes[1]})"
+            elif e.control_element is not None:
+                control = f" (kontrol: {e.control_element} akımı)"
+            else:
+                control = ""
+            lines.append(f"{e.name}{value}: {e.nodes[0]}-{e.nodes[1]}{control}")
         return lines
 
     def dangling_nodes(self) -> list[str]:

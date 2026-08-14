@@ -66,13 +66,21 @@ def impedance(kind: str, value: float, frequency: float) -> complex:
     raise SolverError(f"{kind}: empedansı tanımlı değil")
 
 
+def _add_phased_source(circuit, prefix: str, name: str, plus, minus, magnitude: float, phase: float) -> None:
+    """Faz açılı bağımsız kaynak — ham SPICE satırıyla (bkz. `solve_ac` notu).
+
+    Yalnızca `.ac()` analizi çalıştırılacağı için DC/geçici bileşen
+    önemsiz; `DC 0` ile sıfırlanıyor, yalnızca AC genlik+faz kullanılıyor.
+    """
+    circuit.raw_spice += f"{prefix}{name} {plus} {minus} DC 0 AC {magnitude} {phase}\n"
+
+
 def solve_ac(netlist: Netlist, frequency: float) -> ACSolution:
     """Devreyi verilen frekansta fazör olarak çözer.
 
     Kaynaklar bu analizde birim genlikli AC kaynağı olarak sürülür; genlik
-    `Element.value` ile ölçeklenir. Faz kaydırmalı kaynaklar bu sürümde
-    desteklenmiyor (hepsi 0° kabul edilir) — sessizce yanlış sonuç vermemek
-    için ileride ayrı bir alan gerekecek.
+    `Element.value` ile, faz `Element.phase` (derece) ile ölçeklenir —
+    varsayılan 0°.
     """
     from PySpice.Spice.Netlist import Circuit
 
@@ -109,24 +117,35 @@ def solve_ac(netlist: Netlist, frequency: float) -> ACSolution:
         # çıkıyordu (gerçek veride yakalandı — genliği 1 olan bir devreyle
         # test edilseydi bu hata görünmezdi).
         elif element.kind == "voltage_source":
-            circuit.SinusoidalVoltageSource(
-                element.name,
-                node(a),
-                node(b),
-                amplitude=element.value,
-                frequency=frequency,
-                ac_magnitude=element.value,
-            )
+            if element.phase:
+                # PySpice'ın SinusoidalVoltageSource sarmalayıcısı AC faz
+                # parametresini desteklemiyor (yalnızca DC/AC genlik) — ham
+                # SPICE satırı gerekiyor: "DC 0 AC genlik faz". Elle kurulan
+                # bir devrede doğrulandı: 10∠30° verilince ngspice tam
+                # olarak 10∠30° döndürüyor.
+                _add_phased_source(circuit, "V", element.name, node(a), node(b), element.value, element.phase)
+            else:
+                circuit.SinusoidalVoltageSource(
+                    element.name,
+                    node(a),
+                    node(b),
+                    amplitude=element.value,
+                    frequency=frequency,
+                    ac_magnitude=element.value,
+                )
             has_source = True
         elif element.kind == "current_source":
-            circuit.SinusoidalCurrentSource(
-                element.name,
-                node(a),
-                node(b),
-                amplitude=element.value,
-                frequency=frequency,
-                ac_magnitude=element.value,
-            )
+            if element.phase:
+                _add_phased_source(circuit, "I", element.name, node(a), node(b), element.value, element.phase)
+            else:
+                circuit.SinusoidalCurrentSource(
+                    element.name,
+                    node(a),
+                    node(b),
+                    amplitude=element.value,
+                    frequency=frequency,
+                    ac_magnitude=element.value,
+                )
             has_source = True
         else:
             raise SolverError(f"{element.name}: {element.kind} AC çözümde desteklenmiyor")
