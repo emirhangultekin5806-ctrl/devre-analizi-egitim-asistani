@@ -18,7 +18,6 @@ Vakalar: data/eval/rag_cases.json
 
 import argparse
 import json
-import re
 import sys
 import time
 from pathlib import Path
@@ -27,53 +26,10 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.stdout.reconfigure(encoding="utf-8")
 
+from app.evaluation.checks import check_case  # noqa: E402
 from app.rag.generate import NOT_FOUND_MESSAGE, answer_question  # noqa: E402
 
 CASES_PATH = ROOT / "data" / "eval" / "rag_cases.json"
-
-
-_FRAC_RE = re.compile(r"\\[dt]?frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}")
-_LATEX_CMD_RE = re.compile(r"\\[a-zA-Z]+")
-
-
-def _normalize(text: str) -> str:
-    """Cevabı LaTeX'ten arındırıp karşılaştırılabilir düz metne indirger.
-
-    Cevaplar formülleri LaTeX ile yazıyor ($X_C = \\dfrac{-j}{2\\pi f C}$);
-    vaka dosyasındaki beklentiler ise düz metin ("xc", "di/dt"). Bu fonksiyon
-    ikisini ortak bir zemine getiriyor — böylece gösterim biçimi değişince
-    tüm vakaları yeniden yazmak gerekmiyor.
-    """
-    text = _FRAC_RE.sub(r"\1/\2", text)  # \dfrac{a}{b} -> a/b
-    text = _LATEX_CMD_RE.sub(" ", text)  # \pi, \cdot ... -> bosluk
-    for ch in "${}_\\":
-        text = text.replace(ch, "")
-    return re.sub(r"\s+", " ", text).lower()
-
-
-def _is_refusal(answer: str) -> bool:
-    return NOT_FOUND_MESSAGE.lower()[:35] in answer.lower()
-
-
-def _check(case: dict, answer: str) -> list[str]:
-    """Vakayı değerlendirir, ihlal listesi döner (boşsa geçti)."""
-    problems = []
-    lowered = _normalize(answer)
-    refused = _is_refusal(answer)
-
-    if case["expect"] == "refuse" and not refused:
-        problems.append("reddetmesi gerekirken cevap verdi")
-    if case["expect"] == "answer" and refused:
-        problems.append("cevap vermesi gerekirken reddetti")
-
-    if not refused:
-        for term in case.get("must_contain", []):
-            if _normalize(term) not in lowered:
-                problems.append(f"'{term}' geçmiyor")
-        for term in case.get("must_not_contain", []):
-            if _normalize(term) in lowered:
-                problems.append(f"'{term}' geçmemeliydi")
-    return problems
 
 
 def main() -> None:
@@ -102,7 +58,7 @@ def main() -> None:
             print(f"[HATA] {case['id']}: {type(exc).__name__}")
             continue
 
-        problems = _check(case, answer)
+        problems = check_case(case, answer, NOT_FOUND_MESSAGE)
         if problems:
             failed.append((case["id"], problems, answer))
             print(f"[X] {case['id']} ({elapsed:.0f}s) — {'; '.join(problems)}")

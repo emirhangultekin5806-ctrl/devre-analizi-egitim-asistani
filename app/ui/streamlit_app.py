@@ -24,6 +24,12 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
+from app.hints.generate import (  # noqa: E402
+    MAX_HINT_LEVEL,
+    evaluate_answer,
+    generate_hint,
+    generate_question,
+)
 from app.quiz.generate import generate_quiz  # noqa: E402
 from app.rag.generate import (  # noqa: E402
     CONCEPT_CONTENT_TYPES,
@@ -249,6 +255,96 @@ def screen_quiz() -> None:
     render_sources(quiz["sources"])
 
 
+_VERDICT_LABELS = {
+    "dogru": ("✅ Doğru", st.success),
+    "kismen_dogru": ("🟡 Kısmen doğru", st.warning),
+    "yanlis": ("❌ Yanlış", st.error),
+    "yetersiz": ("ℹ️ Yetersiz", st.info),
+}
+
+
+def screen_ipucu() -> None:
+    header(
+        "💡 İpucu ve Değerlendirme Modu",
+        "Serbest cevap yaz; sistem doğru/kısmen doğru/yanlış/yetersiz diye değerlendirir, "
+        "tam doğru değilse cevabı vermeden kademeli ipucu verir.",
+    )
+
+    with st.sidebar:
+        st.markdown("### Ayarlar")
+        top_k = st.slider("Getirilecek kaynak sayısı", 3, 10, 5)
+        st.caption("İpucu modu `fast` kademesini kullanır (hızlı geri bildirim önceliği).")
+
+    topic = st.text_input("Konu", placeholder="örn. Kirchhoff akım yasası")
+    if st.button("Soru oluştur") and topic.strip():
+        with st.spinner("Soru hazırlanıyor…"):
+            try:
+                question_data = generate_question(topic.strip(), top_k=top_k)
+            except Exception as exc:  # noqa: BLE001 - arayüz sınırı
+                service_error(exc)
+                return
+        # Yeni soru = yeni oturum: önceki cevap/değerlendirme/ipucu sıfırlanır.
+        st.session_state.hint_session = {
+            "question_data": question_data,
+            "evaluation": None,
+            "hint_level": 0,
+            "hints_shown": [],
+        }
+
+    session = st.session_state.get("hint_session")
+    if not session:
+        return
+    question_data = session["question_data"]
+    if not question_data["question"]:
+        st.warning("Model bu konu için geçerli biçimde soru üretemedi. Konuyu biraz daha belirgin yazıp tekrar deneyin.")
+        return
+
+    st.markdown(f"#### Soru\n{question_data['question']}")
+    student_answer = st.text_area("Cevabınız", key="hint_student_answer", height=120)
+
+    if st.button("Cevabı gönder") and student_answer.strip():
+        with st.spinner("Değerlendiriliyor…"):
+            try:
+                session["evaluation"] = evaluate_answer(
+                    question_data["question"], question_data["source_sentences"], student_answer.strip()
+                )
+            except Exception as exc:  # noqa: BLE001 - arayüz sınırı
+                service_error(exc)
+                return
+        session["hint_level"] = 0
+        session["hints_shown"] = []
+        session["last_answer"] = student_answer.strip()
+
+    evaluation = session.get("evaluation")
+    if evaluation:
+        label, renderer = _VERDICT_LABELS[evaluation["degerlendirme"]]
+        renderer(f"**{label}** — {evaluation['aciklama']}")
+
+        if evaluation["degerlendirme"] != "dogru":
+            if session["hint_level"] < MAX_HINT_LEVEL:
+                if st.button(f"İpucu iste (seviye {session['hint_level'] + 1}/{MAX_HINT_LEVEL})"):
+                    with st.spinner("İpucu hazırlanıyor…"):
+                        try:
+                            hint = generate_hint(
+                                question_data["question"],
+                                question_data["source_sentences"],
+                                session.get("last_answer", student_answer.strip()),
+                                hint_level=session["hint_level"] + 1,
+                            )
+                        except Exception as exc:  # noqa: BLE001 - arayüz sınırı
+                            service_error(exc)
+                            return
+                    session["hint_level"] += 1
+                    session["hints_shown"].append(hint)
+            else:
+                st.caption("Tüm ipucu seviyeleri gösterildi.")
+
+        for i, hint in enumerate(session["hints_shown"], start=1):
+            st.info(f"**İpucu {i}:** {hint}")
+
+    render_sources(question_data["sources"])
+
+
 def screen_kaynaklar() -> None:
     header("📚 Kaynaklar", "Sisteme yüklenmiş ders kitapları ve işlenmiş içerik.")
 
@@ -293,12 +389,7 @@ SCREENS = {
     "📖 Konu Anlatımı": screen_konu_anlatimi,
     "📝 Quiz": screen_quiz,
     "📚 Kaynaklar": screen_kaynaklar,
-    "💡 İpucu Modu": lambda: not_built(
-        "💡 İpucu ve Değerlendirme Modu",
-        "Öğrenci serbest cevap yazar; sistem doğru/kısmen doğru/yanlış diye değerlendirir ve "
-        "cevabı doğrudan vermeden 3 kademeli ipucu verir.",
-        "`app/hints/` modülü",
-    ),
+    "💡 İpucu Modu": screen_ipucu,
     "⚡ Devre Simülatörü": lambda: not_built(
         "⚡ Devre Simülatörü",
         "Kullanıcının elle devre kurup üzerinde oynayabildiği interaktif ekran; "

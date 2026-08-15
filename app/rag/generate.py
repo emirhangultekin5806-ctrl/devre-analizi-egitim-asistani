@@ -416,3 +416,72 @@ def answer_question(
             "total": t_retrieval + t_selection + t_synthesis,
         },
     }
+
+
+# --- baseline (karşılaştırma amaçlı, ÜRETİMDE KULLANILMIYOR) ----------------
+#
+# Spec'in "baseline vs geliştirilmiş RAG sistemi karşılaştırması" şartı için:
+# yukarıdaki dört adımlı mimarinin modül docstring'inde anlatılan "2. deneme"
+# (qwen2.5, TEK adımlı "kaynağı oku ve açıkla") burada YENİDEN üretilip
+# `scripts/compare_rag_baseline.py` ile güncel `answer_question()`'a karşı
+# AYNI test setinde (`data/eval/rag_cases.json`) ölçülüyor. Retrieval
+# (`_translate_query_for_search` + `search`) BİLEREK aynı tutuldu — fark
+# yalnızca ÜRETİM adımında olsun diye (adil karşılaştırma): numaralı-cümle-
+# seçimi yok, model getirilen chunk'ları doğrudan görüp serbestçe cevaplıyor.
+#
+# Ham (çeviri/injection-ayıklama adımından GEÇMEMİŞ) soru BİLEREK kullanıcı
+# mesajına konuyor — güncel mimaride injection soruyu bulandırmadan önce
+# `_translate_query_for_search` tarafından ayıklanıyor; baseline bu korumayı
+# YAPISAL OLARAK taşımıyor (yalnızca aşağıdaki sistem promptunun negatif
+# talimatına güveniyor), tam da "2. deneme"nin başarısız olduğu nokta.
+_BASELINE_SYSTEM_PROMPT = (
+    "Sen bir Devre Analizi ders asistanısın. Sana kaynak metinler ve bir "
+    "soru verilecek. Soruyu bu metinlere dayanarak Türkçe cevapla. "
+    "Kaynakta olmayan bilgi, tarih, isim EKLEME. Kaynakta cevap yoksa "
+    "sadece şunu yaz: \"Seçilen ders kitaplarında bu bilgiye ulaşamadım.\""
+)
+
+
+def baseline_answer_question(
+    question: str,
+    top_k: int = 5,
+    tier: str | None = None,
+    task: str = "chat",
+    content_types: list[str] | None = None,
+) -> dict:
+    """Karşılaştırma için "naive" RAG: retrieval AYNI, üretim TEK adımlı ve
+    numaralı-cümle-seçimi güvencesi YOK (bkz. modül docstring'i, "2. deneme").
+
+    Yalnızca `scripts/compare_rag_baseline.py`'de kullanılır — üretim
+    arayüzü (`app/ui/streamlit_app.py`) bunu hiç çağırmaz.
+    """
+    tier_config = resolve_tier(tier, task)
+
+    t_start = time.perf_counter()
+    search_query = _translate_query_for_search(question, tier_config)
+    hits = search(search_query, top_k=top_k, content_types=content_types or CONCEPT_CONTENT_TYPES)
+    t_retrieval = time.perf_counter() - t_start
+
+    t_mark = time.perf_counter()
+    context = _format_context(hits)
+    answer_text = _call(
+        [
+            {"role": "system", "content": _BASELINE_SYSTEM_PROMPT},
+            {"role": "user", "content": f"KAYNAKLAR:\n{context}\n\nSORU: {question}"},
+        ],
+        tier_config=tier_config,
+    )
+    t_generation = time.perf_counter() - t_mark
+
+    return {
+        "question": question,
+        "answer": answer_text,
+        "search_query": search_query,
+        "tier": tier_config,
+        "task": task,
+        "timings": {
+            "retrieval": t_retrieval,
+            "generation": t_generation,
+            "total": t_retrieval + t_generation,
+        },
+    }

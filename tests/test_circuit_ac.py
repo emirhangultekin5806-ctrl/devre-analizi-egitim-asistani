@@ -159,6 +159,18 @@ def test_requires_source():
         solve_ac(net, 1e3)
 
 
+def test_uppercase_node_names_are_looked_up_case_insensitively():
+    """ngspice düğüm adlarını sessizce küçük harfe çeviriyor -- büyük
+    harfli bir düğüm adı ("N" gibi) sorgulanınca `node_voltages`'ta
+    bulunamayıp KeyError veriyordu (gerçek veride yakalandı, bkz.
+    `app/circuit/threephase.py` geçmişi). `_v()`/`voltage_across()` artık
+    sorguyu da küçük harfe çevirdiği için büyük harfli adlar da çalışır."""
+    net = Netlist([V("s", "N", "gnd", 1.0), R("1", "N", "gnd", 10.0)])
+    solution = solve_ac(net, 1e3)
+    assert solution.voltage_across("N", "gnd") == pytest.approx(1 + 0j)
+    assert solution.voltage_across("n", "gnd") == pytest.approx(1 + 0j)
+
+
 def test_describe_node_uses_polar_notation():
     net = Netlist([V("s", "n1", "gnd", 1.0), R("1", "n1", "out", 1000.0), C("1", "out", "gnd", 159.155e-9)])
     text = solve_ac(net, 1e3).describe_node("out")

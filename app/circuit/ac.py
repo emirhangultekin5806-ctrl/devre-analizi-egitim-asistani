@@ -33,11 +33,18 @@ class ACSolution:
         return self._v(node_a) - self._v(node_b)
 
     def _v(self, node: str) -> complex:
-        if node.lower() in GROUND_NODES:
+        # ngspice düğüm adlarını küçük harfe çeviriyor (SPICE büyük/küçük
+        # harf duyarsızdır); `node_voltages` bu yüzden hep küçük harfle
+        # anahtarlanır (bkz. `solve_ac`) — sorgu da aynı şekilde küçük
+        # harfe çevrilir, aksi halde büyük harfli bir düğüm adı ("N" gibi)
+        # burada sessizce KeyError verirdi (gerçek veride yakalandı:
+        # `threephase.py`, bkz. modül geçmişi).
+        key = node.lower()
+        if key in GROUND_NODES:
             return 0j
-        if node not in self.node_voltages:
+        if key not in self.node_voltages:
             raise KeyError(f"{node!r} düğümü çözümde yok")
-        return self.node_voltages[node]
+        return self.node_voltages[key]
 
     @staticmethod
     def polar(value: complex) -> tuple[float, float]:
@@ -165,8 +172,14 @@ def solve_ac(netlist: Netlist, frequency: float) -> ACSolution:
 
     # as_ndarray(): PySpice'ın sarmalayıcısı sanal kısmı atıyor (bkz. modül
     # docstring'i) — ham diziden okunmalı.
+    # Küçük harf: ngspice düğüm adlarını (SPICE büyük/küçük harf duyarsız
+    # olduğu için) sessizce küçük harfe çeviriyor — burada da AÇIKÇA küçük
+    # harfe çevrilip anahtarlanır, `ACSolution._v()`'nin sorgu tarafında
+    # yaptığı küçültmeyle SİMETRİK olsun diye (aksi halde ngspice'ın kendi
+    # davranışına dolaylı olarak güvenilmiş olurdu).
     voltages = {
-        str(name): complex(waveform.as_ndarray()[0]) for name, waveform in analysis.nodes.items()
+        str(name).lower(): complex(waveform.as_ndarray()[0])
+        for name, waveform in analysis.nodes.items()
     }
     raw = {
         str(name).lower(): -complex(waveform.as_ndarray()[0])
