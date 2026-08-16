@@ -15,9 +15,8 @@ Cevaplar kitaptan (Sadiku vol.1):
   - Example 2.15          (Figure 2.52): Rab = 9.632 Ω, i = 12.458 A (köprü, Y-Δ gerektirir)
 """
 
-from pathlib import Path
-
 import pytest
+from sadiku_pdf import SADIKU_PDF, skip_no_sadiku
 
 from app.circuit.netlist import Netlist
 from app.circuit.solve import element_results, power_balance, solve_dc
@@ -28,16 +27,14 @@ from app.vision.schematic import SchematicError, build_netlist, build_switch_net
 
 fitz = pytest.importorskip("fitz")
 
-SADIKU_1 = Path(r"C:\Users\Sinemis\OneDrive\Masaüstü\ilovepdf_split\Devre analizi-1.pdf")
-skip_no_sadiku_1 = pytest.mark.skipif(not SADIKU_1.exists(), reason="Sadiku vol1 PDF bu makinede yok")
-
+# Sayfa indeksleri cilt-1'e göre; birleşik PDF'te de aynı (bkz. tests/sadiku_pdf.py).
 # Her iki şekil de bu sayfada (Practice Problem 2.9 ve Example 2.10).
 PAGE_INDEX = 79
 
 
 @pytest.fixture(scope="module")
 def page():
-    with fitz.open(SADIKU_1) as document:
+    with fitz.open(SADIKU_PDF) as document:
         yield document[PAGE_INDEX]
 
 
@@ -48,7 +45,7 @@ def solve(page, caption):
     return netlist, terminals, equivalent_resistance(netlist, first, second)
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 @pytest.mark.parametrize(
     ("caption", "expected", "element_count"),
     [("Figure 2.36", 6.0, 8), ("Figure 2.37", 11.2, 8)],
@@ -59,7 +56,7 @@ def test_extracted_figure_matches_printed_answer(page, caption, expected, elemen
     assert computed == pytest.approx(expected, rel=1e-9), f"{caption}: {netlist.to_lines()}"
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_every_resistor_gets_a_value_from_the_figure(page):
     """Değersiz kalan bir eleman, etiket eşleşmesinin sessizce koptuğu demektir."""
     for caption in ("Figure 2.36", "Figure 2.37"):
@@ -68,21 +65,21 @@ def test_every_resistor_gets_a_value_from_the_figure(page):
         assert not missing, f"{caption}: değersiz eleman {missing}"
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_terminals_take_their_letters_from_the_figure(page):
     """Fig 2.37'de uçlar 'a' ve 'b' olarak etiketli — Rab bu ikisi arasında."""
     _, terminals = build_netlist(extract_figure(page, "Figure 2.37"))
     assert set(terminals) == {"a", "b"}
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_only_the_two_terminals_are_left_dangling(page):
     """Başka açık uç varsa bir tel okunamamış demektir (sessiz topoloji hatası)."""
     netlist, terminals, _ = solve(page, "Figure 2.36")
     assert set(netlist.dangling_nodes()) <= set(terminals.values())
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_the_parallel_pair_the_book_names_is_present(page):
     """Kitap: "3 Ω ve 6 Ω dirençleri paraleldir, çünkü aynı iki düğüme bağlılar."
 
@@ -95,7 +92,7 @@ def test_the_parallel_pair_the_book_names_is_present(page):
     assert set(three.nodes) == set(six.nodes)
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_a_caption_with_two_subfigures_is_reported_not_guessed(page):
     """Figure 2.35 (a) ve (b) iki ayrı devre — tek şekil sanılmamalı."""
     assert len(extract_figures(page, "Figure 2.35")) == 2
@@ -103,7 +100,7 @@ def test_a_caption_with_two_subfigures_is_reported_not_guessed(page):
         extract_figure(page, "Figure 2.35")
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_a_missing_caption_raises(page):
     with pytest.raises(SchematicError, match="başlığı bu sayfada yok"):
         extract_figure(page, "Figure 9.99")
@@ -119,11 +116,11 @@ def test_a_missing_caption_raises(page):
 
 @pytest.fixture(scope="module")
 def document():
-    with fitz.open(SADIKU_1) as opened:
+    with fitz.open(SADIKU_PDF) as opened:
         yield opened
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_current_source_direction_matches_example_3_1(document):
     """Example 3.1: iki akım kaynağı, çizilmiş toprak. Kitap: v1=13.333, v2=20."""
     figure = extract_figures(document[115], "Figure 3.3")[0]
@@ -134,7 +131,7 @@ def test_current_source_direction_matches_example_3_1(document):
     assert voltages == pytest.approx([13.3333, 20.0], rel=1e-4)
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_both_drawings_of_one_circuit_give_the_same_netlist(document):
     """Fig 3.3 aynı devreyi (a) ve (b) olarak iki kez çiziyor.
 
@@ -145,7 +142,7 @@ def test_both_drawings_of_one_circuit_give_the_same_netlist(document):
     assert build_netlist(first)[0].to_lines() == build_netlist(second)[0].to_lines()
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_voltage_source_polarity_matches_example_3_5(document):
     """Example 3.5: 15 V ve 10 V kaynak. Kitap: I1=1 A, I2=1 A, I3=0.
 
@@ -166,7 +163,7 @@ def test_voltage_source_polarity_matches_example_3_5(document):
     assert power_balance(results) == pytest.approx(0.0, abs=1e-9)
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_dependent_voltage_source_matches_example_2_6(document):
     """Example 2.6: tek çevrim, VCVS "2vo" 6Ω direncin gerilimiyle kontrollü.
 
@@ -184,7 +181,7 @@ def test_dependent_voltage_source_matches_example_2_6(document):
     assert power_balance(results) == pytest.approx(0.0, abs=1e-9)
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_dependent_voltage_source_matches_practice_problem_2_6(document):
     """Practice Problem 2.6: VCVS "2vx", 10Ω=vx ve 5Ω=vo seri. Kitap: vx=10V, vo=5V."""
     figure = extract_figures(document[72], "Figure 2.24")[0]
@@ -200,7 +197,7 @@ def test_dependent_voltage_source_matches_practice_problem_2_6(document):
     assert power_balance(results) == pytest.approx(0.0, abs=1e-9)
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_current_controlled_voltage_source_matches_example_3_6(document):
     """Example 3.6 (Figure 3.20): CCVS "4Io", kontrol akımı 10Ω direncin
     üzerinden bir OKLA ("Io") işaretli — +/- değil. Kitap: Io = 1.5 A.
@@ -221,7 +218,7 @@ def test_current_controlled_voltage_source_matches_example_3_6(document):
     assert power_balance(results) == pytest.approx(0.0, abs=1e-9)
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_kcl_direction_arrows_are_not_mistaken_for_current_probes(document):
     """Example 3.1 (Figure 3.3) bağımlı kaynak İÇERMİYOR, ama KCL akım
     yönü için "i1"/"i2"/"i3" oklu etiketler var — bunlar sessizce bir
@@ -235,7 +232,7 @@ def test_kcl_direction_arrows_are_not_mistaken_for_current_probes(document):
     assert build_netlist(first)[0].to_lines() == build_netlist(second)[0].to_lines()
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_bridge_circuit_matches_example_2_15(document):
     """Example 2.15 (Figure 2.52): 6 dirençli, yıldız+üçgen karışık köprü.
 
@@ -259,7 +256,7 @@ def test_bridge_circuit_matches_example_2_15(document):
     assert power_balance(results) == pytest.approx(0.0, abs=1e-9)
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_switch_and_capacitor_match_example_7_10(document):
     """Example 7.10 (Figure 7.43): SPDT anahtar + kapasitör, uçtan uca.
 

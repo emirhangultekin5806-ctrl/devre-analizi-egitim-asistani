@@ -14,6 +14,7 @@ PDF'in 0'dan başlayan sayfa indeksidir (basılı sayfa numarası değil).
 """
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -32,7 +33,11 @@ from app.circuit.topology import equivalent_resistance, reduce_resistors  # noqa
 from app.vision.pdf_figure import extract_figures  # noqa: E402
 from app.vision.schematic import build_netlist  # noqa: E402
 
-DEFAULT_PDF = Path(r"C:\Users\Sinemis\OneDrive\Masaüstü\ilovepdf_split\Devre analizi-1.pdf")
+# Telifli Sadiku PDF'i repo dışında (bkz. docs/kaynaklar.md); bu makinedeki
+# yol varsayılan, `SADIKU_PDF` ortam değişkeni ya da --pdf ile değiştirilebilir.
+DEFAULT_PDF = Path(
+    os.environ.get("SADIKU_PDF") or r"C:\Users\Furkan\Desktop\Emirhan+\Devre analizi.pdf"
+)
 
 SOURCE_KINDS = {"voltage_source", "current_source"}
 

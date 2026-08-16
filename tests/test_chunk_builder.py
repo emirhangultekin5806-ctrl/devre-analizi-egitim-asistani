@@ -14,17 +14,13 @@ from app.chunking.segment import build_segments
 ROOT = Path(__file__).resolve().parent.parent
 FIORE_DC_PROCESSED = ROOT / "data" / "processed" / "fiore_dc.jsonl"
 FIORE_AC_PROCESSED = ROOT / "data" / "processed" / "fiore_ac.jsonl"
-SADIKU_1_PROCESSED = ROOT / "data" / "processed" / "sadiku_1.jsonl"
-SADIKU_2_PROCESSED = ROOT / "data" / "processed" / "sadiku_2.jsonl"
+SADIKU_PROCESSED = ROOT / "data" / "processed" / "sadiku_full.jsonl"
 
 skip_no_fiore_ac = pytest.mark.skipif(
     not FIORE_AC_PROCESSED.exists(), reason="fiore_ac henuz islenmemis (scripts/parse_books.py)"
 )
-skip_no_sadiku_1 = pytest.mark.skipif(
-    not SADIKU_1_PROCESSED.exists(), reason="sadiku_1 bu makinede islenmemis (telifli PDF)"
-)
-skip_no_sadiku_2 = pytest.mark.skipif(
-    not SADIKU_2_PROCESSED.exists(), reason="sadiku_2 bu makinede islenmemis (telifli PDF)"
+skip_no_sadiku = pytest.mark.skipif(
+    not SADIKU_PROCESSED.exists(), reason="sadiku_full bu makinede islenmemis (telifli PDF)"
 )
 
 
@@ -157,21 +153,11 @@ def test_real_fiore_ac_chunks_have_full_schema_and_unique_ids():
     _assert_valid_chunks(chunks)
 
 
-@skip_no_sadiku_1
-def test_real_sadiku_1_chunks_have_full_schema_and_resolved_printed_page():
-    with SADIKU_1_PROCESSED.open(encoding="utf-8") as f:
+@skip_no_sadiku
+def test_real_sadiku_chunks_have_full_schema_and_resolved_printed_page():
+    with SADIKU_PROCESSED.open(encoding="utf-8") as f:
         pages = [json.loads(line) for line in f]
 
-    chunks = build_chunks_for_book(pages, "sadiku_1")
-
-    _assert_valid_chunks(chunks)
-
-
-@skip_no_sadiku_2
-def test_real_sadiku_2_chunks_have_full_schema_and_resolved_printed_page():
-    with SADIKU_2_PROCESSED.open(encoding="utf-8") as f:
-        pages = [json.loads(line) for line in f]
-
-    chunks = build_chunks_for_book(pages, "sadiku_2")
+    chunks = build_chunks_for_book(pages, "sadiku_full")
 
     _assert_valid_chunks(chunks)

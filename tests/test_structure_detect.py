@@ -1,18 +1,10 @@
-from pathlib import Path
-
-import pytest
+from sadiku_pdf import SADIKU_PDF, skip_no_sadiku
 
 from app.ingestion.pdf_extract import extract_pages
 from app.ingestion.structure_detect import (
     detect_structure_fiore,
     detect_structure_sadiku,
 )
-
-SADIKU_1 = Path(r"C:\Users\Sinemis\OneDrive\Masaüstü\ilovepdf_split\Devre analizi-1.pdf")
-SADIKU_2 = Path(r"C:\Users\Sinemis\OneDrive\Masaüstü\ilovepdf_split\Devre analizi-2.pdf")
-
-skip_no_sadiku_1 = pytest.mark.skipif(not SADIKU_1.exists(), reason="Sadiku vol1 PDF bu makinede yok")
-skip_no_sadiku_2 = pytest.mark.skipif(not SADIKU_2.exists(), reason="Sadiku vol2 PDF bu makinede yok")
 
 
 def _pages(raw_texts: list[str]) -> list[dict]:
@@ -219,24 +211,22 @@ def test_sadiku_numbered_section_after_appendix_footer_updates_normally():
 # --- Gerçek PDF doğrulama (yalnızca bu makinede, dosya varsa) ---
 
 
-@skip_no_sadiku_1
-def test_sadiku_1_real_pdf_reaches_all_twelve_chapters():
-    pages = extract_pages(SADIKU_1, "sadiku_1")
+@skip_no_sadiku
+def test_sadiku_real_pdf_reaches_all_nineteen_chapters():
+    """Birleşik kitap 1'den 19'a kesintisiz ilerlemeli.
+
+    Kitap eskiden iki cilde bölünmüştü (1-12 ve 13-19); bölüm numaraları
+    cilt sınırında kesintisiz devam ettiği için tek dosyada tespit
+    algoritmasının ("yalnızca current+1 kabul et") hiçbir bölümü
+    düşürmeden 19'a kadar gitmesi gerekir.
+    """
+    pages = extract_pages(SADIKU_PDF, "sadiku_full")
     pages = detect_structure_sadiku(pages)
     chapter_numbers = [p["chapter_number"] for p in pages if p["chapter_number"] is not None]
     assert chapter_numbers[0] == 1
-    assert max(chapter_numbers) == 12
-    assert chapter_numbers == sorted(chapter_numbers)
-
-
-@skip_no_sadiku_2
-def test_sadiku_2_real_pdf_starts_at_thirteen_reaches_nineteen():
-    pages = extract_pages(SADIKU_2, "sadiku_2")
-    pages = detect_structure_sadiku(pages)
-    chapter_numbers = [p["chapter_number"] for p in pages if p["chapter_number"] is not None]
-    assert chapter_numbers[0] == 13
     assert max(chapter_numbers) == 19
     assert chapter_numbers == sorted(chapter_numbers)
+    assert set(chapter_numbers) == set(range(1, 20)), "atlanan bölüm var"
 
 
 def _max_pages_per_summary_section(pages: list[dict]) -> int:
@@ -249,20 +239,11 @@ def _max_pages_per_summary_section(pages: list[dict]) -> int:
     return max(groups.values(), default=0)
 
 
-@skip_no_sadiku_1
-def test_sadiku_1_real_pdf_summary_sections_stay_short():
+@skip_no_sadiku
+def test_sadiku_real_pdf_summary_sections_stay_short():
     """Regresyon testi: appendix-footer duzeltmesinden once "Summary"
     section'lari bolum sonu Problems/Review Questions sayfalarini yutup
-    6-16 sayfaya kadar sisiyordu."""
-    pages = extract_pages(SADIKU_1, "sadiku_1")
-    pages = detect_structure_sadiku(pages)
-    assert _max_pages_per_summary_section(pages) <= 3
-
-
-@skip_no_sadiku_2
-def test_sadiku_2_real_pdf_summary_sections_stay_short():
-    """Ayni regresyon, sadiku_2 icin — duzeltmeden once bir section 136
-    sayfaya kadar sismisti."""
-    pages = extract_pages(SADIKU_2, "sadiku_2")
+    sisiyordu (cilt 1'de 6-16 sayfa, cilt 2'de bir section 136 sayfa)."""
+    pages = extract_pages(SADIKU_PDF, "sadiku_full")
     pages = detect_structure_sadiku(pages)
     assert _max_pages_per_summary_section(pages) <= 3

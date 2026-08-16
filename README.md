@@ -6,13 +6,14 @@ Devre Analizi 1 ve Devre Analizi 2 konularında, açık lisanslı ders kitaplar�
 
 Uçtan uca çalışıyor: PDF → chunk + metadata → embedding/vektör index → soru-cevap → arayüz.
 
-- 4 kitap işlendi (Fiore DC/AC, Sadiku 1-2), **2174 chunk** index'lendi.
+- 3 kaynak işlendi (Fiore DC/AC + Sadiku tek cilt), **2230 chunk** index'lendi.
 - Türkçe soru sorulur, İngilizce kaynaklardan kaynak göstererek cevaplanır.
 - Kaynakta olmayan soruda uydurmaz, "bu bilgiye ulaşamadım" der.
 - Cevap süresi ~20-40 sn (bu donanımda: GTX 1650, 4 GB VRAM).
 - Kalite regresyon seti: **22/22** (`scripts/evaluate_rag.py`).
 
-Henüz yok: quiz, ipucu sistemi, devre görseli okuma, simülatör, FastAPI backend.
+Henüz yok: devre simülatörü (interaktif çizim arayüzü), kullanıcının kendi
+devre fotoğrafını yükleyip okutması, FastAPI backend.
 
 ## Planlanan Özellikler
 
@@ -35,6 +36,17 @@ Henüz yok: quiz, ipucu sistemi, devre görseli okuma, simülatör, FastAPI back
 python -m venv .venv
 .venv\Scripts\pip install -r requirements.txt
 ```
+
+Devre çözücü ngspice'ı kullanıyor; PySpice pip ile gelir ama ngspice
+kütüphanesi ayrıca indirilmeli (bir kez):
+
+```bat
+.venv\Scripts\pyspice-post-installation --install-ngspice-dll
+```
+
+> Bu adım atlanırsa devre çözümü gerektiren her şey (`app/circuit/`,
+> `scripts/read_figure.py` ve ilgili ~65 test) `cannot load library
+> ngspice.dll` ile kırılır.
 
 Ollama kurulu olmalı (ollama.com/download) ve şu modeller çekilmeli:
 
@@ -69,6 +81,9 @@ Veriyi hazırla (bir kez):
 .venv\Scripts\python scripts\download_books.py            :: açık kitaplar
 .venv\Scripts\python scripts\parse_books.py --book fiore_dc
 .venv\Scripts\python scripts\chunk_books.py --book fiore_dc
+:: aynısı fiore_ac için; Sadiku telifli olduğu için --path zorunlu:
+.venv\Scripts\python scripts\parse_books.py --book sadiku_full --path "<Sadiku PDF yolu>"
+.venv\Scripts\python scripts\chunk_books.py --book sadiku_full
 .venv\Scripts\python scripts\build_index.py --all
 ```
 

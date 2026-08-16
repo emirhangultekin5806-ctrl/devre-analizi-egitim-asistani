@@ -44,11 +44,20 @@ class Solution:
         return self._v(node_a) - self._v(node_b)
 
     def _v(self, node: str) -> float:
-        if node.lower() in GROUND_NODES or node == self.reference:
+        # ngspice düğüm adlarını küçük harfe çeviriyor (SPICE büyük/küçük
+        # harf duyarsızdır); `node_voltages` bu yüzden hep küçük harfle
+        # anahtarlanır (bkz. `solve_dc`) — sorgu da aynı şekilde küçük
+        # harfe çevrilir, aksi halde büyük harfli bir düğüm adı burada
+        # sessizce KeyError verirdi (aynı hata sınıfı `ac.py`/`threephase.py`
+        # geçmişinde bir kez yakalanmıştı, DC tarafında da gerçek veride
+        # tekrarlandı — bkz. `app/vision/vlm_read.py` ile üretilen büyük
+        # harfli düğüm adları).
+        key = node.lower()
+        if key in GROUND_NODES or (self.reference is not None and key == self.reference.lower()):
             return 0.0
-        if node not in self.node_voltages:
+        if key not in self.node_voltages:
             raise KeyError(f"{node!r} düğümü çözümde yok")
-        return self.node_voltages[node]
+        return self.node_voltages[key]
 
 
 def _ground_of(netlist: Netlist, reference: str | None = None) -> str:
@@ -160,7 +169,11 @@ def solve_dc(netlist: Netlist, reference: str | None = None) -> Solution:
     except Exception as exc:
         raise SolverError(f"ngspice çözemedi: {exc}") from exc
 
-    voltages = {str(name): float(value[0]) for name, value in analysis.nodes.items()}
+    # Küçük harf: ngspice düğüm adlarını (SPICE büyük/küçük harf duyarsız
+    # olduğu için) sessizce küçük harfe çeviriyor — burada da AÇIKÇA küçük
+    # harfe çevrilip anahtarlanır, `Solution._v()`'nin sorgu tarafında
+    # yaptığı küçültmeyle SİMETRİK olsun diye (bkz. `ac.py`'deki aynı desen).
+    voltages = {str(name).lower(): float(value[0]) for name, value in analysis.nodes.items()}
 
     # ngspice dal akımlarını kendi adlandırmasıyla döndürür: "R1" adlı gerilim
     # kaynağı "vr1" olur, VCVS ise "er1" (SPICE eleman öneki + isim). Çağıran

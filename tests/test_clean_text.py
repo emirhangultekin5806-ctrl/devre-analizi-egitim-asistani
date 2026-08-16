@@ -1,17 +1,12 @@
 from pathlib import Path
 
-import pytest
+from sadiku_pdf import SADIKU_PDF, skip_no_sadiku
 
 from app.ingestion.pdf_extract import extract_pages
 from app.ingestion.text_clean import clean_text, clean_text_sadiku, compute_page_offset
 
 ROOT = Path(__file__).resolve().parent.parent
 FIORE_DC = ROOT / "data" / "raw" / "open" / "Fiore_DC_Electrical_Circuit_Analysis.pdf"
-SADIKU_1 = Path(r"C:\Users\Sinemis\OneDrive\Masaüstü\ilovepdf_split\Devre analizi-1.pdf")
-SADIKU_2 = Path(r"C:\Users\Sinemis\OneDrive\Masaüstü\ilovepdf_split\Devre analizi-2.pdf")
-
-skip_no_sadiku_1 = pytest.mark.skipif(not SADIKU_1.exists(), reason="Sadiku vol1 PDF bu makinede yok")
-skip_no_sadiku_2 = pytest.mark.skipif(not SADIKU_2.exists(), reason="Sadiku vol2 PDF bu makinede yok")
 
 
 def test_notes_divider_page_collapses_to_empty_string():
@@ -180,21 +175,34 @@ def test_clean_text_sadiku_excess_blank_lines_collapsed():
     assert "\n\n\n" not in result
 
 
-@skip_no_sadiku_1
-def test_compute_page_offset_real_sadiku_1_is_31():
-    pages = extract_pages(SADIKU_1, "sadiku_1")
+@skip_no_sadiku
+def test_compute_page_offset_real_sadiku_is_31():
+    pages = extract_pages(SADIKU_PDF, "sadiku_full")
     assert compute_page_offset(pages) == 31
 
 
-@skip_no_sadiku_2
-def test_compute_page_offset_real_sadiku_2_is_minus_519():
-    pages = extract_pages(SADIKU_2, "sadiku_2")
-    assert compute_page_offset(pages) == -519
+@skip_no_sadiku
+def test_single_offset_holds_across_the_whole_book():
+    """Kitap eskiden iki cilde bölünmüştü (ofsetleri 31 ve -519); birleşik
+    dosyada basılı numaralandırma cilt sınırında kesintisiz devam ettiği
+    için TEK bir ofset (31) kitabın sonuna kadar geçerli olmalı.
+
+    Cilt-2 bölgesinden bir sayfanın footer'ının da temizlenebilmesi bunun
+    kanıtı: ofset orada tutmasaydı satır silinmezdi.
+    """
+    pages = extract_pages(SADIKU_PDF, "sadiku_full")
+    offset = compute_page_offset(pages)
+
+    page = pages[700]  # cilt-2 bölgesi (eski bölünmede sayfa 150)
+    printed = page["page_number"] - offset
+    result = clean_text_sadiku(page["raw_text"], page["page_number"], offset)
+    assert str(printed) in page["raw_text"].split("\n")
+    assert str(printed) not in result.split("\n")
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_clean_text_sadiku_real_page_strips_footer_keeps_body():
-    pages = extract_pages(SADIKU_1, "sadiku_1")
+    pages = extract_pages(SADIKU_PDF, "sadiku_full")
     offset = compute_page_offset(pages)
     page = pages[45]  # basılı sayfa no "14"
     result = clean_text_sadiku(page["raw_text"], page["page_number"], offset)

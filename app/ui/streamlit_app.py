@@ -15,6 +15,7 @@ Her çalışan ekranda, `docs/vision.md`'nin "tüm modlarda ortak" şartı gere�
 kaynak gösterimi ve boru hattı şeffaflığı ("Ne oldu?") bulunur.
 """
 
+import base64
 import sys
 import time
 from pathlib import Path
@@ -24,6 +25,13 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
+from app.circuit.ac import solve_ac  # noqa: E402
+from app.circuit.solve import (  # noqa: E402
+    SolverError,
+    element_results,
+    power_balance,
+    solve_dc,
+)
 from app.hints.generate import (  # noqa: E402
     MAX_HINT_LEVEL,
     evaluate_answer,
@@ -36,6 +44,12 @@ from app.rag.generate import (  # noqa: E402
     TASK_TIERS,
     TIERS,
     answer_question,
+)
+from app.vision.vlm_read import (  # noqa: E402
+    READABLE_KINDS,
+    VLMReadError,
+    draft_to_netlist,
+    read_circuit_image,
 )
 
 EXAMPLE_CONTENT_TYPES = ["example", "practice_problem"]
@@ -345,6 +359,131 @@ def screen_ipucu() -> None:
     render_sources(question_data["sources"])
 
 
+def _render_dc_results(netlist, solution) -> None:
+    results = element_results(netlist, solution)
+    residual = power_balance(results)
+    st.markdown("#### Sonuçlar")
+    rows = [
+        {
+            "Eleman": r.name, "Tür": r.kind,
+            "I (A)": round(r.current, 4), "V (V)": round(r.voltage, 4), "P (W)": round(r.power, 4),
+        }
+        for r in results.values()
+    ]
+    st.dataframe(rows, width="stretch", hide_index=True)
+    total = sum(abs(r.power) for r in results.values()) or 1.0
+    ok = abs(residual) / total < 1e-6
+    st.caption(f"Güç dengesi (Tellegen): {residual:.2e} W → {'tutarlı ✅' if ok else 'TUTARSIZ ⚠️'}")
+
+
+def _render_ac_results(solution) -> None:
+    st.markdown("#### Sonuçlar (fazör)")
+    rows = []
+    for node in sorted(solution.node_voltages):
+        magnitude, angle = solution.polar(solution.node_voltages[node])
+        rows.append({"Düğüm": node, "|V| (V)": round(magnitude, 4), "∠ (°)": round(angle, 2)})
+    st.dataframe(rows, width="stretch", hide_index=True)
+
+
+def screen_kendi_devren() -> None:
+    header(
+        "📷 Kendi Devreni Yükle",
+        "Kendi devre görselini yükle; sistem okumaya çalışır, sen onaylar/düzeltirsin, sonra çözülür.",
+    )
+    st.warning(
+        "VLM devre okuması özellikle kaynak polaritesinde (+/- ucu) güvenilir değil "
+        "(bkz. `docs/vlm-karsilastirma-sonuclari.md`) — aşağıdaki tabloyu görselle "
+        "karşılaştırıp MUTLAKA kontrol et, çözmeden önce."
+    )
+
+    uploaded = st.file_uploader("Devre görseli (PDF'ten kırpma da olur)", type=["png", "jpg", "jpeg"])
+
+    col1, col2 = st.columns(2)
+    with col1:
+        read_clicked = st.button("Görseli oku", disabled=uploaded is None)
+    with col2:
+        manual_clicked = st.button("Elle gir (VLM kullanma)")
+
+    if read_clicked and uploaded is not None:
+        image_b64 = base64.b64encode(uploaded.getvalue()).decode("ascii")
+        with st.spinner("Görsel okunuyor (VLM birkaç dakika sürebilir)…"):
+            try:
+                draft = read_circuit_image(image_b64)
+            except VLMReadError as exc:
+                st.error(f"Okuma başarısız: {exc}")
+                if exc.raw:
+                    with st.expander("VLM'in ham yanıtı"):
+                        st.text(exc.raw)
+                return
+            except Exception as exc:  # noqa: BLE001 - arayüz sınırı
+                service_error(exc)
+                return
+        st.session_state.own_circuit = {"rows": draft["elements"], "frequency_hz": draft["frequency_hz"]}
+        if draft["notlar"]:
+            st.info(f"VLM notu: {draft['notlar']}")
+
+    if manual_clicked:
+        st.session_state.own_circuit = {"rows": [], "frequency_hz": None}
+
+    session = st.session_state.get("own_circuit")
+    if not session:
+        return
+
+    st.markdown("#### Devre elemanları (gerekirse düzelt)")
+    st.caption(
+        "Yönsüz elemanlarda (direnç/kapasitör/bobin) uç sırası önemsiz. Kaynaklarda "
+        "düğüm A = + ucu, düğüm B = − ucu. Toprak varsa düğüm adı \"gnd\" olmalı. "
+        "Bağımlı kaynaklar (VCVS/CCVS) bu tablodan desteklenmiyor."
+    )
+    edited = st.data_editor(
+        session["rows"],
+        num_rows="dynamic",
+        width="stretch",
+        column_config={
+            "kind": st.column_config.SelectboxColumn("tür", options=sorted(READABLE_KINDS), required=True),
+            "name": st.column_config.TextColumn("ad", required=True),
+            "value": st.column_config.NumberColumn("değer"),
+            "node_a": st.column_config.TextColumn("düğüm A (+ ise)", required=True),
+            "node_b": st.column_config.TextColumn("düğüm B (− ise)", required=True),
+            "phase_degrees": st.column_config.NumberColumn("faz (derece)"),
+        },
+        key="own_circuit_editor",
+    )
+    session["rows"] = edited
+
+    needs_frequency = any((row.get("phase_degrees") or 0) != 0 for row in edited)
+    frequency = session.get("frequency_hz")
+    if needs_frequency:
+        frequency = st.number_input(
+            "Frekans (Hz) — bir kaynağın fazı 0 değil, AC çözüm gerekiyor",
+            min_value=0.0, value=frequency or 60.0,
+        )
+        session["frequency_hz"] = frequency
+
+    if st.button("Çöz") and edited:
+        try:
+            netlist = draft_to_netlist(edited)
+        except (ValueError, TypeError) as exc:
+            st.error(f"Devre geçersiz: {exc}")
+            return
+
+        try:
+            if needs_frequency:
+                if not frequency:
+                    st.error("Frekans girilmeli.")
+                    return
+                solution = solve_ac(netlist, frequency)
+                _render_ac_results(solution)
+            else:
+                reference = None if "gnd" in netlist.nodes() else min(netlist.nodes())
+                if reference:
+                    st.caption(f"Şekilde toprak yok; referans düğüm olarak {reference} seçildi.")
+                solution = solve_dc(netlist, reference=reference)
+                _render_dc_results(netlist, solution)
+        except SolverError as exc:
+            st.error(f"Çözülemedi: {exc}")
+
+
 def screen_kaynaklar() -> None:
     header("📚 Kaynaklar", "Sisteme yüklenmiş ders kitapları ve işlenmiş içerik.")
 
@@ -379,7 +518,7 @@ def screen_kaynaklar() -> None:
         return
 
     st.metric("Toplam chunk", total)
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    st.dataframe(rows, width="stretch", hide_index=True)
     st.caption(
         "Telifli kaynak (Sadiku) yalnızca bu makinede işlenir, paylaşılmaz — bkz. docs/kaynaklar.md."
     )
@@ -396,13 +535,7 @@ SCREENS = {
         "çözüm ngspice/PySpice ile deterministik olarak hesaplanır.",
         "simülasyon motoru + çizim arayüzü",
     ),
-    "📷 Kendi Devreni Yükle": lambda: not_built(
-        "📷 Kendi Devreni Yükle",
-        "Kullanıcı devre fotoğrafı yükler; sistem devreyi okur ve 'böyle mi anladım?' onay "
-        "adımıyla doğrulatır, sonra simülatöre aktarır.",
-        "`app/vision/` görsel okuma + onay akışı (VLM'ler topolojiyi güvenilir okuyamıyor, "
-        "bkz. docs/vlm-karsilastirma-sonuclari.md)",
-    ),
+    "📷 Kendi Devreni Yükle": screen_kendi_devren,
 }
 
 

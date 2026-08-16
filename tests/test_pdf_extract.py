@@ -1,13 +1,11 @@
 from pathlib import Path
 
-import pytest
+from sadiku_pdf import SADIKU_PDF, skip_no_sadiku
 
 from app.ingestion.pdf_extract import _parse_differences, extract_pages
 
 ROOT = Path(__file__).resolve().parent.parent
 FIORE_DC = ROOT / "data" / "raw" / "open" / "Fiore_DC_Electrical_Circuit_Analysis.pdf"
-SADIKU_1 = Path(r"C:\Users\Sinemis\OneDrive\Masaüstü\ilovepdf_split\Devre analizi-1.pdf")
-skip_no_sadiku_1 = pytest.mark.skipif(not SADIKU_1.exists(), reason="Sadiku vol1 PDF bu makinede yok")
 
 
 def test_extract_pages_returns_readable_text():
@@ -99,7 +97,7 @@ def test_parse_differences_resolves_math_pi_one_bold_comparison_operators():
 # --- gerçek kitap sayfalarında uçtan uca doğrulama --------------------------
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_operators_are_resolved_not_left_as_control_characters():
     """Sadiku s.61: '1 Ω = ...', '3 × 10^-19' gibi formüllerde "=" ve "×"
     artık okunaklı — önceden \\x01/\\x02 gibi anlamsız kontrol karakterleriydi."""
@@ -107,14 +105,14 @@ def test_operators_are_resolved_not_left_as_control_characters():
 
     from app.ingestion.pdf_extract import _page_text
 
-    with fitz.open(SADIKU_1) as doc:
+    with fitz.open(SADIKU_PDF) as doc:
         text = _page_text(doc[61])
 
     assert "=" in text
     assert "×" in text
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_pages_without_greek_letters_leak_no_control_characters():
     """s.62'de yalnızca MathematicalPi-One/Three operatörleri var (Yunan
     harfi yok) — kontrol karakteri (satır sonu/sekme hariç) hiç sızmamalı."""
@@ -122,14 +120,14 @@ def test_pages_without_greek_letters_leak_no_control_characters():
 
     from app.ingestion.pdf_extract import _page_text
 
-    with fitz.open(SADIKU_1) as doc:
+    with fitz.open(SADIKU_PDF) as doc:
         text = _page_text(doc[62])
 
     leaked = [ch for ch in text if ord(ch) < 32 and ch not in "\n\t"]
     assert not leaked, f"sızan kontrol karakterleri: {[hex(ord(c)) for c in leaked]}"
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_greek_letter_italic_font_gap_is_now_closed():
     """Önceden "MathPiOneItalic" adlı AYRI bir font ailesi (ρ, ω, θ gibi eğik
     Yunan harfleri — H9267 vb.) kapsam dışıydı; s.61'deki "resistivity ρ"
@@ -140,14 +138,14 @@ def test_greek_letter_italic_font_gap_is_now_closed():
 
     from app.ingestion.pdf_extract import _page_text
 
-    with fitz.open(SADIKU_1) as doc:
+    with fitz.open(SADIKU_PDF) as doc:
         text = _page_text(doc[61])
 
     assert "\x01" not in text
     assert "resistivity ρ" in text
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_grk_font_greek_letters_are_no_longer_misread_as_latin():
     """"Grk" fontu /Differences KULLANMIYOR (standart WinAnsiEncoding), ama
     kodun kendi gömülü glif programı harf kodlarına ("m", "p", "A"...) Yunan
@@ -159,7 +157,7 @@ def test_grk_font_greek_letters_are_no_longer_misread_as_latin():
 
     from app.ingestion.pdf_extract import _math_glyph_map
 
-    with fitz.open(SADIKU_1) as doc:
+    with fitz.open(SADIKU_PDF) as doc:
         glyph_map = _math_glyph_map(doc[61])
 
     assert glyph_map["Grk"]["r"] == "ρ"
@@ -175,7 +173,7 @@ def test_grk_glyph_table_covers_every_character_seen_in_the_book():
     assert set(_GRK_GLYPH_CHARS) == set("AFUabcdfglmprstuyz")
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_page_474_truncated_font_name_is_still_resolved():
     """PyMuPDF, span sözlüğündeki font adını sessizce kısaltıyor (ölçüldü:
     "DKOMFM+MathematicalPi-One-Italic" `get_fonts()`'ta tam görünürken,
@@ -188,14 +186,14 @@ def test_page_474_truncated_font_name_is_still_resolved():
 
     from app.ingestion.pdf_extract import _page_text
 
-    with fitz.open(SADIKU_1) as doc:
+    with fitz.open(SADIKU_PDF) as doc:
         text = _page_text(doc[474])
 
     leaked = [ch for ch in text if ord(ch) < 32 and ch not in "\n\t"]
     assert not leaked, f"sızan kontrol karakterleri: {[hex(ord(c)) for c in leaked]}"
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_the_same_raw_code_resolves_differently_on_different_pages():
     """Bu, sorunun kök nedeninin doğru anlaşıldığının kanıtı: aynı ham kod
     (0x02) bir sayfada "=" bir başkasında farklı bir sembole karşılık
@@ -205,7 +203,7 @@ def test_the_same_raw_code_resolves_differently_on_different_pages():
 
     from app.ingestion.pdf_extract import _math_glyph_map
 
-    with fitz.open(SADIKU_1) as doc:
+    with fitz.open(SADIKU_PDF) as doc:
         map_61 = _math_glyph_map(doc[61])
         map_63 = _math_glyph_map(doc[63])
 
@@ -216,7 +214,7 @@ def test_the_same_raw_code_resolves_differently_on_different_pages():
     assert map_63["MathematicalPi-One"]["\x01"] == "·"
 
 
-@skip_no_sadiku_1
+@skip_no_sadiku
 def test_two_math_pi_subfonts_on_one_page_do_not_overwrite_each_other():
     """Sadiku s.308: MathematicalPi-One'ın kod 1'i "=" iken aynı sayfadaki
     MathematicalPi-Three'nin kod 1'i "×" — tek düz sözlükte tutulsaydı biri
@@ -226,7 +224,7 @@ def test_two_math_pi_subfonts_on_one_page_do_not_overwrite_each_other():
 
     from app.ingestion.pdf_extract import _math_glyph_map, _page_text
 
-    with fitz.open(SADIKU_1) as doc:
+    with fitz.open(SADIKU_PDF) as doc:
         glyph_map = _math_glyph_map(doc[308])
         text = _page_text(doc[308])
 

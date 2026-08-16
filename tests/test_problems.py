@@ -6,14 +6,14 @@ import pytest
 from app.circuit.problems import Problem, extract_problems, parse_answer_values
 
 ROOT = Path(__file__).resolve().parent.parent
-SADIKU_1 = ROOT / "data" / "chunks" / "sadiku_1.jsonl"
+SADIKU_CHUNKS = ROOT / "data" / "chunks" / "sadiku_full.jsonl"
 
 skip_no_sadiku = pytest.mark.skipif(
-    not SADIKU_1.exists(), reason="sadiku_1 chunk'lari bu makinede yok (telifli)"
+    not SADIKU_CHUNKS.exists(), reason="sadiku_full chunk'lari bu makinede yok (telifli)"
 )
 
 
-def chunk(text, chunk_id="c1", document_id="sadiku_1"):
+def chunk(text, chunk_id="c1", document_id="sadiku_full"):
     return {"text": text, "chunk_id": chunk_id, "document_id": document_id}
 
 
@@ -43,7 +43,7 @@ def test_problem_rejects_construction_with_leaked_answer():
 
 @skip_no_sadiku
 def test_no_extracted_problem_leaks_its_answer_on_real_data():
-    with SADIKU_1.open(encoding="utf-8") as f:
+    with SADIKU_CHUNKS.open(encoding="utf-8") as f:
         problems = extract_problems([json.loads(line) for line in f])
     assert problems, "gercek veriden alistirma cikmali"
     for problem in problems:

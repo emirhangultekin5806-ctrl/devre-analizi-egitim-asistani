@@ -14,7 +14,9 @@
 
 # Commands
 - Install: `python -m venv .venv` sonra `.venv\Scripts\pip install -r requirements.txt`
-- Run (PDF çıkarımı): `.venv\Scripts\python scripts\parse_books.py --book fiore_dc` (fiore_dc, fiore_ac; Sadiku için `--path` ile PDF yolu verilmeli)
+- ngspice (bir kez, devre çözücü için zorunlu): `.venv\Scripts\pyspice-post-installation --install-ngspice-dll`
+  (atlanırsa `app/circuit/` ve şekil çözme testleri "cannot load library ngspice.dll" ile kırılır)
+- Run (PDF çıkarımı): `.venv\Scripts\python scripts\parse_books.py --book fiore_dc` (fiore_dc, fiore_ac; Sadiku için `--book sadiku_full --path "<PDF yolu>"`)
 - Chunking: `.venv\Scripts\python scripts\chunk_books.py --book fiore_dc`
 - Test: `.venv\Scripts\python -m pytest`
 - Lint: `.venv\Scripts\ruff check .`
@@ -57,7 +59,7 @@
 
 # Domain Notes
 - Konu alanı: Devre Analizi 1 (DC devreler) ve Devre Analizi 2 (AC/ileri devreler).
-- Ana kaynak (telifli, paylaşılmaz): Sadiku, "Fundamentals of Electric Circuits" (McGraw-Hill) — kullanıcının satın aldığı kopya, yalnızca kişisel/lokal kullanım.
+- Ana kaynak (telifli, paylaşılmaz): Sadiku, "Fundamentals of Electric Circuits" (McGraw-Hill) — kullanıcının satın aldığı kopya, yalnızca kişisel/lokal kullanım. Bu makinede tek dosya (1056 sayfa, `sadiku_full`); PDF yolu `SADIKU_PDF` ortam değişkeniyle geçersiz kılınabilir (bkz. `tests/sadiku_pdf.py`).
 - Destekleyici kaynaklar (açık lisanslı, CC BY-NC-SA, paylaşılabilir): Fiore, "DC Electrical Circuit Analysis" ve "AC Electrical Circuit Analysis" — `scripts/download_books.py` ile indirilir, `data/raw/open/` altında.
 - Kaynak/lisans detayları: docs/kaynaklar.md.
 - Telifli kaynak PDF'ler asla commit edilmez veya paylaşılmaz (data/raw/ .gitignore'da; açık kaynaklar bilerek repo dışında tutulup script ile indirilir).

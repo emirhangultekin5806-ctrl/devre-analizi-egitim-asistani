@@ -34,7 +34,7 @@ MIN_TAIL_TOKENS = 80
 
 # Sadiku'da sabit +1 ofseti geçerli değil (bkz. text_clean.py docstring'i);
 # parse_books.py'deki SADIKU_BOOKS ile aynı gerekçe/kapsam.
-SADIKU_BOOKS = {"sadiku_1", "sadiku_2"}
+SADIKU_BOOKS = {"sadiku_1", "sadiku_2", "sadiku_full"}
 
 
 def _compute_printed_page(document_id: str, page_number: int, sadiku_offset: int | None) -> int | None:

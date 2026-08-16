@@ -9,8 +9,18 @@
 | Yayıncı | McGraw-Hill |
 | Lisans | Ticari / telifli — kullanıcı tarafından satın alınmış, kişisel kullanım |
 | Kapsam | Devre Analizi 1 (DC/AC temel devreler) ve Devre Analizi 2 (ileri konular, üç fazlı sistemler vb.) |
-| Kaynak dosyalar | `Devre analizi-1.pdf` (550 sayfa), `Devre analizi-2.pdf` (506 sayfa) |
+| Kaynak dosya | `Devre analizi.pdf` — tek dosya, 1056 sayfa, bölüm 1-19 (document_id `sadiku_full`) |
 | İndirilme/edinilme tarihi | 2026-08-03 |
+
+**Dosya biçimi notu:** Kitap ilk makinede iki cilde bölünmüş olarak
+tutuluyordu (`Devre analizi-1.pdf` 550 sayfa / bölüm 1-12 → `sadiku_1`,
+`Devre analizi-2.pdf` 506 sayfa / bölüm 13-19 → `sadiku_2`). İkinci
+makinede tek birleşik dosya kullanılıyor. Bölüm numaralandırması ve basılı
+sayfa numaraları cilt sınırında kesintisiz devam ettiği için birleşik dosya
+sorunsuz işleniyor: sayfa ofseti tüm kitapta 31 (bölünmüş hâlde 31 ve -519
+olmak üzere iki ayrı ofset gerekiyordu) ve cilt-1 sayfa indeksleri birebir
+aynı kalıyor — bu, `tests/sadiku_pdf.py`'de ölçülerek doğrulandı. Eski
+`sadiku_1`/`sadiku_2` document_id'leri kodda hâlâ tanınıyor.
 
 **Dağıtım kısıtı:** Bu kitap telifli olduğu için PDF dosyaları repository'ye eklenmez (`.gitignore` → `data/raw/*`). Yalnızca kişisel/lokal kullanım için işlenecek; sistem paylaşılırsa veya teslim edilirse kaynak PDF'ler hariç tutulmalıdır.
 

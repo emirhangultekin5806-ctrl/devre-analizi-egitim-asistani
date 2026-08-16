@@ -134,9 +134,20 @@ gizlenmez, "hazır değil" durumuyla gösterilir.
 | 📖 Konu Anlatımı | Çalışıyor (RAG) |
 | 📝 Quiz | Çalışıyor |
 | 📚 Kaynaklar | Çalışıyor (işlenmiş içerik istatistikleri) |
-| 💡 İpucu Modu | Hazır değil (`app/hints/`) |
+| 💡 İpucu Modu | Çalışıyor (`app/hints/`, kademeli 1-3 seviye ipucu) |
 | ⚡ Devre Simülatörü | Hazır değil |
-| 📷 Kendi Devreni Yükle | Hazır değil (`app/vision/` + onay akışı) |
+| 📷 Kendi Devreni Yükle | Kısmen çalışıyor — bkz. not aşağıda |
+
+**Kendi Devreni Yükle — durum notu:** Elle giriş yolu (tablo doldur →
+çöz) uçtan uca çalışıyor ve test edilmiş (`tests/test_streamlit_own_circuit.py`).
+VLM okuma yolu (`app/vision/vlm_read.py`, `minicpm-v4.5:8b`) kodlandı ama
+henüz GERÇEK bir görselle denenmedi — yalnızca sentetik/elle yazılmış
+JSON yanıtlarla test edildi (`tests/test_vlm_read.py`). Ayrıca onaylanan
+netlist şu an simülatöre değil, doğrudan çözüp sonuç göstermeye
+gidiyor (simülatör ekranı henüz yok).
+
+Kalan büyük parça (`Devre Simülatörü`) projenin henüz planlanmamış
+kısmı — detay için `docs/vision.md`.
 
 Çalışan her ekranda kaynak gösterimi ve "Ne oldu?" şeffaflık paneli vardır
 (getirilen kaynaklar, kaç adaydan kaçının seçildiği, adım süreleri, model).

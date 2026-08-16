@@ -115,3 +115,20 @@ def test_capacitor_is_open_circuit_in_dc():
     )
     sol = solve_dc(net)
     assert sol.node_voltages["mid"] == pytest.approx(5.0, rel=1e-3)
+
+
+def test_uppercase_node_names_are_looked_up_case_insensitively():
+    """ngspice düğüm adlarını sessizce küçük harfe çeviriyor -- büyük harfli
+    bir düğüm adı ("A" gibi) sorgulanınca `node_voltages`'ta bulunamayıp
+    KeyError veriyordu. `app/circuit/ac.py`/`threephase.py` için bu daha önce
+    düzeltilmişti (bkz. `test_circuit_ac.py`'deki eşdeğer test) ama DC
+    çözücüde aynı düzeltme eksikti -- gerçek veride yakalandı: VLM ile
+    okunan devrelerde düğümler büyük harfle etiketleniyor (bkz.
+    `app/vision/vlm_read.py`), Streamlit ekranında "A" düğümlü bir devre
+    çözülünce bu hatayla patladı. `_v()`/`voltage_across()` artık sorguyu
+    da küçük harfe çevirdiği için büyük harfli adlar da çalışır."""
+    net = Netlist([V("s", "A", "gnd", 12.0), R("1", "A", "gnd", 10.0)])
+    sol = solve_dc(net)
+    assert sol.voltage_across("A", "gnd") == pytest.approx(12.0)
+    assert sol.voltage_across("a", "gnd") == pytest.approx(12.0)
+    assert sol.node_voltages["a"] == pytest.approx(12.0)

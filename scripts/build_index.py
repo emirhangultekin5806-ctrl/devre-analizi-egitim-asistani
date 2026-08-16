@@ -37,7 +37,7 @@ sys.stdout.reconfigure(encoding="utf-8")
 from app.retrieval.index import get_collection, index_chunks  # noqa: E402
 
 CHUNKS_DIR = ROOT / "data" / "chunks"
-ALL_BOOKS = ["fiore_dc", "fiore_ac", "sadiku_1", "sadiku_2"]
+ALL_BOOKS = ["fiore_dc", "fiore_ac", "sadiku_full"]
 
 
 def _load_chunks(book: str) -> list[dict]:

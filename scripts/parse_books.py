@@ -37,6 +37,7 @@ STRUCTURE_DETECTORS = {
     "fiore_ac": detect_structure_fiore,
     "sadiku_1": detect_structure_sadiku,
     "sadiku_2": detect_structure_sadiku,
+    "sadiku_full": detect_structure_sadiku,
 }
 
 # document_id -> metin temizleme fonksiyonu (kitap bazlı)
@@ -45,12 +46,14 @@ TEXT_CLEANERS = {
     "fiore_ac": clean_text,
     "sadiku_1": clean_text_sadiku,
     "sadiku_2": clean_text_sadiku,
+    "sadiku_full": clean_text_sadiku,
 }
 
 # Sadiku'nun temizleyicisi (clean_text_sadiku) Fiore'ninkinden (clean_text) farklı bir
 # imzaya sahip (üçüncü parametre: önceden hesaplanan sayfa no ofseti) — main() bu
 # yüzden çağrıdan önce hangi kitap grubunda olduğuna göre dallanıyor.
-SADIKU_BOOKS = {"sadiku_1", "sadiku_2"}
+# sadiku_full: tek cilt PDF (sadiku_1+sadiku_2'nin birleşik hali, bu makinede kullanılan).
+SADIKU_BOOKS = {"sadiku_1", "sadiku_2", "sadiku_full"}
 
 OUTPUT_DIR = ROOT / "data" / "processed"
 
