@@ -19,7 +19,13 @@ from dataclasses import dataclass
 
 # Desteklenen eleman türleri. `value` birimi türe göre değişir:
 # resistor -> ohm, voltage_source -> volt, current_source -> amper,
-# vcvs/ccvs -> kazanç (birimsiz "2vx" ya da direnç boyutlu "4Io"/Io katsayısı, ohm).
+# vcvs/ccvs -> kazanç (birimsiz "2vx" ya da direnç boyutlu "4Io"/Io katsayısı, ohm),
+# impedance -> Ω CİNSİNDEN BÜYÜKLÜK (`value`), `phase` ALANI BU TURDE FAZ
+# AÇISI DEĞİL EMPEDANSIN KENDİ AÇISI (Z = value∠phase, örn. "8+j6 Ω" ->
+# value=10, phase=36.87). Kaynaklarda `phase` fazörün fazıdır (bkz. Element
+# docstring'i) -- AYNI ALANIN İKİ FARKLI ANLAMI eleman TÜRÜNE göre ayrışır,
+# kaynak+empedans AYNI devrede karışmaz (biri kaynak sırasını, öteki
+# elemanın kendi açısını tutar, hiçbir hesap ikisini birden okumaz).
 #
 # Desteklenen bağımlı kaynaklar:
 #   - "vcvs" (gerilim kontrollü gerilim kaynağı): kontrol büyüklüğü netlist'teki
@@ -28,6 +34,10 @@ from dataclasses import dataclass
 #     BAŞKA bir elemanın üzerinden geçen AKIM (`control_element` — o elemanın
 #     kendi nodes[0]→nodes[1] yönünde ölçülür).
 # VCCS ve CCCS (çıkışı akım olan bağımlı kaynaklar) henüz desteklenmiyor.
+#
+# "impedance": Sadiku'nun AC bölümünde çok sık görülen "Z = 8+j6 Ω" kutusu
+# -- SADECE AC'de anlamlı (bkz. app/circuit/ac.py), solve_dc BİLEREK
+# reddeder (DC'de sabit bir karmaşık empedansın karşılığı yok).
 ELEMENT_KINDS = {
     "resistor",
     "voltage_source",
@@ -36,6 +46,7 @@ ELEMENT_KINDS = {
     "inductor",
     "vcvs",
     "ccvs",
+    "impedance",
 }
 CONTROLLED_BY_NODES = {"vcvs"}
 CONTROLLED_BY_ELEMENT = {"ccvs"}

@@ -17,6 +17,7 @@ kaynak gösterimi ve boru hattı şeffaflığı ("Ne oldu?") bulunur.
 
 import base64
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -45,12 +46,14 @@ from app.rag.generate import (  # noqa: E402
     TIERS,
     answer_question,
 )
+from app.vision.pipeline_bridge import PipelineBridgeError, extract_circuit  # noqa: E402
 from app.vision.vlm_read import (  # noqa: E402
     READABLE_KINDS,
     VLMReadError,
     draft_to_netlist,
     read_circuit_image,
 )
+from scripts.solve_from_extraction import SolveFromExtractionError, solve_extraction  # noqa: E402
 
 EXAMPLE_CONTENT_TYPES = ["example", "practice_problem"]
 CHUNKS_DIR = ROOT / "data" / "chunks"
@@ -58,6 +61,18 @@ CHUNKS_DIR = ROOT / "data" / "chunks"
 NAVY = "#0d2149"
 NAVY_LIGHT = "#1c3a6e"
 ACCENT = "#2f6fb8"
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+
+
+@st.cache_data
+def hero_texture() -> str:
+    """Başlık şeridinin arka planı: yatayda kusursuz döşenen devre dokusu.
+
+    Yerel dosya CSS'ten okunamadığı için data URI olarak gömülür (~10 KB).
+    """
+    raw = base64.b64encode((ASSETS_DIR / "hero_circuit.webp").read_bytes()).decode()
+    return f"data:image/webp;base64,{raw}"
+
 
 st.set_page_config(page_title="Devre Analizi Asistanı", page_icon="⚡", layout="wide")
 
@@ -71,9 +86,27 @@ st.markdown(
       section[data-testid="stSidebar"] h1,
       section[data-testid="stSidebar"] h2,
       section[data-testid="stSidebar"] h3 {{ color: #ffffff !important; }}
+      @keyframes da-drift {{
+        from {{ background-position: 0 center; }}
+        to   {{ background-position: -848px center; }}
+      }}
       .da-title {{
-        background: {NAVY}; color: #fff; padding: .9rem 1.2rem;
+        position: relative; overflow: hidden;
+        background: {NAVY} url("{hero_texture()}") repeat-x;
+        background-size: 848px 180px;
+        animation: da-drift 120s linear infinite;
+        color: #fff; padding: .9rem 1.2rem;
         border-radius: 10px; margin-bottom: 1.1rem;
+      }}
+      /* Devre dokusunun üstüne yazıyı okunur tutan lacivert perde. */
+      .da-title::after {{
+        content: ""; position: absolute; inset: 0;
+        background: linear-gradient(90deg, {NAVY} 0%, rgba(13, 33, 73, .86) 40%,
+                                    rgba(13, 33, 73, .58) 100%);
+      }}
+      .da-title > * {{ position: relative; z-index: 1; }}
+      @media (prefers-reduced-motion: reduce) {{
+        .da-title {{ animation: none; }}
       }}
       .da-title p {{ margin: .25rem 0 0; color: #c9d8ef; font-size: .88rem; }}
       .da-chip {{
@@ -385,26 +418,72 @@ def _render_ac_results(solution) -> None:
     st.dataframe(rows, width="stretch", hide_index=True)
 
 
+def _render_pipeline_results(out: dict) -> None:
+    """`scripts.solve_from_extraction.solve_extraction`'un ciktisini gosterir.
+
+    Iki farkli sekil dondurebilir (bkz. o fonksiyon): normal eleman sonuclari
+    (DC ElementResult / AC ACElementResult -- ikisi de .describe() ile ayni
+    arayuzu paylasir, DC/AC ayrimini burada TEKRAR yazmamak icin CLI'daki
+    gibi dogrudan kullanilir) ya da kaynaksiz devrede tek bir Rₑq sayisi.
+    """
+    st.markdown("#### Sonuçlar")
+    results = out["results"]
+    if "esdeger_direnc_ohm" in results:
+        a, b = results["terminals"]
+        st.metric(f"R_eşdeğer ({a}–{b})", f"{results['esdeger_direnc_ohm']:.4g} Ω")
+        return
+    for r in results.values():
+        st.text(r.describe())
+    st.caption(f"Güç dengesi (Tellegen, 0 olmalı): {out['power_balance']!s}")
+
+
 def screen_kendi_devren() -> None:
     header(
         "📷 Kendi Devreni Yükle",
         "Kendi devre görselini yükle; sistem okumaya çalışır, sen onaylar/düzeltirsin, sonra çözülür.",
     )
-    st.warning(
-        "VLM devre okuması özellikle kaynak polaritesinde (+/- ucu) güvenilir değil "
-        "(bkz. `docs/vlm-karsilastirma-sonuclari.md`) — aşağıdaki tabloyu görselle "
-        "karşılaştırıp MUTLAKA kontrol et, çözmeden önce."
-    )
 
     uploaded = st.file_uploader("Devre görseli (PDF'ten kırpma da olur)", type=["png", "jpg", "jpeg"])
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
-        read_clicked = st.button("Görseli oku", disabled=uploaded is None)
+        pipeline_clicked = st.button(
+            "🔍 Pipeline ile oku (önerilen)", disabled=uploaded is None,
+            help="YOLO ile bileşen/bağlantı tespiti + OCR/VLM ile değer okuma -- topoloji halüsinasyon riski taşımaz.",
+        )
     with col2:
-        manual_clicked = st.button("Elle gir (VLM kullanma)")
+        read_clicked = st.button(
+            "VLM ile oku (deneysel)", disabled=uploaded is None,
+            help="Bütün görüntüyü tek seferde VLM'e verir -- topolojide halüsinasyon görülebilir, bkz. uyarı.",
+        )
+    with col3:
+        manual_clicked = st.button("Elle gir")
+
+    if pipeline_clicked and uploaded is not None:
+        # Kirpma/scratch dosyalari kalici -- solve_extraction daha sonra
+        # (kullanici "Coz" butonuna basinca) bu yoldaki crop'lari VLM'e
+        # gonderecek, o yuzden burada SILINMEZ (bkz. modul yorumu asagida).
+        tmp_dir = Path(tempfile.mkdtemp(prefix="own_circuit_"))
+        image_path = tmp_dir / f"upload{Path(uploaded.name).suffix or '.png'}"
+        image_path.write_bytes(uploaded.getvalue())
+        with st.spinner("YOLO + connectivity + OCR ile işleniyor…"):
+            try:
+                extraction = extract_circuit(image_path, tmp_dir / "extract")
+            except PipelineBridgeError as exc:
+                st.error(f"İşlenemedi: {exc}")
+                return
+            except Exception as exc:  # noqa: BLE001 - arayüz sınırı
+                service_error(exc)
+                return
+        st.session_state.own_pipeline_extraction = extraction
+        st.session_state.own_circuit = None
 
     if read_clicked and uploaded is not None:
+        st.warning(
+            "VLM devre okuması özellikle kaynak polaritesinde (+/- ucu) güvenilir değil "
+            "(bkz. `docs/vlm-karsilastirma-sonuclari.md`) — aşağıdaki tabloyu görselle "
+            "karşılaştırıp MUTLAKA kontrol et, çözmeden önce."
+        )
         image_b64 = base64.b64encode(uploaded.getvalue()).decode("ascii")
         with st.spinner("Görsel okunuyor (VLM birkaç dakika sürebilir)…"):
             try:
@@ -419,11 +498,41 @@ def screen_kendi_devren() -> None:
                 service_error(exc)
                 return
         st.session_state.own_circuit = {"rows": draft["elements"], "frequency_hz": draft["frequency_hz"]}
+        st.session_state.own_pipeline_extraction = None
         if draft["notlar"]:
             st.info(f"VLM notu: {draft['notlar']}")
 
     if manual_clicked:
         st.session_state.own_circuit = {"rows": [], "frequency_hz": None}
+        st.session_state.own_pipeline_extraction = None
+
+    extraction = st.session_state.get("own_pipeline_extraction")
+    if extraction:
+        st.markdown("#### Tespit edilen bileşenler (YOLO + connectivity)")
+        comp_rows = [
+            {"Ad": name, "Tür": c["kind"], "Netler": c["nets"]}
+            for name, c in extraction["components"].items()
+        ]
+        st.dataframe(comp_rows, width="stretch", hide_index=True)
+        for w in extraction.get("warnings", []):
+            st.warning(w)
+
+        reference = st.text_input(
+            "Referans (toprak) düğüm adı — şemada toprak sembolü YOKSA gerekli (örn. n0)",
+            key="own_pipeline_reference",
+        ).strip() or None
+        if st.button("Çöz (pipeline)"):
+            with st.spinner("Değerler okunuyor ve çözülüyor (VLM birkaç dakika sürebilir)…"):
+                try:
+                    out = solve_extraction(extraction, reference=reference, verbose=False)
+                except SolveFromExtractionError as exc:
+                    st.error(f"Çözülemedi: {exc}")
+                    return
+                except Exception as exc:  # noqa: BLE001 - arayüz sınırı
+                    service_error(exc)
+                    return
+            _render_pipeline_results(out)
+        return
 
     session = st.session_state.get("own_circuit")
     if not session:

@@ -33,6 +33,10 @@ def V(name, plus, minus, value, phase=0.0):
     return Element(name, "voltage_source", (plus, minus), value, phase=phase)
 
 
+def Z(name, a, b, magnitude, phase_degrees):
+    return Element(f"Z{name}", "impedance", (a, b), magnitude, phase=phase_degrees)
+
+
 # --- empedans --------------------------------------------------------------
 
 
@@ -60,6 +64,18 @@ def test_unknown_element_impedance_raises():
         impedance("voltage_source", 1.0, 1e3)
 
 
+def test_impedance_kind_uses_own_magnitude_and_phase():
+    """Sadiku'nun "Z = 8+j6 Ω" kutusu -- value=BÜYÜKLÜK, phase=EMPEDANSIN
+    KENDİ açısı (kaynak fazı değil, bkz. netlist.py ELEMENT_KINDS yorumu).
+    frequency parametresi GÖRMEZDEN GELİNMELİ -- R/L/C'nin aksine bu tür
+    zaten kendi sabit empedansını taşıyor."""
+    z = impedance("impedance", 10.0, frequency=1e6, phase_degrees=36.8699)
+    assert z.real == pytest.approx(8.0, rel=1e-3)
+    assert z.imag == pytest.approx(6.0, rel=1e-3)
+    # frekanstan bagimsiz -- ayni deger farkli frekansta da AYNI cikmali
+    assert impedance("impedance", 10.0, frequency=1.0, phase_degrees=36.8699) == z
+
+
 # --- fazor cozumu ----------------------------------------------------------
 
 
@@ -79,6 +95,35 @@ def test_source_amplitude_is_used_not_assumed_unity():
     solution = solve_ac(net, 1e3)
     magnitude, _ = ACSolution.polar(solution.source_currents["s"])
     assert magnitude == pytest.approx(10.0 / 50.0, rel=1e-6)
+
+
+def test_impedance_box_solves_like_manual_rectangular_form():
+    """Sadiku'da cok sik gorulen "Z = 8+j6 Ω" kutusu -- R+jX'i elle iki ayri
+    eleman (direnc + bobin) olarak kurup COZUP, TEK bir 'impedance' elemani
+    olarak kurulan AYNI devreyle birebir eslesmesi beklenir. El hesabi:
+    |Z|=10, faz=36.8699°, I = 10V/10Ω∠36.8699° = 1∠-36.8699° A."""
+    frequency = 1e3
+    omega = 2 * math.pi * frequency
+    net_manual = Netlist(
+        [V("s", "a", "gnd", 10.0), R("1", "a", "b", 8.0), L("1", "b", "gnd", 6.0 / omega)]
+    )
+    net_impedance = Netlist([V("s", "a", "gnd", 10.0), Z("1", "a", "gnd", 10.0, 36.8699)])
+
+    sol_manual = solve_ac(net_manual, frequency)
+    sol_impedance = solve_ac(net_impedance, frequency)
+
+    i_manual = sol_manual.source_currents["s"]
+    i_impedance = sol_impedance.source_currents["s"]
+    assert abs(i_manual - i_impedance) < 1e-6
+    magnitude, angle = ACSolution.polar(i_impedance)
+    assert magnitude == pytest.approx(1.0, rel=1e-3)
+    assert angle == pytest.approx(-36.8699, abs=0.1)
+
+
+def test_rejects_zero_valued_impedance():
+    net = Netlist([V("s", "a", "gnd", 10.0), Z("1", "a", "gnd", 0.0, 30.0)])
+    with pytest.raises(SolverError, match="impedance değeri 0"):
+        solve_ac(net, 1e3)
 
 
 def test_series_rlc_at_resonance():
@@ -156,6 +201,35 @@ def test_requires_ground():
 def test_requires_source():
     net = Netlist([R("1", "a", "gnd", 10.0), R("2", "a", "gnd", 10.0)])
     with pytest.raises(SolverError, match="kaynak yok"):
+        solve_ac(net, 1e3)
+
+
+def test_rejects_zero_valued_resistor():
+    """bkz. solve.py'deki ayni testin yorumu -- 0 Ω, empedans hesabinda
+    (element_results_ac -> impedance) sifira bolmeye yol acar."""
+    net = Netlist([V("s", "a", "gnd", 10.0), R("1", "a", "gnd", 0.0)])
+    with pytest.raises(SolverError, match="direnç değeri 0"):
+        solve_ac(net, 1e3)
+
+
+def test_rejects_zero_valued_capacitor():
+    """BULUNDU (2026-08-21 denetimi, gercek cagriyla dogrulandi): 0Ω direnc
+    icin var olan koruma kapasitore hic uygulanmiyordu -- solve_ac 0F'lik
+    bir kapasitoru SESSIZCE kabul ediyordu (ngspice hata vermiyor), cozum
+    "basarili" gorunuyordu, ama element_results_ac->impedance()'daki
+    1/(jωC) hesabi C=0 ile ZeroDivisionError ile COKUYORDU -- kullanici
+    "cozuldu" saniyordu, sonuc adiminda program cokuyordu."""
+    net = Netlist([V("s", "a", "gnd", 10.0), C("1", "a", "gnd", 0.0)])
+    with pytest.raises(SolverError, match="capacitor değeri 0"):
+        solve_ac(net, 1e3)
+
+
+def test_rejects_zero_valued_inductor():
+    """Bobinde (jωL) bolme YOK -- ZeroDivisionError riski tasimiyor -- ama
+    0H fiziksel olarak ayni sekilde anlamsiz (okuma hatasi), tutarlilik
+    icin o da reddedilir."""
+    net = Netlist([V("s", "a", "gnd", 10.0), L("1", "a", "gnd", 0.0)])
+    with pytest.raises(SolverError, match="inductor değeri 0"):
         solve_ac(net, 1e3)
 
 

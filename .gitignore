@@ -25,3 +25,7 @@ data/chunks/*
 # Build artifacts (mevcut deneme dosyaları)
 *.exe
 *.obj
+
+# MCP kimlik bilgileri (bearer token icerir, asla commit edilmez)
+.mcp.json
+.higgsfield_token.json

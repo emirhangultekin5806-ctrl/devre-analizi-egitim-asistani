@@ -49,6 +49,16 @@ def test_rejects_element_without_value():
         solve_dc(net)
 
 
+def test_rejects_zero_valued_resistor():
+    """GERCEK VERIDE YAKALANDI (Fiore Figure 2.23): OCR '6 Ω'yi '0' olarak
+    yanlış okudu, eskiden bu deger sessizce kabul edilip element_results'ta
+    ZeroDivisionError ile programı çökertiyordu (bkz. app/vision/vlm_read.py
+    parse_ocr_value_hint'teki aynı olayla ilgili yorum)."""
+    net = Netlist([V("s", "a", "gnd", 10), R("1", "a", "gnd", 0)])
+    with pytest.raises(SolverError, match="direnç değeri 0"):
+        solve_dc(net)
+
+
 def test_simple_series_divider():
     """10 V, iki esit direnc -> orta nokta 5 V, akim 1 A."""
     net = Netlist([V("s", "vs", "gnd", 10), R("1", "vs", "mid", 5), R("2", "mid", "gnd", 5)])

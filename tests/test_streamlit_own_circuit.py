@@ -27,10 +27,27 @@ def _select_screen_and_go_manual() -> AppTest:
     at.run()
     at.sidebar.radio[0].set_value("📷 Kendi Devreni Yükle")
     at.run()
-    manual_btn = next(b for b in at.button if b.label == "Elle gir (VLM kullanma)")
+    manual_btn = next(b for b in at.button if b.label == "Elle gir")
     manual_btn.click()
     at.run()
     return at
+
+
+def test_screen_shows_all_three_entry_buttons():
+    """BULUNDU (2026-08-21 denetimi): ekran gercek YOLO+connectivity
+    pipeline'ina hic baglanmamisti, sadece butun goruntuyu VLM'e veren eski
+    yol vardi. Pipeline yolu eklendikten sonra ucu de ayni ekranda
+    gorunmeli -- yanlislikla birini silip digerini unutmak (bkz. buton
+    etiket degisikligiyle KIRILAN yukaridaki testler) burada yakalanir."""
+    at = AppTest.from_file(str(APP_PATH), default_timeout=60)
+    at.run()
+    at.sidebar.radio[0].set_value("📷 Kendi Devreni Yükle")
+    at.run()
+    assert not at.exception
+    labels = {b.label for b in at.button}
+    assert "🔍 Pipeline ile oku (önerilen)" in labels
+    assert "VLM ile oku (deneysel)" in labels
+    assert "Elle gir" in labels
 
 
 def test_manual_entry_starts_with_empty_draft():

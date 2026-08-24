@@ -1,6 +1,14 @@
 import pytest
 
-from app.vision.vlm_read import VLMReadError, draft_to_netlist, parse_vlm_response
+import app.vision.vlm_read as vlm_read
+from app.vision.vlm_read import (
+    VLMReadError,
+    _unit_multiplier,
+    draft_to_netlist,
+    parse_ocr_value_hint,
+    parse_vlm_response,
+    read_impedance,
+)
 
 VALID_RESPONSE = """İşte devre:
 {
@@ -82,6 +90,82 @@ def test_non_numeric_value_raises():
         parse_vlm_response(raw)
 
 
+# --- _unit_multiplier ---------------------------------------------------------
+#
+# VLM'e biriminin AYNEN yazidaki gibi kopyalanmasi soyleniyor (bkz. modul
+# docstring'i) -- sabit bir kume degil, kitapta gecen HERHANGI bir yazim
+# gelebilir. Once tanimadigi birimi SESSIZCE 1.0 (carpansiz) sayiyordu --
+# "MΩ" gibi tabloda olmayan bir birim, deger 1.000.000 kat kucuk okunurdu,
+# hicbir hata vermeden (kod incelemesiyle bulundu, gercek veride henuz
+# yakalanmadi ama mekanizma birebir op-amp/oversize hatasiyla ayni sinif:
+# ust katmanda DOGRU okunan bir sey, alt katmanda SESSIZCE yanlis islenir).
+
+
+def test_known_units_convert_correctly():
+    assert _unit_multiplier("kohm") == 1e3
+    assert _unit_multiplier("MΩ") == 1e6  # buyuk/kucuk harf -- megaohm
+    assert _unit_multiplier("uF") == 1e-6
+    assert _unit_multiplier(None) == 1.0
+    assert _unit_multiplier("") == 1.0
+
+
+def test_milliohm_and_megaohm_distinguished_by_case():
+    """DENETIMDE BULUNDU (2026-08-21), kullanici miliohm'un GERCEKTEN
+    kullanildigini teyit etti: eskiden "mΩ" ve "MΩ" ikisi de kucuk harfe
+    cevrilip AYNI (mega, 1e6) sayiliyordu -- gercek bir miliohm degeri
+    1e9 kat yanlis okunurdu. Artik buyuk/kucuk harf KORUNUYOR."""
+    assert _unit_multiplier("mΩ") == 1e-3
+    assert _unit_multiplier("MΩ") == 1e6
+    assert _unit_multiplier("mohm") == 1e-3
+    assert _unit_multiplier("Mohm") == 1e6
+    # digger "m" onekleri (V/A/H) HER ZAMAN mili -- burada karisiklik yok,
+    # buyuk harfli "Megavolt" gibi bir birim bu domainde hic gecmiyor.
+    assert _unit_multiplier("mV") == 1e-3
+    assert _unit_multiplier("mA") == 1e-3
+
+
+def test_unrecognized_unit_raises_instead_of_silently_defaulting():
+    with pytest.raises(ValueError, match="bilinmeyen birim"):
+        _unit_multiplier("gigaohm")
+
+
+# --- parse_ocr_value_hint ------------------------------------------------------
+#
+# GERCEK VERIDE YAKALANDI (Fiore Figure 2.23): OCR "6 Ω" yazisini tek basina
+# "0" olarak okudu. Eski kod bunu GECERLI bir deger (0.0) sanip VLM'i
+# atlıyordu -- cozucude ZeroDivisionError'a kadar gitti (bkz. app/circuit/
+# solve.py'deki ayni olayla ilgili yorum). "0" biriMSIZ artik supheli
+# sayilip VLM'e birakiliyor.
+
+
+def test_bare_zero_is_rejected_falls_back_to_vlm():
+    assert parse_ocr_value_hint("0") is None
+
+
+def test_bare_nonzero_is_rejected_falls_back_to_vlm():
+    """GERCEK VERIDE IKI AYRI ORNEKTE YAKALANDI (2026-08-21 denetimi):
+    Figure 4.9 resistor5'in gercek etiketi '1 Ω' iken OCR birimsiz '10'
+    okudu (10 kat yanlis); Figure 2.27 resistor1'in gercek etiketi '6 Ω'
+    iken OCR birimsiz '9' okudu (yanlis rakam + kayip birim). Sadece
+    birimsiz SIFIR degil, birimsiz HER sayi supheli -- birim kaybi genelde
+    rakami da bozuyor, sessizce yanlis deger yerine VLM'e dusulur."""
+    assert parse_ocr_value_hint("10") is None
+    assert parse_ocr_value_hint("9") is None
+
+
+def test_zero_with_explicit_unit_is_accepted():
+    """'0 V' gibi bir kaynagin GERCEKTEN sifir olmasi fiziksel olarak
+    anlamli (direncin aksine) -- birim ACIKCA yazılıysa reddedilmez."""
+    result = parse_ocr_value_hint("0 V")
+    assert result is not None
+    assert result["value"] == 0.0
+
+
+def test_clean_value_still_parses():
+    result = parse_ocr_value_hint("10 kΩ")
+    assert result == {"value": 10000.0, "phase_degrees": 0.0, "frequency_hz": None}
+
+
 # --- draft_to_netlist --------------------------------------------------------
 
 
@@ -116,3 +200,63 @@ def test_draft_to_netlist_allows_ac_phase():
     rows = [{"name": "V1", "kind": "voltage_source", "value": 10, "node_a": "A", "node_b": "gnd", "phase_degrees": 30}]
     netlist = draft_to_netlist(rows)
     assert netlist.by_name("V1").phase == 30.0
+
+
+# --- empedans kutusu (read_impedance) ---------------------------------------
+#
+# read_impedance kartezyen (R+jX) ya da kutupsal (Z∠θ) HANGISI YAZILIYSA onu
+# okuyup Python'da (VLM'e hesap yaptirmadan) magnitude/phase_degrees'e
+# cevirir -- _call_vlm_with_prompt monkeypatch'lenerek AG cagrisi olmadan
+# test edilir.
+
+
+def test_read_impedance_rectangular_form_converts_to_polar(monkeypatch):
+    """'8+j6 Ω' -- gercek kisim 8, sanal kisim 6 -> |Z|=10, faz=36.8699 derece."""
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_prompt", lambda *a, **k: '{"resistance": 8, "reactance": 6, "magnitude": null, "phase_degrees": null}')
+    out = read_impedance("fake_b64")
+    assert out["value"] == pytest.approx(10.0, rel=1e-4)
+    assert out["phase_degrees"] == pytest.approx(36.8699, rel=1e-3)
+
+
+def test_read_impedance_negative_reactance_is_capacitive(monkeypatch):
+    """'5-j3 Ω' -- negatif reaktans (kapasitif), faz NEGATIF cikmali."""
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_prompt", lambda *a, **k: '{"resistance": 5, "reactance": -3, "magnitude": null, "phase_degrees": null}')
+    out = read_impedance("fake_b64")
+    assert out["value"] == pytest.approx((5**2 + 3**2) ** 0.5, rel=1e-4)
+    assert out["phase_degrees"] < 0
+
+
+def test_read_impedance_polar_form_passed_through(monkeypatch):
+    """'10∠30° Ω' -- zaten kutupsal, hesapsiz aynen donmeli."""
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_prompt", lambda *a, **k: '{"resistance": null, "reactance": null, "magnitude": 10, "phase_degrees": 30}')
+    out = read_impedance("fake_b64")
+    assert out["value"] == pytest.approx(10.0)
+    assert out["phase_degrees"] == pytest.approx(30.0)
+
+
+def test_read_impedance_missing_fields_raises(monkeypatch):
+    """Ne kartezyen ne kutupsal alanlar doluysa (VLM emin degilse) tahmin
+    YAPILMAZ -- acikca reddedilir."""
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_prompt", lambda *a, **k: '{"resistance": null, "reactance": null, "magnitude": null, "phase_degrees": null}')
+    with pytest.raises(VLMReadError, match="eksik/null"):
+        read_impedance("fake_b64")
+
+
+# --- anahtar durumu (read_switch_state) -------------------------------------
+
+
+def test_read_switch_state_closed(monkeypatch):
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_prompt", lambda *a, **k: '{"closed": true}')
+    assert vlm_read.read_switch_state("fake_b64") == {"closed": True}
+
+
+def test_read_switch_state_open(monkeypatch):
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_prompt", lambda *a, **k: '{"closed": false}')
+    assert vlm_read.read_switch_state("fake_b64") == {"closed": False}
+
+
+def test_read_switch_state_uncertain_raises(monkeypatch):
+    """Emin degilse TAHMIN edilmez -- acikca reddedilir."""
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_prompt", lambda *a, **k: '{"closed": null}')
+    with pytest.raises(VLMReadError, match="belirsiz"):
+        vlm_read.read_switch_state("fake_b64")

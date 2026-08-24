@@ -128,6 +128,13 @@ def solve_dc(netlist: Netlist, reference: str | None = None) -> Solution:
         a, b = element.nodes
         if element.value is None and element.kind != "capacitor":
             raise SolverError(f"{element.name}: değer verilmemiş, çözülemez")
+        # 0 Ω direnç fiziksel olarak anlamsız (kısa devre farklı bir eleman
+        # türüdür) VE element_results()'ta bölme hatası verir -- OLCULDU
+        # (Figure 2.23): VLM/OCR'ın Ω'yi "0" yanlış okuması bu değeri
+        # sessizce geçirip ZeroDivisionError ile programı çökertti. Açık
+        # hata burada, ngspice'a gitmeden önce.
+        if element.kind == "resistor" and element.value == 0:
+            raise SolverError(f"{element.name}: direnç değeri 0 -- muhtemelen okuma hatası, çözülemez")
 
         if element.kind == "resistor":
             if element.name in sensed:

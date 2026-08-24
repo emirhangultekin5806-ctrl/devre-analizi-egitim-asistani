@@ -1,0 +1,478 @@
+"""`devre-yolo-dedektor/extract_for_solve.py`'nin ciktisini (topoloji+kirpimlar)
+okur, her kirpimin degerini VLM ile okur, `Netlist` kurup `solve_dc` ile cozer.
+
+Neden IKI ASAMALI: bkz. `extract_for_solve.py` docstring'i -- gorme
+(ultralytics/cv2) ve cozme (PySpice/ngspice) AYRI venv'lerde, JSON dosyasi
+uzerinden aktariliyor.
+
+Deger okuma TOPOLOJIYLE ILGILENMEZ (bkz. `app/vision/vlm_read.py`
+`read_component_value` docstring'i): her YOLO kutusu kendi kirpimiyla 1:1
+eslenir, VLM'in kendi kurdugu dugum adlarina hic ihtiyac kalmaz.
+
+Ground (toprak) sembolu bir DEVRE ELEMANI degil, referans isaretidir:
+degdigi TEK net "gnd" adiyla anilir (bkz. `app.circuit.solve.GROUND_NODES`),
+kendisi Netlist'e eleman olarak eklenmez.
+"""
+from __future__ import annotations
+
+import argparse
+import base64
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from app.circuit.ac import element_results_ac, power_balance_ac, solve_ac  # noqa: E402
+from app.circuit.netlist import Element, Netlist  # noqa: E402
+from app.circuit.page_text import extract_frequency_hz, mentions_unsupported_element  # noqa: E402
+from app.circuit.solve import GROUND_NODES, SolverError, element_results, power_balance, solve_dc  # noqa: E402
+from app.circuit.topology import equivalent_resistance  # noqa: E402
+from app.circuit.transient import rc_step_response, rl_step_response  # noqa: E402
+from app.vision.vlm_read import (  # noqa: E402
+    VLMReadError,
+    parse_ocr_value_hint,
+    read_component_value,
+    read_dependent_source,
+    read_impedance,
+    read_switch_state,
+)
+
+# YOLO/taxonomy sinif adi -> Netlist eleman turu. Kapsam disi kalanlar (diyot,
+# transistor, transformator, op-amp, AC-fazor bagimli kaynak) BILEREK
+# yok -- solve_dc/solve_ac yalnizca direnc+bagimsiz kaynak+kapasitor/bobin
+# (+DC bagimli kaynak, +AC empedans kutusu, +TEK anahtarli gecici rejim)
+# cozuyor, digerleri icin sessizce yanlis sonuc uretmek yerine acikca
+# "desteklenmiyor" denir. "switch" burada da YOK -- KIND_MAP'teki gibi
+# SABIT bir Netlist turune gitmiyor (asla kalici bir Element olmuyor),
+# asagida ozel islenip BEFORE/AFTER netlist ciftine donusuyor (bkz. ana
+# dongu sonrasindaki "ANAHTARLI GECICI REJIM" blogu). source_ac_sine bir
+# GERILIM kaynagi (bkz. devre-yolo-dedektor/symbols.py draw_source_ac_sine)
+# -- egitim verisinde +/- ayrimi yapilmadigi icin YOLO'nun kendisi polarite
+# OGRENEMEDI, ama connectivity.py'deki _POLARITY_READERS artik source_v ile
+# AYNI (SAF PIKSEL, YOLO'dan bagimsiz) source_orientation okuyucusunu
+# kullaniyor -- gercek kitap sekli +/- ciziyorsa net sirasi dogru okunur,
+# cizmiyorsa guvenli sekilde yonsuz kalir (2026-08-21 denetiminde eklendi,
+# oncesinde bu sinif HIC bir okuyucuya sahip degildi). source_ac_i bir AKIM
+# kaynagi (source_i ile ayni
+# ok govdesi + sinus -- bkz. devre-yolo-dedektor/classes.py); daha once
+# burada eksikti, source_i gibi cozulebilir oldugu halde "desteklenmiyor"
+# diye reddediliyordu.
+#
+# "dependent_vcvs" burada YOK -- KIND_MAP'teki gibi SABIT bir Netlist turune
+# gitmiyor, ayri bir ikinci gecişte cozuluyor (bkz. asagidaki
+# _resolve_dependent_sources). Sebep: devre-yolo-dedektor'daki YOLO sinifi
+# "dependent_vcvs" yalnizca SEMBOL SEKLINI (baklava + '+/-' = GERILIM ciktisi)
+# tanimliyor, kontrol turunu (gerilim mi akim mi kontrol ediyor) DEGIL --
+# o ancak etiketten (VLM: "2vx" -> gerilim-kontrollu, "4Io" -> akim-kontrollu)
+# okunabilir, ayrica HANGI baska elemanin kontrol degiskenini tasidigi
+# (control_label_hint ile) coz baglamde tekrar aranmali. "dependent_ccvs"
+# YOLO sinifi (ok ucu = AKIM ciktisi, gercek VCCS/CCCS) BILEREK KIND_MAP'te
+# yok -- netlist.py CIKISI AKIM olan bagimli kaynaklari (VCCS/CCCS) henuz
+# desteklemiyor (bkz. o dosyanin ELEMENT_KINDS yorumu), bu YOLO tespit
+# hatasi degil, gercek bir cozucu kapsam siniri.
+#
+# "impedance_box" da burada YOK, dependent_vcvs ile AYNI sebepten: deger
+# okuma read_component_value'nun basit "sayi+birim" kalibina UYMUYOR --
+# "8+j6 Ω" gibi karmasik bir ifade, ayri bir okuyucu (read_impedance) ve
+# ayri bir parse/donusum (kartezyen -> buyukluk+faz) gerektiriyor (bkz.
+# asagidaki ozel dal + app/vision/vlm_read.py read_impedance docstring'i).
+KIND_MAP = {
+    "resistor": "resistor",
+    "source_v": "voltage_source",
+    "source_i": "current_source",
+    "source_ac_sine": "voltage_source",
+    "source_ac_i": "current_source",
+    "capacitor": "capacitor",
+    "inductor": "inductor",
+}
+
+
+class SolveFromExtractionError(RuntimeError):
+    """Netlist kurulamadi ya da cozulemedi -- mesaj kullaniciya gosterilebilir."""
+
+
+def solve_extraction(data: dict, reference: str | None = None, verbose: bool = True) -> dict:
+    """Tek bir extraction.json icerigini cozer.
+
+    Donen: {"elements": [{"name","kind","value","nodes"}...], "results": {...},
+    "power_balance": float}. Basarisizlikta `SolveFromExtractionError` firlatir
+    (mesaj neden basarisiz oldugunu acikca soyler -- CLI'daki `raise SystemExit`
+    ile ayni bilgiyi tasir, sadece toplu kosumda process durdurmak yerine
+    yakalanabilir bir istisna olarak).
+    """
+    components: dict[str, dict] = data["components"]
+
+    # Sayfanin duz metni -- export_sadiku_test_set.py PNG'nin yanina ayni
+    # adla .txt yaziyor (bkz. o script + app/circuit/page_text.py). Yoksa
+    # (Fiore figurleri, ya da eski bir extraction) sessizce atlanir --
+    # bu YEDEK bir kaynak, zorunlu degil.
+    page_text = None
+    image_path = data.get("image")
+    if image_path:
+        text_path = Path(image_path).with_suffix(".txt")
+        if text_path.exists():
+            page_text = text_path.read_text(encoding="utf-8")
+    if page_text is not None:
+        unsupported = mentions_unsupported_element(page_text)
+        if unsupported is not None:
+            raise SolveFromExtractionError(
+                f"sayfa metninde {unsupported!r} geciyor -- bu devre turu desteklenmiyor "
+                "(YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)"
+            )
+
+    ground_net = None
+    for comp in components.values():
+        if comp["kind"] == "ground" and len(comp["nets"]) == 1:
+            ground_net = comp["nets"][0]
+            break
+
+    def node_name(net_id: int) -> str:
+        return "gnd" if net_id == ground_net else f"n{net_id}"
+
+    elements = []
+    element_log = []
+    frequencies: dict[str, float] = {}
+    # control_label_hint'i olan HER elemani (bagimli kaynak olsun olmasin --
+    # kontrol degiskeni herhangi bir direnc/kaynagin uzerinde olabilir)
+    # sembol -> (isim, dugumler) olarak topluyoruz; ayni sembol 2+ elemanda
+    # gecerse ("Vo" iki yerde) BILEREK belirsiz sayilir (None), tahmin
+    # yapilmaz -- bkz. _resolve_dependent_sources.
+    control_targets: dict[str, list[tuple[str, tuple[str, str]]]] = {}
+    pending_dependent: list[dict] = []
+    # Anahtar (switch) bir DEVRE ELEMANI degil -- gecici rejim (transient)
+    # dispatch'inin BEFORE/AFTER netlist'lerini kurmak icin gereken bir
+    # DURUM bilgisi (bkz. asagidaki, ana dongu SONRASI islenen blok).
+    switches: list[dict] = []
+    for name, comp in components.items():
+        kind = comp["kind"]
+        if kind == "ground":
+            continue
+        nets = comp["nets"]
+        if len(nets) != 2:
+            raise SolveFromExtractionError(
+                f"{name}: {len(nets)} net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)"
+            )
+        node_pair = (node_name(nets[0]), node_name(nets[1]))
+
+        if kind == "dependent_vcvs":
+            image_b64 = base64.b64encode(Path(comp["crop"]).read_bytes()).decode()
+            try:
+                dep = read_dependent_source(image_b64)
+            except VLMReadError as exc:
+                raise SolveFromExtractionError(f"{name}: bagimli kaynak okunamadi -- {exc}") from exc
+            pending_dependent.append({"name": name, "nodes": node_pair, **dep})
+            if verbose:
+                gain, sym = dep["gain"], dep["control_symbol"]
+                kontrol = "akim" if dep["control_is_current"] else "gerilim"
+                print(f"  {name} (dependent_vcvs): {gain:g} * {kontrol}({sym})  [{node_pair[0]} <-> {node_pair[1]}]")
+            continue
+
+        if kind == "impedance_box":
+            image_b64 = base64.b64encode(Path(comp["crop"]).read_bytes()).decode()
+            try:
+                reading = read_impedance(image_b64)
+            except VLMReadError as exc:
+                raise SolveFromExtractionError(f"{name}: empedans okunamadi -- {exc}") from exc
+            elements.append(
+                Element(name=name, kind="impedance", nodes=node_pair, value=reading["value"], phase=reading["phase_degrees"])
+            )
+            element_log.append({"name": name, "kind": "impedance", "value": reading["value"], "nodes": node_pair})
+            if verbose:
+                print(f"  {name} (impedance): {reading['value']:g} Ω ∠ {reading['phase_degrees']:g}°  [{node_pair[0]} <-> {node_pair[1]}]")
+            continue
+
+        if kind == "switch":
+            image_b64 = base64.b64encode(Path(comp["crop"]).read_bytes()).decode()
+            try:
+                state = read_switch_state(image_b64)
+            except VLMReadError as exc:
+                raise SolveFromExtractionError(f"{name}: anahtar durumu okunamadi -- {exc}") from exc
+            switches.append({"name": name, "nodes": node_pair, "closed_before": state["closed"]})
+            if verbose:
+                durum = "kapali" if state["closed"] else "acik"
+                print(f"  {name} (switch): t<0'da {durum}  [{node_pair[0]} <-> {node_pair[1]}]")
+            continue
+
+        # BAGIMLI kaynagin KENDI govdesindeki etiket ("2vx") burada
+        # KAYDEDILMEZ -- bir bagimli kaynak asla baska bir bagimli kaynagin
+        # kontrol hedefi OLAMAZ (bu domainde). OLCULDU (Figure 4_21): bu
+        # kontrol olmadan dependent_vcvs1'in KENDI "x" etiketi de adaylara
+        # karisip gercekte TEK olan eslesmeyi (resistor1/resistor3'ten
+        # sadece biri gercek hedef) yapay olarak belirsizlestiriyordu.
+        label = comp.get("control_label_hint")
+        if label:
+            control_targets.setdefault(label, []).append((name, node_pair))
+
+        mapped = KIND_MAP.get(kind)
+        if mapped is None:
+            raise SolveFromExtractionError(f"{name} ({kind}): bu tur henuz desteklenmiyor, cozulemez")
+
+        # OCR (bkz. devre-yolo-dedektor/extract_for_solve.py ocr_value_hint)
+        # kirpimin yakininda TEK, acik bir deger-benzeri metin bulmussa VLM'i
+        # HIC CAGIRMADAN parse edilir -- VLM (ag uzerinden model calistirma)
+        # pipeline'in en yavas adimi, OCR zaten net bir sinyal verdiyse
+        # tekrar sormanin bir faydasi yok. OCR belirsizse/bulamamissa
+        # (None) ya da parse basarisizsa (Omega'yi "0" okumasi gibi) VLM'e
+        # DUSER -- asla tahmin etmez.
+        ocr_hint = comp.get("ocr_value_hint")
+        reading = parse_ocr_value_hint(ocr_hint) if ocr_hint else None
+        if reading is not None and verbose:
+            print(f"  {name}: OCR'dan dogrudan okundu ({ocr_hint!r}), VLM atlandi")
+        if reading is None:
+            image_b64 = base64.b64encode(Path(comp["crop"]).read_bytes()).decode()
+            try:
+                reading = read_component_value(image_b64)
+            except VLMReadError as exc:
+                raise SolveFromExtractionError(f"{name}: VLM deger okuyamadi -- {exc}") from exc
+        if reading["value"] is None:
+            raise SolveFromExtractionError(f"{name}: VLM degeri okuyamadi (null dondu), elle girilmeli")
+        if reading["frequency_hz"] is not None:
+            frequencies[name] = reading["frequency_hz"]
+
+        elements.append(
+            Element(name=name, kind=mapped, nodes=node_pair, value=reading["value"], phase=reading["phase_degrees"])
+        )
+        element_log.append({"name": name, "kind": kind, "value": reading["value"], "nodes": node_pair})
+        if verbose:
+            print(f"  {name} ({kind}): {reading['value']:g}  [{node_pair[0]} <-> {node_pair[1]}]")
+
+    # IKINCI GECIS: her bekleyen bagimli kaynak icin, control_symbol'unu
+    # TASIYAN TEK elemani control_targets'tan bul (bkz. yukaridaki toplama
+    # ve modul basindaki KIND_MAP yorumu). GERCEK VERIDE DOGRULANDI (Fiore
+    # Figure 2.23): dependent_vcvs govdesinde "2vo" yaziyor, resistor1'in
+    # KENDI kirpiminda ayrica "+ vo -" etiketi var -- OCR bunu "Vo" olarak
+    # ayirt edilebilir sekilde buluyor (bkz. devre-yolo-dedektor/
+    # extract_for_solve.py control_label_hint).
+    for dep in pending_dependent:
+        symbol = dep["control_symbol"]
+        matches = control_targets.get(symbol, [])
+        if len(matches) != 1:
+            raise SolveFromExtractionError(
+                f"{dep['name']}: kontrol degiskeni {symbol!r} icin {len(matches)} aday bulundu "
+                f"(TEK olmali) -- {matches}"
+            )
+        control_name, control_nodes = matches[0]
+        if dep["control_is_current"]:
+            netlist_kind, extra = "ccvs", {"control_element": control_name}
+        else:
+            netlist_kind, extra = "vcvs", {"control_nodes": control_nodes}
+        elements.append(
+            Element(name=dep["name"], kind=netlist_kind, nodes=dep["nodes"], value=dep["gain"], **extra)
+        )
+        element_log.append(
+            {"name": dep["name"], "kind": netlist_kind, "value": dep["gain"], "nodes": dep["nodes"],
+             "control": control_name}
+        )
+
+    # ANAHTARLI GECICI REJIM (transient) -- normal DC/AC dispatch'ten TAMAMEN
+    # AYRI bir mod, o yuzden burada erken donuyor. Sadiku Bolum 7'nin
+    # tanimi geregi TEK anahtar + TEK depolama elemani (kapasitor YA DA
+    # bobin, ikisi birden degil -- o "ikinci derece" olur, ayri bir konu,
+    # burada desteklenmiyor). `app/circuit/transient.py`'nin BEFORE/AFTER
+    # netlist mantigi (bkz. o modulun docstring'i) burada kullanilir:
+    # anahtarin CIZILI (t<0) durumu kapaliysa iki ucu BIRLESTIRILIR (tel),
+    # aciksa hic eklenmez (kopuk) -- t>=0'da (after) TERSI uygulanir.
+    if switches:
+        if len(switches) != 1:
+            raise SolveFromExtractionError(
+                f"{len(switches)} anahtar bulundu -- su an yalnizca TEK anahtarli devreler destekleniyor"
+            )
+        switch = switches[0]
+        node_a, node_b = switch["nodes"]
+        # "gnd" HER ZAMAN hayatta kalmali -- BULUNDU (test sirasinda,
+        # 2026-08-24): hangi net'in nets[0]/nets[1] oldugu YOLO/connectivity
+        # siralamasina bagli, "gnd" bazen node_b olup SILINEBILIYORDU (asagida
+        # her zaman node_b elenir) -- devrede referans dugum tumden
+        # kayboluyor, solve_dc "referans yok" hatasi veriyordu.
+        if node_b.lower() in GROUND_NODES:
+            node_a, node_b = node_b, node_a
+
+        def _merged(els: list[Element], old: str, new: str) -> list[Element]:
+            return [
+                Element(
+                    name=e.name,
+                    kind=e.kind,
+                    nodes=tuple(new if n == old else n for n in e.nodes),
+                    value=e.value,
+                    control_nodes=(
+                        tuple(new if n == old else n for n in e.control_nodes)
+                        if e.control_nodes is not None
+                        else None
+                    ),
+                    control_element=e.control_element,
+                    phase=e.phase,
+                )
+                for e in els
+            ]
+
+        if switch["closed_before"]:
+            before_elements, after_elements = _merged(elements, node_b, node_a), elements
+        else:
+            before_elements, after_elements = elements, _merged(elements, node_b, node_a)
+
+        capacitors = [e.name for e in elements if e.kind == "capacitor"]
+        inductors = [e.name for e in elements if e.kind == "inductor"]
+        if len(capacitors) == 1 and not inductors:
+            reactive_name, solver = capacitors[0], rc_step_response
+        elif len(inductors) == 1 and not capacitors:
+            reactive_name, solver = inductors[0], rl_step_response
+        else:
+            raise SolveFromExtractionError(
+                f"gecici rejim icin TAM OLARAK 1 kapasitor YA DA 1 bobin gerekiyor "
+                f"(bulunan: {len(capacitors)} kapasitor, {len(inductors)} bobin -- "
+                "ikisi birden 'ikinci derece' devre olur, henuz desteklenmiyor)"
+            )
+
+        try:
+            response = solver(Netlist(before_elements), Netlist(after_elements), reactive_name, reference=reference)
+        except SolverError as exc:
+            raise SolveFromExtractionError(f"gecici rejim cozulemedi: {exc}") from exc
+        if verbose:
+            print(f"  (anahtarli gecici rejim -- {switch['name']} t=0'da durum degistiriyor)")
+            print(f"  {response.describe()}")
+        return {"elements": element_log, "results": {"gecici_yanit": response}, "power_balance": 0.0}
+
+    # Bir devrede frekans yazılıysa (VLM en az bir kaynakta "f=..."
+    # okuduysa) devre AC'dir -- kapasitör/bobin artık açık/kısa devre
+    # değil, empedanslı fazör çözümü gerekir (bkz. app/circuit/ac.py).
+    # Frekans TEK olmalı: aynı devrede iki farklı kaynak frekansı fiziksel
+    # olarak anlamsız (bu çözücü/kitap kapsamında iki frekanslı analiz yok).
+    distinct = set(frequencies.values())
+    if len(distinct) > 1:
+        raise SolveFromExtractionError(f"devrede birden fazla farkli frekans okundu: {frequencies}")
+
+    # YEDEK: hicbir bilesenin kirpiminda frekans yoksa ama devrede reaktif
+    # eleman (kapasitor/bobin/empedans kutusu) varsa, sayfa metninde bir
+    # frekans ifadesi olabilir (bkz. app/circuit/page_text.py modul
+    # docstring'i -- OLCULDU, Sadiku'da kural bu: frekans hemen hic sema
+    # uzerinde yazmiyor). Bu bir SEZGI (sayfada birden fazla problem
+    # olabilir) -- yalnizca semanin KENDISI hicbir sey vermediginde
+    # devreye giriyor. "impedance" de BURAYA DAHIL -- read_impedance hic
+    # frekans okumaz (Z zaten sabit, frekanstan bagimsiz -- bkz. ac.py
+    # impedance() docstring'i), yani SADECE impedans kutusu iceren bir AC
+    # devrede frekans HER ZAMAN bu yedekten gelmek zorunda.
+    has_reactive = any(e.kind in ("capacitor", "inductor", "impedance") for e in elements)
+    if not distinct and has_reactive and page_text is not None:
+        page_freq = extract_frequency_hz(page_text)
+        if page_freq is not None:
+            distinct = {page_freq}
+            if verbose:
+                print(f"  (frekans semada yok, sayfa metninden alindi: {page_freq:g} Hz)")
+
+    netlist = Netlist(elements)
+
+    # Kaynaksiz devre: "Req/Geq bul" tarzi sorular (Fiore/Sadiku'da sik) --
+    # bunlar gecersiz DEGIL, sadece nodal-analiz + kaynak yerine seri/paralel
+    # (+ yildiz-ucgen) indirgeme ister (bkz. app/circuit/topology.py
+    # equivalent_resistance, ayni fonksiyon theorems.py'de Thevenin direnci
+    # icin de kullaniliyor). Devrenin acik uclari = tam olarak 1 elemana
+    # deyen (derece-1) iki net; digerleri (0, 1 veya 3+ ucuk) belirsiz
+    # sayilir, tahmin edilmez.
+    has_source = any(e.kind in ("voltage_source", "current_source", "vcvs", "ccvs") for e in elements)
+    if not has_source:
+        if elements and all(e.kind == "resistor" for e in elements):
+            # AYNI sifir-deger riski burada da var (BULUNDU, 2026-08-21
+            # denetimi, gercek cagriyla dogrulandi: iki 0 Ω direnc paralel
+            # olunca _parallel_value'nin (r1*r2)/(r1+r2) hesabi 0/0 ile
+            # coker) -- solve_dc/solve_ac'teki AYNI koruma burada YOKTU,
+            # cunku bu yol o fonksiyonlara hic ugramiyor.
+            zero_valued = [e.name for e in elements if e.value == 0]
+            if zero_valued:
+                raise SolveFromExtractionError(
+                    f"{', '.join(zero_valued)}: direnç değeri 0 -- muhtemelen okuma hatası, çözülemez"
+                )
+            # dangling_nodes() Netlist'in KENDI derece-1 hesabi -- burada
+            # AYNI mantigi elle tekrar yazmak yerine onu kullaniyoruz
+            # (BULUNDU, 2026-08-21 denetimi: eskiden burada elle bir
+            # degree-dict kuruluyordu, netlist.py'deki dangling_nodes()'un
+            # BIREBIR kopyasiydi).
+            terminals = netlist.dangling_nodes()
+            if len(terminals) == 2:
+                req = equivalent_resistance(netlist, terminals[0], terminals[1])
+                if req is not None:
+                    if verbose:
+                        print(f"  (kaynaksiz devre -- {terminals[0]}-{terminals[1]} arasi esdeger direnc)")
+                        print(f"  R_esdeger = {req:g} Ohm")
+                    return {
+                        "elements": element_log,
+                        "results": {"esdeger_direnc_ohm": req, "terminals": terminals},
+                        "power_balance": 0.0,
+                    }
+        raise SolveFromExtractionError(
+            "devrede kaynak yok ve esdeger direnc hesaplanamadi "
+            "(tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)"
+        )
+
+    if distinct:
+        frequency = distinct.pop()
+        try:
+            solution = solve_ac(netlist, frequency, reference=reference)
+        except SolverError as exc:
+            raise SolveFromExtractionError(f"cozulemedi (AC): {exc}") from exc
+        results = element_results_ac(netlist, solution, frequency)
+        balance = power_balance_ac(results)
+        if verbose:
+            print(f"  (AC, f = {frequency:g} Hz)")
+    else:
+        try:
+            solution = solve_dc(netlist, reference=reference)
+        except SolverError as exc:
+            raise SolveFromExtractionError(f"cozulemedi (DC): {exc}") from exc
+        results = element_results(netlist, solution)
+        balance = power_balance(results)
+
+    return {"elements": element_log, "results": results, "power_balance": balance}
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--extraction", required=True, help="extract_for_solve.py ciktisi (extraction.json)")
+    parser.add_argument("--reference", default=None, help="toprak yoksa referans dugum adi")
+    args = parser.parse_args()
+
+    data = json.loads(Path(args.extraction).read_text(encoding="utf-8"))
+    try:
+        out = solve_extraction(data, reference=args.reference, verbose=True)
+    except SolveFromExtractionError as exc:
+        raise SystemExit(str(exc)) from exc
+
+    print("\nSonuclar:")
+    # Kaynaksiz (Req/Geq) yolu farkli bir sekil dondurur -- ElementResult
+    # DEGIL, {"esdeger_direnc_ohm": float, "terminals": [a, b]} (bkz.
+    # solve_extraction'daki kaynaksiz devre dali). BULUNDU (2026-08-21
+    # denetimi): asagidaki .describe()/.power erisimleri bu yolda
+    # AttributeError ile CLI'yi cokertiyordu -- batch_solve.py etkilenmedi
+    # (o .describe() hic cagirmiyor), yalnizca burasi.
+    if "esdeger_direnc_ohm" in out["results"]:
+        req = out["results"]["esdeger_direnc_ohm"]
+        a, b = out["results"]["terminals"]
+        print(f"  R_esdeger({a}, {b}) = {req:g} Ohm")
+        return
+    # Anahtarli gecici rejim yolu da farkli bir sekil dondurur --
+    # {"gecici_yanit": FirstOrderResponse} (bkz. solve_extraction'daki
+    # switch dali). FirstOrderResponse'un KENDI .describe()'u var (Req'in
+    # aksine) ama .power YOK -- asagidaki guc dengesi/Tellegen kontrolu bu
+    # yolda ANLAMSIZ (tek bir DC calisma noktasi degil, zamana bagli bir
+    # yanit), o yuzden erken donuluyor.
+    if "gecici_yanit" in out["results"]:
+        print(f"  {out['results']['gecici_yanit'].describe()}")
+        return
+    for r in out["results"].values():
+        print(f"  {r.describe()}")
+
+    balance = out["power_balance"]
+    print(f"\nguc dengesi (0 olmali): {balance!s}")
+    # UYARI: bu kontrol Tellegen teoreminden gelir -- solve_dc HANGI DEGERI
+    # verirsen ver KVL/KCL'yi cozerek dogal olarak 0 uretir (OLCULDU: VLM
+    # yanlis deger okudugunda -- 2 ohm yerine 4 ohm -- bu kontrol yine de
+    # ~0 verdi). Yani SADECE topoloji/cozucu gecerliligini dogrular, VLM'in
+    # DOGRU DEGERI okudugunu KANITLAMAZ. Deger dogrulugu icin bagimsiz bir
+    # kaynak (kitabin bastigi cevap, elle olcum) gerekir.
+    ok = abs(balance) < 1e-6 * max(1.0, sum(abs(r.power) for r in out["results"].values()))
+    print("(cozucu/topoloji tutarli)" if ok else "(TUTARSIZ -- topoloji/polarite hatali olabilir)")
+    print("NOT: bu kontrol VLM'in okudugu DEGERLERIN dogrulugunu KANITLAMAZ, sadece cozumun ic tutarliligini gosterir.")
+
+
+if __name__ == "__main__":
+    main()
