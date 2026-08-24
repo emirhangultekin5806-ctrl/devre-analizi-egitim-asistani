@@ -430,6 +430,28 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             "(tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)"
         )
 
+    # ACIK UC (derece-1 dugum) kontrolu -- SADECE kaynakli yolda. Kaynaksiz
+    # (Req) yol acik uclara MUHTAC (terminaller onlar, bkz. yukarisi), ama
+    # kaynakli bir devrede tek elemana degen bir dugum akim akitamaz: ngspice
+    # o dugum icin gerilim URETMEZ, `element_results` da onu sorunca ham bir
+    # KeyError ile COKER -- SolveFromExtractionError degil, yani cagiran
+    # taraf icin ne anlasilir ne de duzgun yakalanabilir bir hata.
+    # BULUNDU (2026-08-24, Devre Fotoları 1-100/31.png ve 101-131/116.png):
+    # ikisinde de connectivity bir kondansatoru devrenin geri kalanina hic
+    # baglayamamis (her iki ucu da sadece kendisine degiyor), sonuc
+    # `KeyError: "'n7' dugumu cozumde yok"` seklinde anlamsiz bir cokme
+    # oluyordu. Devre GERCEKTEN boyle cizilmis olamaz (o eleman akim
+    # tasiyamazdi), yani bu bir cikarim hatasi -- sessizce eksik bir devre
+    # cozup fiziksel olarak yanlis cevap vermek yerine acikca reddediliyor.
+    dangling = netlist.dangling_nodes()
+    if dangling:
+        touching = sorted({e.name for e in elements if set(e.nodes) & set(dangling)})
+        raise SolveFromExtractionError(
+            f"acik uc: {', '.join(touching)} elemani devrenin geri kalanina baglanmamis "
+            f"(dugum {', '.join(dangling)} yalnizca tek elemana degiyor) -- "
+            "baglanti cikarimi eksik, cozulemez"
+        )
+
     if distinct:
         frequency = distinct.pop()
         try:

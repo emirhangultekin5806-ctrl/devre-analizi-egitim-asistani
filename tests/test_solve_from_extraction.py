@@ -276,6 +276,52 @@ def test_vlm_fallback_also_fails_still_raises(tmp_path, monkeypatch):
         sfe.solve_extraction(data, verbose=False)
 
 
+def test_dangling_node_with_source_is_rejected_clearly(tmp_path, monkeypatch):
+    """BULUNDU (2026-08-24, Devre Fotoları 1-100/31.png, 101-131/116.png):
+    connectivity bir kondansatoru devreye hic baglayamayinca (her iki ucu
+    da derece-1) ngspice o dugumler icin gerilim uretmiyor, element_results
+    ham `KeyError: "'n7' dugumu cozumde yok"` ile COKUYORDU -- yakalanabilir
+    bir SolveFromExtractionError degil. Kaynakli devrede acik uc = cikarim
+    hatasi, acikca reddedilmeli."""
+    readings = {
+        "source_v1": {"value": 10.0, "phase_degrees": 0, "frequency_hz": None},
+        "resistor1": {"value": 50.0, "phase_degrees": 0, "frequency_hz": None},
+        "resistor2": {"value": 20.0, "phase_degrees": 0, "frequency_hz": None},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "ground": {"kind": "ground", "nets": [0]},
+            "source_v1": {"kind": "source_v", "nets": [1, 0]},
+            "resistor1": {"kind": "resistor", "nets": [1, 0]},
+            # net 2 ve 3'e BASKA hicbir eleman degmiyor -- tamamen kopuk.
+            "resistor2": {"kind": "resistor", "nets": [2, 3]},
+        },
+    )
+    with pytest.raises(sfe.SolveFromExtractionError, match="acik uc"):
+        sfe.solve_extraction(data, verbose=False)
+
+
+def test_sourceless_dangling_nodes_still_allowed_for_req(tmp_path, monkeypatch):
+    """Acik uc kontrolu kaynaksiz (Req) yolu BOZMAMALI -- orada acik uclar
+    terminallerin ta kendisi (bkz. equivalent_resistance cagrisi)."""
+    readings = {
+        "resistor1": {"value": 10.0, "phase_degrees": 0, "frequency_hz": None},
+        "resistor2": {"value": 20.0, "phase_degrees": 0, "frequency_hz": None},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "resistor1": {"kind": "resistor", "nets": [0, 1]},
+            "resistor2": {"kind": "resistor", "nets": [1, 2]},
+        },
+    )
+    out = sfe.solve_extraction(data, verbose=False)
+    assert out["results"]["esdeger_direnc_ohm"] == pytest.approx(30.0)
+
+
 def test_sourceless_series_circuit_computes_equivalent_resistance(tmp_path, monkeypatch):
     """'Req bul' tarzi kaynaksiz sorular GECERSIZ degil -- seri/paralel
     indirgemeyle cozulmeli (bkz. app/circuit/topology.py equivalent_resistance).
