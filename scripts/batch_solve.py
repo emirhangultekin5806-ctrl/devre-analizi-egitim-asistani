@@ -17,6 +17,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from scripts.solve_from_extraction import SolveFromExtractionError, solve_extraction  # noqa: E402
 
+# Windows konsolu varsayilan olarak cp1254/cp1252 kullanir -- gercek devre
+# verisinde gecen Yunan harfleri (orn. bagimli kaynak kontrol degiskeni
+# "i_delta") bu kod sayfasinda YOK, print() UnicodeEncodeError ile COKUYOR
+# ve 100+ figurluk butun kosum yarida kesiliyor (rapor dosyasi zaten
+# ensure_ascii=False ile UTF-8 yazildigi icin etkilenmiyordu, sadece konsol
+# ciktisi coktu). BULUNDU: 2026-08-24, real_screenshots_50 kosusunda.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(errors="backslashreplace")
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()

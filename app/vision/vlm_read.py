@@ -377,6 +377,81 @@ def read_switch_state(image_base64: str) -> dict:
     return {"closed": bool(closed)}
 
 
+_CONTROL_TARGET_SYSTEM_PROMPT = """Sen bir devre şeması okuyucususun. Sana birden
+fazla kırpılmış görüntü verilecek: İLK görüntü bağımlı (kontrollü) bir
+kaynağın gövdesi (üzerinde "150iβ", "2vx" gibi bir KATSAYI+DEĞİŞKEN yazar).
+SONRAKİ görüntüler (2, 3, 4...) devredeki DİĞER elemanlar, her biri
+numaralandırılmış.
+
+GÖREV: İlk görüntüdeki değişkenin alt indisiyle (harften SONRAKİ kısım,
+örn. "iβ" -> "β") AYNI harf/sembolün yazılı olduğu elemanı numaralı
+görüntüler arasından bul. Yunanca/Latin fark etmez, SADECE görsel olarak
+AYNI karakter mi diye bak, anlamını değil.
+
+KURALLAR:
+- Kaç numaralı görüntüde o TAM sembol yazıyorsa o numarayı yaz.
+- Hiçbirinde yoksa, birden fazlasında varsa, ya da emin değilsen "index"
+  alanını null bırak -- TAHMİN ETME.
+
+ÇIKTI BİÇİMİ — yalnızca şu JSON'u yaz, başka hiçbir şey yazma:
+{"index": 2}"""
+
+
+def read_control_variable_target(dependent_crop_b64: str, candidates: list[tuple[str, str]]) -> str | None:
+    """Bagimli kaynagin kontrol degiskenini, METIN OKUMADAN, gorsel olarak
+    hangi ADAY elemana ait oldugunu bularak coz.
+
+    `control_label_hint` (devre-yolo-dedektor/extract_for_solve.py, EasyOCR
+    tabanli) SADECE Latin alfabesini taniyor -- kutuphane Yunanca'yi (`el`)
+    HIC DESTEKLEMIYOR (dogrulandi: `easyocr.Reader(['en','el'])` "is not
+    supported" hatasi veriyor), OCR bu yuzden "iΔ" gibi bir etiketi asla
+    bulamiyor, `_resolve_dependent_sources` "0 aday bulundu" ile
+    reddediyordu. Once tek-tek kirpim okuyup METIN karsilastiran bir
+    fallback denendi -- calisti ama kirpim cerceveleri birbirine yakin
+    elemanlarda ORTUSTUGU icin (BULUNDU, 2026-08-24, 75.png/86.png: ayni
+    "δ"/"β" birden fazla komsu kirpimda "gorulup" belirsizlik yaratti)
+    tek basina yetmedi.
+
+    Bu fonksiyon FARKLI bir strateji kullanir (kullanicinin onerisi): sembolu
+    OKUYUP ANLAMAYA calismak yerine, TUM adaylari TEK bir cok-gorselli VLM
+    cagrisinda yan yana koyup "hangisi gorsel olarak ayni karakter" diye
+    sorar -- Ollama'nin chat API'si `images` alaninda BIRDEN FAZLA gorseli
+    ayni mesajda kabul ediyor (minicpm-v coklu-gorsel destekliyor), bu
+    yuzden ek bir kutuphane/model gerekmiyor. Karsilastirma piksel-gorsel
+    seviyesinde oldugu icin OCR'in Yunanca kisitlamasindan tamamen bagimsiz.
+
+    `candidates`: [(eleman_adi, kirpim_base64), ...] -- sirayla 2, 3, 4...
+    olarak numaralandirilir (1 = bagimli kaynagin kendisi).
+
+    Donen: eslesen adayin eleman adi, ya da bulunamadi/belirsizse None.
+    """
+    if not candidates:
+        return None
+    images = [dependent_crop_b64] + [b64 for _, b64 in candidates]
+    numbered = "\n".join(f"{i + 2}: {name}" for i, (name, _) in enumerate(candidates))
+    raw = _call_vlm_with_images(
+        images, _CONTROL_TARGET_SYSTEM_PROMPT,
+        f"1. görüntü bağımlı kaynak, aşağıdaki numaralar diğer elemanlar:\n{numbered}\nHangisi eşleşiyor?",
+    )
+    match = _VALUE_JSON_RE.search(raw)
+    if not match:
+        raise VLMReadError("VLM yanıtında JSON bulunamadı.", raw=raw)
+    try:
+        payload = json.loads(match.group(0))
+    except json.JSONDecodeError as exc:
+        raise VLMReadError(f"VLM yanıtı geçerli JSON değil: {exc}", raw=raw) from exc
+    index = payload.get("index")
+    if index is None:
+        return None
+    try:
+        pos = int(index) - 2
+    except (TypeError, ValueError) as exc:
+        raise VLMReadError(f"Sayısal olmayan index {index!r}", raw=raw) from exc
+    if not (0 <= pos < len(candidates)):
+        return None
+    return candidates[pos][0]
+
+
 class VLMReadError(RuntimeError):
     """VLM çıktısı ayrıştırılamadı/beklenen biçimde değil.
 
@@ -395,6 +470,13 @@ def _call_vlm(image_base64: str) -> str:
 
 
 def _call_vlm_with_prompt(image_base64: str, system_prompt: str, user_text: str) -> str:
+    return _call_vlm_with_images([image_base64], system_prompt, user_text)
+
+
+def _call_vlm_with_images(images: list[str], system_prompt: str, user_text: str) -> str:
+    """`_call_vlm_with_prompt` ile AYNI, ama birden fazla goruntu kabul eder --
+    Ollama chat API'sindeki `images` alani zaten liste (bkz. minicpm-v'nin
+    coklu-gorsel destegi), tek goruntulu cagri bunun ozel hali."""
     response = requests.post(
         OLLAMA_CHAT_URL,
         json={
@@ -404,7 +486,7 @@ def _call_vlm_with_prompt(image_base64: str, system_prompt: str, user_text: str)
                 {
                     "role": "user",
                     "content": user_text,
-                    "images": [image_base64],
+                    "images": images,
                 },
             ],
             "stream": False,

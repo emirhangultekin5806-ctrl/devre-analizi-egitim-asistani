@@ -33,6 +33,7 @@ from app.vision.vlm_read import (  # noqa: E402
     VLMReadError,
     parse_ocr_value_hint,
     read_component_value,
+    read_control_variable_target,
     read_dependent_source,
     read_impedance,
     read_switch_state,
@@ -247,6 +248,31 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
     for dep in pending_dependent:
         symbol = dep["control_symbol"]
         matches = control_targets.get(symbol, [])
+        if not matches:
+            # OCR eslesmesi sifir -- BULUNDU (2026-08-24): en sık sebep
+            # Yunanca kontrol degiskeni (EasyOCR Yunanca'yi HIC desteklemiyor,
+            # bkz. read_control_variable_target docstring'i), ama ASCII
+            # sembolde de OCR kacirabiliyor. Metin okumaya calismak yerine
+            # bagimli kaynagin kirpimini TUM aday elemanlarin kirpimlariyla
+            # BIRLIKTE tek bir cok-gorselli VLM cagrisina verip "hangisi
+            # gorsel olarak ayni sembol" diye soruyoruz -- OCR/dil kisitindan
+            # tamamen bagimsiz.
+            candidates = [
+                (name, comp)
+                for name, comp in components.items()
+                if comp["kind"] not in ("ground", "dependent_vcvs", "switch") and len(comp["nets"]) == 2
+            ]
+            try:
+                dep_crop_b64 = base64.b64encode(Path(components[dep["name"]]["crop"]).read_bytes()).decode()
+                found = read_control_variable_target(
+                    dep_crop_b64,
+                    [(name, base64.b64encode(Path(c["crop"]).read_bytes()).decode()) for name, c in candidates],
+                )
+            except VLMReadError:
+                found = None
+            if found is not None:
+                comp = components[found]
+                matches = [(found, (node_name(comp["nets"][0]), node_name(comp["nets"][1])))]
         if len(matches) != 1:
             raise SolveFromExtractionError(
                 f"{dep['name']}: kontrol degiskeni {symbol!r} icin {len(matches)} aday bulundu "

@@ -230,6 +230,47 @@ def test_missing_control_symbol_raises(tmp_path, monkeypatch):
     dep_readings["dependent_vcvs1"]["control_symbol"] = "z"
     monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
     monkeypatch.setattr(sfe, "read_dependent_source", _fake_dependent_reader(dep_readings))
+    monkeypatch.setattr(sfe, "read_control_variable_target", lambda dep_crop_b64, candidates: None)
+
+    with pytest.raises(sfe.SolveFromExtractionError, match="0 aday bulundu"):
+        sfe.solve_extraction(data, verbose=False)
+
+
+def test_zero_ocr_matches_falls_back_to_vlm_visual_match(tmp_path, monkeypatch):
+    """EasyOCR Yunanca'yi desteklemedigi icin control_label_hint boyle bir
+    etiketi ("δ") asla bulamaz -- BULUNDU (2026-08-24, Devre Fotoları
+    1-100/38.png). OCR'dan 0 aday geldiginde, bagimli kaynagin kirpimi
+    TUM adaylarla birlikte tek bir VLM cagrisina verilip gorsel eslesme
+    aranmali -- sembol metnini OKUMADAN, dogrudan hangi adayin eslestigini
+    sorarak (bkz. read_control_variable_target docstring'i)."""
+    data, readings, dep_readings = _dependent_circuit(tmp_path, control_is_current=False)
+    data["components"]["resistor1"].pop("control_label_hint")  # OCR bulamadi (Yunanca)
+    dep_readings["dependent_vcvs1"]["control_symbol"] = "δ"
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    monkeypatch.setattr(sfe, "read_dependent_source", _fake_dependent_reader(dep_readings))
+    monkeypatch.setattr(
+        sfe, "read_control_variable_target",
+        lambda dep_crop_b64, candidates: next(
+            (name for name, b64 in candidates if base64.b64decode(b64).decode() == "resistor1"), None
+        ),
+    )
+
+    out = sfe.solve_extraction(data, verbose=False)
+
+    dep_el = next(e for e in out["elements"] if e["name"] == "dependent_vcvs1")
+    assert dep_el["control"] == "resistor1"
+    assert abs(out["power_balance"]) < 1e-6
+
+
+def test_vlm_fallback_also_fails_still_raises(tmp_path, monkeypatch):
+    """VLM fallback da eslesme bulamazsa (gercekten yoksa) SESSIZCE tahmin
+    edip yanlis bir adaya duşmek yerine acikca reddedilmeli."""
+    data, readings, dep_readings = _dependent_circuit(tmp_path, control_is_current=False)
+    dep_readings["dependent_vcvs1"]["control_symbol"] = "z"  # hicbir elemanda yok
+
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    monkeypatch.setattr(sfe, "read_dependent_source", _fake_dependent_reader(dep_readings))
+    monkeypatch.setattr(sfe, "read_control_variable_target", lambda dep_crop_b64, candidates: None)
 
     with pytest.raises(sfe.SolveFromExtractionError, match="0 aday bulundu"):
         sfe.solve_extraction(data, verbose=False)

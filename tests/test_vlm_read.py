@@ -260,3 +260,40 @@ def test_read_switch_state_uncertain_raises(monkeypatch):
     monkeypatch.setattr(vlm_read, "_call_vlm_with_prompt", lambda *a, **k: '{"closed": null}')
     with pytest.raises(VLMReadError, match="belirsiz"):
         vlm_read.read_switch_state("fake_b64")
+
+
+# --- kontrol degiskeni hedefi (read_control_variable_target) ----------------
+# BULUNDU (2026-08-24, Devre Fotoları 1-100/38.png): EasyOCR Yunanca'yi hic
+# desteklemiyor, control_label_hint bu yuzden "iΔ" gibi etiketleri asla
+# bulamiyordu. Bu fonksiyon sembolu OKUMADAN, coklu-gorselli tek VLM
+# cagrisiyla hangi adayin gorsel olarak eslestigini bulur.
+
+
+def test_read_control_variable_target_picks_matching_index(monkeypatch):
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_images", lambda *a, **k: '{"index": 3}')
+    result = vlm_read.read_control_variable_target(
+        "dep_b64", [("resistor1", "r1_b64"), ("inductor1", "l1_b64")]
+    )
+    assert result == "inductor1"  # index 3 -> candidates[1] (2=ilk aday, 3=ikinci)
+
+
+def test_read_control_variable_target_no_match_returns_none(monkeypatch):
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_images", lambda *a, **k: '{"index": null}')
+    result = vlm_read.read_control_variable_target("dep_b64", [("resistor1", "r1_b64")])
+    assert result is None
+
+
+def test_read_control_variable_target_empty_candidates_skips_call(monkeypatch):
+    def _must_not_be_called(*a, **k):
+        raise AssertionError("aday yokken VLM cagrilmamaliydi")
+
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_images", _must_not_be_called)
+    assert vlm_read.read_control_variable_target("dep_b64", []) is None
+
+
+def test_read_control_variable_target_out_of_range_index_returns_none(monkeypatch):
+    """VLM gecersiz/hayali bir index donerse (adaylarin disinda) TAHMIN
+    edip YANLIS bir adaya duşmek yerine None donmeli."""
+    monkeypatch.setattr(vlm_read, "_call_vlm_with_images", lambda *a, **k: '{"index": 99}')
+    result = vlm_read.read_control_variable_target("dep_b64", [("resistor1", "r1_b64")])
+    assert result is None
