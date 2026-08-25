@@ -252,20 +252,26 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             # OCR eslesmesi sifir -- BULUNDU (2026-08-24): en sık sebep
             # Yunanca kontrol degiskeni (EasyOCR Yunanca'yi HIC desteklemiyor,
             # bkz. read_control_variable_target docstring'i), ama ASCII
-            # sembolde de OCR kacirabiliyor. Metin okumaya calismak yerine
-            # bagimli kaynagin kirpimini TUM aday elemanlarin kirpimlariyla
-            # BIRLIKTE tek bir cok-gorselli VLM cagrisina verip "hangisi
-            # gorsel olarak ayni sembol" diye soruyoruz -- OCR/dil kisitindan
-            # tamamen bagimsiz.
+            # sembolde de OCR kacirabiliyor. Yedek yol: her aday kirpima
+            # "bu goruntude 'ix' yaziyor mu" diye TEK TEK sorup TEK isabet
+            # arıyoruz -- OCR/dil kisitindan tamamen bagimsiz.
+            #
+            # Aranan sey SADECE ALT INDIS ("x", "δ"): read_dependent_source
+            # bazen alt indisi ("δ"), bazen tam adi ("i_δ") donuyor (OLCULDU,
+            # 38.png) -- oneki soyup tek bicime getiriyoruz. Onek ARAMAYA
+            # KATILMIYOR, cunku control_is_current bayragi guvenilmez (bkz.
+            # crop_has_label docstring'i, 86.png).
+            core = symbol[2:] if symbol[:2] in ("i_", "v_") else (
+                symbol[1:] if symbol[:1] in ("i", "v") and len(symbol) > 1 else symbol
+            )
             candidates = [
                 (name, comp)
                 for name, comp in components.items()
                 if comp["kind"] not in ("ground", "dependent_vcvs", "switch") and len(comp["nets"]) == 2
             ]
             try:
-                dep_crop_b64 = base64.b64encode(Path(components[dep["name"]]["crop"]).read_bytes()).decode()
                 found = read_control_variable_target(
-                    dep_crop_b64,
+                    core,
                     [(name, base64.b64encode(Path(c["crop"]).read_bytes()).decode()) for name, c in candidates],
                 )
             except VLMReadError:

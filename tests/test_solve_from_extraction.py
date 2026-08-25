@@ -230,7 +230,7 @@ def test_missing_control_symbol_raises(tmp_path, monkeypatch):
     dep_readings["dependent_vcvs1"]["control_symbol"] = "z"
     monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
     monkeypatch.setattr(sfe, "read_dependent_source", _fake_dependent_reader(dep_readings))
-    monkeypatch.setattr(sfe, "read_control_variable_target", lambda dep_crop_b64, candidates: None)
+    monkeypatch.setattr(sfe, "read_control_variable_target", lambda label, candidates: None)
 
     with pytest.raises(sfe.SolveFromExtractionError, match="0 aday bulundu"):
         sfe.solve_extraction(data, verbose=False)
@@ -248,18 +248,47 @@ def test_zero_ocr_matches_falls_back_to_vlm_visual_match(tmp_path, monkeypatch):
     dep_readings["dependent_vcvs1"]["control_symbol"] = "δ"
     monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
     monkeypatch.setattr(sfe, "read_dependent_source", _fake_dependent_reader(dep_readings))
-    monkeypatch.setattr(
-        sfe, "read_control_variable_target",
-        lambda dep_crop_b64, candidates: next(
+    captured_labels = []
+
+    def _fake_target(label, candidates):
+        captured_labels.append(label)
+        return next(
             (name for name, b64 in candidates if base64.b64decode(b64).decode() == "resistor1"), None
-        ),
-    )
+        )
+
+    monkeypatch.setattr(sfe, "read_control_variable_target", _fake_target)
 
     out = sfe.solve_extraction(data, verbose=False)
 
     dep_el = next(e for e in out["elements"] if e["name"] == "dependent_vcvs1")
     assert dep_el["control"] == "resistor1"
     assert abs(out["power_balance"]) < 1e-6
+    # Aranan sey SADECE alt indis olmali (i/v oneki YOK -- bkz. crop_has_label).
+    assert captured_labels == ["δ"]
+
+
+def test_prefixed_control_symbol_is_normalized_before_lookup(tmp_path, monkeypatch):
+    """read_dependent_source bazen sadece alt indisi ("δ"), bazen tam adi
+    ("i_δ") donuyor (OLCULDU, 38.png) -- aranan etiket TEK bicime
+    indirgenmeli, yoksa kirpimda "iδ" yazarken "ii_δ" aranir."""
+    data, readings, dep_readings = _dependent_circuit(tmp_path, control_is_current=True)
+    data["components"]["resistor1"].pop("control_label_hint")
+    dep_readings["dependent_vcvs1"]["control_symbol"] = "i_δ"
+    captured_labels = []
+
+    def _fake_target(label, candidates):
+        captured_labels.append(label)
+        return next(
+            (name for name, b64 in candidates if base64.b64decode(b64).decode() == "resistor1"), None
+        )
+
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    monkeypatch.setattr(sfe, "read_dependent_source", _fake_dependent_reader(dep_readings))
+    monkeypatch.setattr(sfe, "read_control_variable_target", _fake_target)
+
+    sfe.solve_extraction(data, verbose=False)
+
+    assert captured_labels == ["δ"], f"onek soyulmaliydi, gelen: {captured_labels}"
 
 
 def test_vlm_fallback_also_fails_still_raises(tmp_path, monkeypatch):
@@ -270,7 +299,7 @@ def test_vlm_fallback_also_fails_still_raises(tmp_path, monkeypatch):
 
     monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
     monkeypatch.setattr(sfe, "read_dependent_source", _fake_dependent_reader(dep_readings))
-    monkeypatch.setattr(sfe, "read_control_variable_target", lambda dep_crop_b64, candidates: None)
+    monkeypatch.setattr(sfe, "read_control_variable_target", lambda label, candidates: None)
 
     with pytest.raises(sfe.SolveFromExtractionError, match="0 aday bulundu"):
         sfe.solve_extraction(data, verbose=False)

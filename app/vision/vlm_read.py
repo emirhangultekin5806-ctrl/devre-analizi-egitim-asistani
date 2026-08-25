@@ -377,61 +377,38 @@ def read_switch_state(image_base64: str) -> dict:
     return {"closed": bool(closed)}
 
 
-_CONTROL_TARGET_SYSTEM_PROMPT = """Sen bir devre şeması okuyucususun. Sana birden
-fazla kırpılmış görüntü verilecek: İLK görüntü bağımlı (kontrollü) bir
-kaynağın gövdesi (üzerinde "150iβ", "2vx" gibi bir KATSAYI+DEĞİŞKEN yazar).
-SONRAKİ görüntüler (2, 3, 4...) devredeki DİĞER elemanlar, her biri
-numaralandırılmış.
+_LABEL_PRESENT_SYSTEM_PROMPT = """Sen bir devre şeması okuyucususun. Sana TEK BİR
+devre elemanının kırpılmış görüntüsü verilecek.
 
-GÖREV: İlk görüntüdeki değişkenin alt indisiyle (harften SONRAKİ kısım,
-örn. "iβ" -> "β") AYNI harf/sembolün yazılı olduğu elemanı numaralı
-görüntüler arasından bul. Yunanca/Latin fark etmez, SADECE görsel olarak
-AYNI karakter mi diye bak, anlamını değil.
+Görüntüde, alt indisi "{sub}" olan bir AKIM veya GERİLİM etiketi
+(yani "i{sub}", "I{sub}", "v{sub}" ya da "V{sub}" biçiminde bir yazı)
+görünüyor mu?
 
 KURALLAR:
-- Kaç numaralı görüntüde o TAM sembol yazıyorsa o numarayı yaz.
-- Hiçbirinde yoksa, birden fazlasında varsa, ya da emin değilsen "index"
-  alanını null bırak -- TAHMİN ETME.
+- Alt indis TAM OLARAK "{sub}" olmalı. Başka bir harf/sembol ise ("ig",
+  "Iy", "vo" gibi) false yaz.
+- i/I/v/V ayrımı ÖNEMLİ DEĞİL, yalnızca alt indise bak.
+- Sadece sayı/birim varsa (örn. "10 Ω", "5 mH") false yaz.
+- Emin değilsen false yaz.
 
 ÇIKTI BİÇİMİ — yalnızca şu JSON'u yaz, başka hiçbir şey yazma:
-{"index": 2}"""
+{{"found": true}}"""
 
 
-def read_control_variable_target(dependent_crop_b64: str, candidates: list[tuple[str, str]]) -> str | None:
-    """Bagimli kaynagin kontrol degiskenini, METIN OKUMADAN, gorsel olarak
-    hangi ADAY elemana ait oldugunu bularak coz.
+def crop_has_label(image_base64: str, subscript: str) -> bool:
+    """Bu kirpimda alt indisi `subscript` olan bir akim/gerilim etiketi var mi.
 
-    `control_label_hint` (devre-yolo-dedektor/extract_for_solve.py, EasyOCR
-    tabanli) SADECE Latin alfabesini taniyor -- kutuphane Yunanca'yi (`el`)
-    HIC DESTEKLEMIYOR (dogrulandi: `easyocr.Reader(['en','el'])` "is not
-    supported" hatasi veriyor), OCR bu yuzden "iΔ" gibi bir etiketi asla
-    bulamiyor, `_resolve_dependent_sources` "0 aday bulundu" ile
-    reddediyordu. Once tek-tek kirpim okuyup METIN karsilastiran bir
-    fallback denendi -- calisti ama kirpim cerceveleri birbirine yakin
-    elemanlarda ORTUSTUGU icin (BULUNDU, 2026-08-24, 75.png/86.png: ayni
-    "δ"/"β" birden fazla komsu kirpimda "gorulup" belirsizlik yaratti)
-    tek basina yetmedi.
-
-    Bu fonksiyon FARKLI bir strateji kullanir (kullanicinin onerisi): sembolu
-    OKUYUP ANLAMAYA calismak yerine, TUM adaylari TEK bir cok-gorselli VLM
-    cagrisinda yan yana koyup "hangisi gorsel olarak ayni karakter" diye
-    sorar -- Ollama'nin chat API'si `images` alaninda BIRDEN FAZLA gorseli
-    ayni mesajda kabul ediyor (minicpm-v coklu-gorsel destekliyor), bu
-    yuzden ek bir kutuphane/model gerekmiyor. Karsilastirma piksel-gorsel
-    seviyesinde oldugu icin OCR'in Yunanca kisitlamasindan tamamen bagimsiz.
-
-    `candidates`: [(eleman_adi, kirpim_base64), ...] -- sirayla 2, 3, 4...
-    olarak numaralandirilir (1 = bagimli kaynagin kendisi).
-
-    Donen: eslesen adayin eleman adi, ya da bulunamadi/belirsizse None.
+    AKIM/GERILIM ONEKI (i/v) BILEREK SORULMUYOR, sadece alt indis: bagimli
+    kaynagin kendi okumasindaki `control_is_current` bayragi guvenilmez
+    (OLCULDU, 2026-08-24, 86.png: figurde "iβ" -- bir AKIM -- yaziyor ama VLM
+    "gerilim" dedi). Oneki arama metnine koymak, bayrak yanlissa etiketi
+    HICBIR kirpimda bulamamaya yol aciyordu (0 isabet, tum devre reddediliyor).
+    Alt indis tek basina hem daha saglam hem ayirt etmeye yetiyor.
     """
-    if not candidates:
-        return None
-    images = [dependent_crop_b64] + [b64 for _, b64 in candidates]
-    numbered = "\n".join(f"{i + 2}: {name}" for i, (name, _) in enumerate(candidates))
-    raw = _call_vlm_with_images(
-        images, _CONTROL_TARGET_SYSTEM_PROMPT,
-        f"1. görüntü bağımlı kaynak, aşağıdaki numaralar diğer elemanlar:\n{numbered}\nHangisi eşleşiyor?",
+    raw = _call_vlm_with_prompt(
+        image_base64,
+        _LABEL_PRESENT_SYSTEM_PROMPT.format(sub=subscript),
+        f"alt indis '{subscript}' var mı?",
     )
     match = _VALUE_JSON_RE.search(raw)
     if not match:
@@ -440,16 +417,47 @@ def read_control_variable_target(dependent_crop_b64: str, candidates: list[tuple
         payload = json.loads(match.group(0))
     except json.JSONDecodeError as exc:
         raise VLMReadError(f"VLM yanıtı geçerli JSON değil: {exc}", raw=raw) from exc
-    index = payload.get("index")
-    if index is None:
-        return None
-    try:
-        pos = int(index) - 2
-    except (TypeError, ValueError) as exc:
-        raise VLMReadError(f"Sayısal olmayan index {index!r}", raw=raw) from exc
-    if not (0 <= pos < len(candidates)):
-        return None
-    return candidates[pos][0]
+    return bool(payload.get("found"))
+
+
+def read_control_variable_target(subscript: str, candidates: list[tuple[str, str]]) -> str | None:
+    """Bagimli kaynagin kontrol degiskeni (alt indis, orn. "x"/"δ") HANGI aday
+    elemanin kirpiminda yaziyor -- her kirpima TEK TEK evet/hayir sorarak.
+
+    `control_label_hint` (devre-yolo-dedektor/extract_for_solve.py, EasyOCR
+    tabanli) SADECE Latin alfabesini taniyor -- kutuphane Yunanca'yi (`el`)
+    HIC DESTEKLEMIYOR (dogrulandi: `easyocr.Reader(['en','el'])` "is not
+    supported" hatasi veriyor), OCR bu yuzden "iΔ" gibi bir etiketi asla
+    bulamiyor, ikinci gecis "0 aday bulundu" ile reddediyordu.
+
+    UC YAKLASIM OLCULDU (2026-08-24/25, gercek VLM cagrilariyla, 6 figur):
+      1. Tum adaylari TEK bir cok-gorselli cagriya koyup "kacinci gorsel
+         eslesiyor" diye sormak -- 28.png ve 38.png'de YANLIS elemani secti
+         (`Iₓ` capacitor1'in kirpiminda apacik yaziyor, source_v1'inkinde HIC
+         yok, buna ragmen source_v1 dedi). VLM'ler cok-gorsel INDEKSLEMEDE
+         zayif. Uretilen "basarili" cozumler de bu yuzden SESSIZCE YANLIS
+         olabiliyordu -- power_balance~0 dogruluk kaniti degil, sadece
+         kurulan netlist'in kendi icinde tutarli oldugunu gosterir.
+      2. Her kirpima ayri ayri, ONEKLI etiketi ("ix"/"vβ") sormak -- oneki
+         `control_is_current` bayragindan kuruyordu, o bayrak guvenilmez
+         cikti (bkz. crop_has_label docstring'i), 6 figurun 5'inde 0 isabet.
+      3. Her kirpima ayri ayri, SADECE ALT INDISI sormak -- 28.png'de tam
+         dogru (yalnizca capacitor1), 21.png'de tek net isabet. KULLANILAN.
+
+    TEK isabet sart: 0 ya da 2+ isabette None doner (tahmin YOK). Bilinen
+    sinir: kirpim cerceveleri komsu elemanlarda ORTUSTUGU icin ayni etiket
+    birden fazla kirpimda gorunebiliyor (OLCULDU: 24.png 2 isabet, 86.png 3
+    isabet -- ucunde de DOGRU eleman isabetler ARASINDA ama tek basina
+    ayirt edilemiyor) -- o durumda yanlis secmek yerine reddediyor.
+
+    Bedeli: aday sayisi kadar VLM cagrisi (tek cagri yerine) -- ama bu yol
+    zaten SADECE OCR eslesmesi sifir kaldiginda calisiyor, her devrede degil.
+
+    `candidates`: [(eleman_adi, kirpim_base64), ...]
+    Donen: eslesen TEK adayin eleman adi, ya da bulunamadi/belirsizse None.
+    """
+    hits = [name for name, b64 in candidates if crop_has_label(b64, subscript)]
+    return hits[0] if len(hits) == 1 else None
 
 
 class VLMReadError(RuntimeError):
@@ -470,13 +478,6 @@ def _call_vlm(image_base64: str) -> str:
 
 
 def _call_vlm_with_prompt(image_base64: str, system_prompt: str, user_text: str) -> str:
-    return _call_vlm_with_images([image_base64], system_prompt, user_text)
-
-
-def _call_vlm_with_images(images: list[str], system_prompt: str, user_text: str) -> str:
-    """`_call_vlm_with_prompt` ile AYNI, ama birden fazla goruntu kabul eder --
-    Ollama chat API'sindeki `images` alani zaten liste (bkz. minicpm-v'nin
-    coklu-gorsel destegi), tek goruntulu cagri bunun ozel hali."""
     response = requests.post(
         OLLAMA_CHAT_URL,
         json={
@@ -486,7 +487,7 @@ def _call_vlm_with_images(images: list[str], system_prompt: str, user_text: str)
                 {
                     "role": "user",
                     "content": user_text,
-                    "images": images,
+                    "images": [image_base64],
                 },
             ],
             "stream": False,
