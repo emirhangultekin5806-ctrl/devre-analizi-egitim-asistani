@@ -101,6 +101,22 @@ class SolveFromExtractionError(RuntimeError):
     """Netlist kurulamadi ya da cozulemedi -- mesaj kullaniciya gosterilebilir."""
 
 
+def _control_is_current(dep: dict) -> bool:
+    """Bagimli kaynak AKIM mi GERILIM mi kontrollu -- once ETIKET METNI, sonra bayrak.
+
+    `control_is_current` bayragi VLM'in yorumu ve guvenilmez (OLCULDU,
+    2026-08-25, 86.png: figurde "iβ" -- bir AKIM -- yaziyor, VLM "gerilim"
+    dedi; yanlis tipte kaynak kurulur, power_balance ~0 cikar, cevap SESSIZCE
+    yanlis olur). Ayni cagrida donen `control_symbol` metninin oneki ise
+    dogrudan okunan yazidir: "i..." akim, "v..." gerilim. Onek varsa o
+    kazanir; onek yoksa (orn. sadece "β") bayraga duseriz.
+    """
+    symbol = dep["control_symbol"]
+    if symbol[:1] in ("i", "v"):
+        return symbol[0] == "i"
+    return bool(dep["control_is_current"])
+
+
 def solve_extraction(data: dict, reference: str | None = None, verbose: bool = True) -> dict:
     """Tek bir extraction.json icerigini cozer.
 
@@ -173,7 +189,7 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             pending_dependent.append({"name": name, "nodes": node_pair, **dep})
             if verbose:
                 gain, sym = dep["gain"], dep["control_symbol"]
-                kontrol = "akim" if dep["control_is_current"] else "gerilim"
+                kontrol = "akim" if _control_is_current(dep) else "gerilim"
                 print(f"  {name} (dependent_vcvs): {gain:g} * {kontrol}({sym})  [{node_pair[0]} <-> {node_pair[1]}]")
             continue
 
@@ -316,7 +332,7 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
                 f"(TEK olmali) -- {matches}"
             )
         control_name, control_nodes = matches[0]
-        if dep["control_is_current"]:
+        if _control_is_current(dep):
             netlist_kind, extra = "ccvs", {"control_element": control_name}
         else:
             netlist_kind, extra = "vcvs", {"control_nodes": control_nodes}
@@ -434,14 +450,24 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
     # Sart BILEREK dar: H/F cinsinden GERCEK bir bobin/kondansator varsa
     # frekans sonucu degistirir, o zaman uydurmak YASAK -- eskisi gibi
     # sayfa metni/sema frekansi sart kalir.
+    #
+    # FAZLI KAYNAK da ayni gerekce: "150∠30° V" yazan bir kaynak fazor
+    # bolgesindedir. Devre SADECE dirençliyse eskiden hic reaktif eleman
+    # olmadigi icin DC yoluna dusuyordu ve faz SESSIZCE atiliyordu
+    # (solve_dc fazi hic bilmez) -- akimlarin acisi 0 sanilip yanlis
+    # cevap uretiliyordu.
+    phased_source = any(
+        e.kind in ("voltage_source", "current_source") and (e.phase or 0.0) != 0.0
+        for e in elements
+    )
     if (
         not distinct
-        and any(e.kind == "impedance" for e in elements)
+        and (any(e.kind == "impedance" for e in elements) or phased_source)
         and not any(e.kind in ("capacitor", "inductor") for e in elements)
     ):
         distinct = {_PHASOR_REFERENCE_HZ}
         if verbose:
-            print("  (saf fazor devresi -- empedanslar verilmis, frekans gerekmiyor)")
+            print("  (saf fazor devresi -- empedanslar/fazlar verilmis, frekans gerekmiyor)")
 
     netlist = Netlist(elements)
 

@@ -769,3 +769,38 @@ def test_switch_touching_ground_keeps_ground_node(tmp_path, monkeypatch):
 
     out = sfe.solve_extraction(data, verbose=False)
     assert "gecici_yanit" in out["results"]
+
+
+def test_symbol_prefix_overrides_unreliable_control_flag(tmp_path, monkeypatch):
+    """Etiket "i..." diyorsa bayrak "gerilim" dese bile CCVS kurulur (86.png)."""
+    data, readings, dep_readings = _dependent_circuit(tmp_path, control_is_current=False)
+    dep_readings["dependent_vcvs1"]["control_symbol"] = "io"
+    data["components"]["resistor1"]["control_label_hint"] = "io"
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    monkeypatch.setattr(sfe, "read_dependent_source", _fake_dependent_reader(dep_readings))
+
+    out = sfe.solve_extraction(data, verbose=False)
+    dep = next(e for e in out["elements"] if e["name"] == "dependent_vcvs1")
+    assert dep["kind"] == "ccvs"
+
+
+def test_phased_source_in_resistive_circuit_keeps_phase(tmp_path, monkeypatch):
+    """150∠30° kaynak + sadece direnc: eskiden DC'ye dusup faz SESSIZCE
+    atiliyordu. Fazor yoluna gitmeli, akimin acisi 30° kalmali."""
+    readings = {
+        "source_v1": {"value": 150.0, "phase_degrees": 30.0, "frequency_hz": None},
+        "resistor1": {"value": 50.0, "phase_degrees": 0, "frequency_hz": None},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "ground": {"kind": "ground", "nets": [0]},
+            "source_v1": {"kind": "source_v", "nets": [1, 0]},
+            "resistor1": {"kind": "resistor", "nets": [1, 0]},
+        },
+    )
+    out = sfe.solve_extraction(data, verbose=False)
+    v = out["results"]["resistor1"].voltage
+    assert abs(v) == pytest.approx(150.0, rel=1e-6)
+    assert cmath.phase(v) == pytest.approx(cmath.pi / 6, rel=1e-6)
