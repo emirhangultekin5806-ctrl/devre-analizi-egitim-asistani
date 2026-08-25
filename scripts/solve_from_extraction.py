@@ -107,6 +107,25 @@ class SolveFromExtractionError(RuntimeError):
     """Netlist kurulamadi ya da cozulemedi -- mesaj kullaniciya gosterilebilir."""
 
 
+def _terminal_nodes(data: dict, netlist: Netlist, node_name) -> list[str]:
+    """Kaynaksiz ("Req/Zeq bul") devrenin TERMINAL dugumleri.
+
+    Once extraction'daki `open_end_nets` (SERBEST TEL UCU / terminal
+    daireleri -- bkz. devre-yolo-dedektor/connectivity.py `_open_end_nets`)
+    kullanilir. Bu, "o net'e kac ELEMAN degiyor" sezgisinden dogru olani:
+    GERCEK VERIDE OLCULDU (Sadiku Figure 2.38) alt ray terminali "b" UC
+    dirence degiyor, derece-1 DEGIL -- eski sezgi onu goremeyip devreyi
+    tumuyle reddediyordu.
+
+    `open_end_nets` yoksa (eski extraction dosyalari) eski derece-1
+    sezgisine duser -- davranis degismez.
+    """
+    open_ends = data.get("open_end_nets")
+    if open_ends:
+        return [node_name(n) for n in open_ends]
+    return netlist.dangling_nodes()
+
+
 def _control_is_current(dep: dict) -> bool:
     """Bagimli kaynak AKIM mi GERILIM mi kontrollu -- once ETIKET METNI, sonra bayrak.
 
@@ -517,7 +536,7 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             # (BULUNDU, 2026-08-21 denetimi: eskiden burada elle bir
             # degree-dict kuruluyordu, netlist.py'deki dangling_nodes()'un
             # BIREBIR kopyasiydi).
-            terminals = netlist.dangling_nodes()
+            terminals = _terminal_nodes(data, netlist, node_name)
             if len(terminals) == 2:
                 req = equivalent_resistance(netlist, terminals[0], terminals[1])
                 if req is not None:
@@ -535,7 +554,7 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
         # 48.png, Figure 9.81): ucu de sirf "hepsi resistor degil" diye
         # reddediliyordu.
         if elements and all(e.kind in _PASSIVE_KINDS for e in elements):
-            terminals = netlist.dangling_nodes()
+            terminals = _terminal_nodes(data, netlist, node_name)
             if len(terminals) == 2:
                 omega = 2 * math.pi * (next(iter(distinct)) if distinct else _PHASOR_REFERENCE_HZ)
                 zeq = equivalent_impedance(netlist, terminals[0], terminals[1], omega)
@@ -552,7 +571,7 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
         # Tek bir "hesaplanamadi" mesaji BES AYRI durumu ayni cop kutusuna
         # atiyordu (OLCULDU, 2026-08-25, 15 gercek vaka) -- hangi adimda
         # takildigi soylenmezse hata ayiklanamaz.
-        terminals = netlist.dangling_nodes()
+        terminals = _terminal_nodes(data, netlist, node_name)
         if not elements:
             detail = "devrede hic eleman yok (tespit basarisiz)"
         elif len(terminals) != 2:

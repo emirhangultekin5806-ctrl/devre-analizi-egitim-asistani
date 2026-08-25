@@ -849,3 +849,25 @@ def test_sourceless_ac_circuit_returns_equivalent_impedance(tmp_path, monkeypatc
     zeq = out["results"]["esdeger_empedans_ohm"]
     # omega = 1000 rad/s, Zc = -j/(1000*1e-3) = -j1 -> Z = 10 - j1 (seri)
     assert zeq == pytest.approx(complex(10.0, -1.0), rel=1e-6)
+
+
+def test_open_end_nets_beat_degree_one_terminal_guess(tmp_path, monkeypatch):
+    """GERCEK VERI (Sadiku Figure 2.38): alt ray terminali UC dirence degiyor,
+    derece-1 degil -- terminaller extraction'daki open_end_nets'ten okunmali."""
+    readings = {name: {"value": v, "phase_degrees": 0, "frequency_hz": None}
+                for name, v in (("r10", 10.0), ("r1", 1.0), ("r2", 2.0), ("r3", 3.0), ("r6", 6.0))}
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "r10": {"kind": "resistor", "nets": [0, 1]},  # a - c
+            "r1": {"kind": "resistor", "nets": [1, 2]},   # c - d
+            "r2": {"kind": "resistor", "nets": [1, 3]},   # c - b
+            "r3": {"kind": "resistor", "nets": [2, 3]},   # d - b
+            "r6": {"kind": "resistor", "nets": [2, 3]},   # d - b
+        },
+    )
+    data["open_end_nets"] = [0, 3]  # a ve b (b rayi 3 dirence degiyor)
+    out = sfe.solve_extraction(data, verbose=False)
+    # 3||6=2, +1=3, ||2=1.2, +10 = 11.2 (kitabin cevabi)
+    assert out["results"]["esdeger_direnc_ohm"] == pytest.approx(11.2, rel=1e-9)
