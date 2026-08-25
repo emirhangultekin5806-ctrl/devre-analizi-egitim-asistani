@@ -472,11 +472,12 @@ def _parse_label(bbox, text: str) -> Label:
     center = ((bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2)
     match = _VALUE_RE.search(text)
     if match is None:
-        return Label(text=text, center=center)
+        return Label(text=text, center=center, bbox=tuple(bbox))
     multiplier = _PREFIXES.get(match.group("prefix"), 1.0)
     return Label(
         text=text,
         center=center,
+        bbox=tuple(bbox),
         value=float(match.group("number")) * multiplier,
         unit=_UNIT_SYMBOLS[match.group("unit")],
     )
@@ -813,8 +814,14 @@ def _figure_from(cluster: list[_Primitive], runs, spans) -> Figure:
             figure.switch_blade = primitive.wire
 
     bounds = _cluster_bounds(cluster)
+    # Baslik ("Figure 9.16") sekle bitisik durur; kutu-kutu mesafesi kuralinda
+    # (bkz. _inside) artik pay icine giriyor -- bir ETIKET degil, disarida
+    # birakilir. Metni ("9.16") sayi gibi gorunur, bir dugum adiyla ya da
+    # degerle karistirilmasi icin sebep yok.
     figure.labels = [
-        _parse_label(bbox, text) for bbox, text in runs if _inside(bbox, bounds, LABEL_MARGIN)
+        _parse_label(bbox, text)
+        for bbox, text in runs
+        if _inside(bbox, bounds, LABEL_MARGIN) and not _CAPTION_RE.match(text.strip())
     ]
     figure.terminals = [_named(terminal, figure.labels) for terminal in figure.terminals]
     return figure
@@ -856,14 +863,60 @@ def _cluster_bounds(cluster: list[_Primitive]) -> tuple[float, float, float, flo
 
 
 def _inside(bbox, bounds, margin: float) -> bool:
-    """Etiketin MERKEZİ şeklin sınırları + pay içinde mi?
+    """Etiket şeklin sınırlarına `margin` pt'den yakın mı (kutu-kutu mesafesi)?
 
     Tamamen içinde olma şartı fazla katıydı: en sağdaki "5 Ω" etiketi
     sınırın 0.4 pt dışına taştığı için düşüyor, o direnç değersiz kalıyordu.
-    Merkez ölçütü etiketin genişliğinden bağımsızdır.
+    Bunun ilk çözümü etiketin MERKEZİNE bakmaktı; o da GENİŞ etiketleri
+    kaybediyordu: BULUNDU (2026-08-25, Figure 9.16) kaynağın "vs = 10 cos 4t"
+    etiketi çizime 4.4 pt uzaklıkta duruyor ama GENİŞ olduğu için merkezi
+    47 pt uzakta kalıyor -- etiket düşüyor, PNG kırpımı onu dışarıda
+    bırakıyor, VLM kaynağın değerini okuyamayıp null dönüyordu (aynı hata
+    Figure 11.3'te de ölçüldü).
+
+    Kutu-kutu mesafesi ikisini de doğru kapsar: örtüşen etiketin mesafesi
+    zaten 0'dır (eski düzeltme korunur), geniş etiket ise EN YAKIN kenarıyla
+    değerlendirilir -- genişliği onu cezalandırmaz.
     """
-    x, y = (bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2
-    return (
-        bounds[0] - margin <= x <= bounds[2] + margin
-        and bounds[1] - margin <= y <= bounds[3] + margin
-    )
+    gap_x = max(bounds[0] - bbox[2], bbox[0] - bounds[2], 0.0)
+    gap_y = max(bounds[1] - bbox[3], bbox[1] - bounds[3], 0.0)
+    return gap_x <= margin and gap_y <= margin
+
+
+# Sekli PNG'e render ederken kullanilan kirpim payi (punto). Iki export
+# script'i (export_sadiku_test_set.py, export_figure_ground_truth.py) AYNI
+# olcegi kullanmali, yoksa uretilen goruntuler birbirine benzemez.
+PAD_PT = 15.0
+
+
+def figure_bbox(figure, pad: float = PAD_PT) -> tuple[float, float, float, float]:
+    """Sekli PNG'e render ederken kullanilacak kirpim dikdortgeni.
+
+    Etiketler TAM SINIRLARIYLA (`Label.bbox`) hesaba katilir. BULUNDU
+    (2026-08-25, Figure 9.16 ve 11.3): eskiden yalnizca `label.center`
+    kullaniliyordu, yani genis bir etiketin sol/sag yarisi kirpimin DISINDA
+    kaliyordu -- render edilen PNG'de kaynagin degeri ("12 cos 4t V") yarim
+    ("s 4t") gorunuyor, VLM sayiyi okuyamayip null donuyordu. Etiket
+    metninin kendisi sekle AITTIR, sadece merkezi degil.
+
+    Ayni fonksiyon eskiden IKI export script'inde birebir kopyaydi -- tek
+    yerde tutuluyor ki ikisi ayrisamasin.
+    """
+    xs: list[float] = []
+    ys: list[float] = []
+    for wire in figure.wires:
+        xs += [wire.p1[0], wire.p2[0]]
+        ys += [wire.p1[1], wire.p2[1]]
+    for symbol in figure.symbols:
+        x0, y0, x1, y1 = symbol.rect
+        xs += [x0, x1]
+        ys += [y0, y1]
+    for label in figure.labels:
+        if label.bbox is not None:
+            x0, y0, x1, y1 = label.bbox
+            xs += [x0, x1]
+            ys += [y0, y1]
+        else:
+            xs.append(label.center[0])
+            ys.append(label.center[1])
+    return min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad

@@ -126,6 +126,11 @@ class Label:
     center: tuple[float, float]
     value: float | None = None  # SI temel biriminde (ohm, volt, amper...)
     unit: str | None = None  # "ohm" | "volt" | "amper" | "farad" | "henry"
+    # Etiketin PDF'teki tam sinirlari (x0, y0, x1, y1) -- yalnizca merkez
+    # yetmiyor: sekli PNG'e render ederken kirpim sinirini etiketin
+    # GENISLIGI belirler (bkz. pdf_figure.figure_bbox). Elle kurulan
+    # Label'larda (testler) None kalabilir, o zaman merkeze dusulur.
+    bbox: tuple[float, float, float, float] | None = None
 
 
 # Hangi birim hangi eleman türüne ait. Etiket-sembol eşleştirmesi bu tabloya

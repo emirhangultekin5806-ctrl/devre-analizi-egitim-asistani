@@ -26,33 +26,17 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.stdout.reconfigure(encoding="utf-8")
 
-from app.vision.pdf_figure import SchematicError, _captions, extract_figures  # noqa: E402
+from app.vision.pdf_figure import SchematicError, _captions, extract_figures, figure_bbox  # noqa: E402
 
 DEFAULT_PDF = Path(os.environ.get("SADIKU_PDF") or r"C:\Users\Furkan\Desktop\Emirhan+\Devre analizi.pdf")
 
 # bkz. export_figure_ground_truth.py -- aynı render ölçeği/payı.
-ZOOM = 4.0
-PAD_PT = 15.0
+ZOOM = 4.0  # PAD_PT artik app/vision/pdf_figure.py icinde (iki script ortak)
 
 # (baslangic_sayfa, bitis_sayfa_haric, etiket) -- 0-indeksli, sadiku_full.jsonl'deki
 # chapter_number sinirlarindan (bkz. modul docstring'i).
 DC_RANGE = (60, 205, "dc")
 AC_RANGE = (400, 487, "ac")
-
-
-def _figure_bbox(figure):
-    xs, ys = [], []
-    for wire in figure.wires:
-        xs += [wire.p1[0], wire.p2[0]]
-        ys += [wire.p1[1], wire.p2[1]]
-    for symbol in figure.symbols:
-        x0, y0, x1, y1 = symbol.rect
-        xs += [x0, x1]
-        ys += [y0, y1]
-    for label in figure.labels:
-        xs += [label.center[0]]
-        ys += [label.center[1]]
-    return min(xs) - PAD_PT, min(ys) - PAD_PT, max(xs) + PAD_PT, max(ys) + PAD_PT
 
 
 def _scan(document, start: int, end: int, limit: int) -> list[tuple[int, str]]:
@@ -92,7 +76,7 @@ def main() -> None:
                 page = document[page_num]
                 figures = extract_figures(page, caption)
                 figure = figures[0]
-                bbox = _figure_bbox(figure)
+                bbox = figure_bbox(figure)
                 pix = page.get_pixmap(matrix=fitz.Matrix(ZOOM, ZOOM), clip=fitz.Rect(*bbox))
                 stem = caption.replace(" ", "_").replace(".", "_")
                 png_path = out_dir / f"{stem}.png"

@@ -279,3 +279,23 @@ def test_switch_and_capacitor_match_example_7_10(document):
     assert response.tau == pytest.approx(2.0, rel=1e-3)
     assert response.at(1.0) == pytest.approx(20.9, rel=1e-3)
     assert response.at(4.0) == pytest.approx(27.97, rel=1e-3)
+
+
+def test_figure_bbox_covers_full_label_width():
+    """Etiketin TAMAMI kirpima girmeli, merkezi degil.
+
+    BULUNDU (2026-08-25, Figure 9.16 / 11.3): bbox etiketlerden yalnizca
+    `center`'i topluyordu, genisligi degil -- sol kenardaki uzun etiketin
+    ("12 cos 4t V") sol yarisi render edilen PNG'nin DISINDA kaliyor, VLM
+    kirpimda kesik bir yazi ("s 4t") gorup deger okuyamiyordu (null).
+    """
+    from app.vision.pdf_figure import PAD_PT, figure_bbox
+    from app.vision.schematic import Figure, Label, Wire
+
+    figure = Figure(
+        wires=[Wire(p1=(100.0, 50.0), p2=(200.0, 50.0))],
+        labels=[Label(text="12 cos 4t V", center=(60.0, 50.0), bbox=(10.0, 40.0, 110.0, 60.0))],
+    )
+    x0, y0, x1, y1 = figure_bbox(figure)
+    assert x0 <= 10.0 - PAD_PT
+    assert x1 >= 200.0 + PAD_PT

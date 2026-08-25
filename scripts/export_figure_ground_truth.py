@@ -22,30 +22,14 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.stdout.reconfigure(encoding="utf-8")
 
-from app.vision.pdf_figure import extract_figures  # noqa: E402
+from app.vision.pdf_figure import extract_figures, figure_bbox  # noqa: E402
 from app.vision.schematic import build_netlist  # noqa: E402
 
 DEFAULT_PDF = Path(os.environ.get("SADIKU_PDF") or r"C:\Users\Furkan\Desktop\Emirhan+\Devre analizi.pdf")
 
 # Render cozunurlugu -- YOLO modelinin egitildigi gorsellerle (~640px genislik
 # civari kitap kirpmalari) makul olcekte olsun diye.
-ZOOM = 4.0
-PAD_PT = 15.0
-
-
-def _figure_bbox(figure) -> tuple[float, float, float, float]:
-    xs, ys = [], []
-    for wire in figure.wires:
-        xs += [wire.p1[0], wire.p2[0]]
-        ys += [wire.p1[1], wire.p2[1]]
-    for symbol in figure.symbols:
-        x0, y0, x1, y1 = symbol.rect
-        xs += [x0, x1]
-        ys += [y0, y1]
-    for label in figure.labels:
-        xs += [label.center[0]]
-        ys += [label.center[1]]
-    return min(xs) - PAD_PT, min(ys) - PAD_PT, max(xs) + PAD_PT, max(ys) + PAD_PT
+ZOOM = 4.0  # PAD_PT artik app/vision/pdf_figure.py icinde (iki script ortak)
 
 
 def main() -> None:
@@ -68,7 +52,7 @@ def main() -> None:
             raise SystemExit(f"{args.figure}: sayfada {len(figures)} cizim var, --index {args.index} yok")
         figure = figures[args.index - 1]
 
-        bbox = _figure_bbox(figure)
+        bbox = figure_bbox(figure)
         clip = fitz.Rect(*bbox)
         pix = page.get_pixmap(matrix=fitz.Matrix(ZOOM, ZOOM), clip=clip)
         stem = args.figure.replace(" ", "_").replace(".", "_")
