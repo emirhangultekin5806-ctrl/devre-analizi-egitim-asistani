@@ -25,6 +25,8 @@ otomatik olarak bunu dener (bkz. Sadiku Example 2.15, aşağıda test
 edilen köprü devresi).
 """
 
+import cmath
+import math
 from dataclasses import dataclass
 
 from app.circuit.netlist import Element, Netlist
@@ -261,6 +263,58 @@ def equivalent_resistance(netlist: Netlist, node_a: str, node_b: str) -> float |
     if not resistors:
         return None
     reduced, _ = reduce_resistors(Netlist(resistors), protected_nodes=(node_a, node_b))
+    if len(reduced.elements) != 1:
+        return None
+    only = reduced.elements[0]
+    if set(only.nodes) != {node_a, node_b}:
+        return None
+    return only.value
+
+
+def equivalent_impedance(
+    netlist: Netlist, node_a: str, node_b: str, omega: float
+) -> complex | None:
+    """`node_a`-`node_b` arasındaki eşdeğer EMPEDANS (fazör bölgesi); indirgenemezse None.
+
+    Neden ayrı: `equivalent_resistance` yalnızca `resistor` türüne bakar,
+    kaynaksız bir AC devresinde (R+L+C ya da "jX Ω" empedans kutuları)
+    hiçbir şey indirgenemiyordu — GERÇEK VERİDE ÖLÇÜLDÜ (2026-08-25,
+    1-100/14.png, 1-100/48.png, Figure 9.81: üçünde de "Zeq bul" sorusu,
+    üçü de "eşdeğer direnç hesaplanamadı" ile reddediliyordu).
+
+    Seri/paralel/Y-Δ kuralları KOMPLEKS empedansta birebir aynıdır (Sadiku
+    §9.6), o yüzden aynı indirgeyici yeniden kullanılır: her eleman
+    ω'daki empedansına çevrilip sentetik bir "resistor" olarak verilir.
+
+    `omega`: açısal frekans (rad/s). Yalnızca L/C çevriminde kullanılır;
+    `impedance` elemanları zaten frekanstan bağımsız verilmiştir.
+
+    LC paralel rezonansında (Z1 + Z2 == 0) eşdeğer sonsuzdur — sayı yerine
+    None döner, uydurma bir değer üretilmez.
+    """
+    as_impedance = []
+    for e in netlist.elements:
+        if e.kind == "resistor":
+            z = complex(e.value, 0.0)
+        elif e.kind == "inductor":
+            z = complex(0.0, omega * e.value)
+        elif e.kind == "capacitor":
+            if omega == 0 or e.value == 0:
+                return None
+            z = complex(0.0, -1.0 / (omega * e.value))
+        elif e.kind == "impedance":
+            z = cmath.rect(e.value, math.radians(e.phase))
+        else:
+            return None  # kaynak/bağımlı kaynak varsa bu yol geçerli değil
+        if z == 0:
+            return None
+        as_impedance.append(Element(e.name, "resistor", e.nodes, z))
+    if not as_impedance:
+        return None
+    try:
+        reduced, _ = reduce_resistors(Netlist(as_impedance), protected_nodes=(node_a, node_b))
+    except ZeroDivisionError:
+        return None  # paralel rezonans: eşdeğer sonsuz
     if len(reduced.elements) != 1:
         return None
     only = reduced.elements[0]

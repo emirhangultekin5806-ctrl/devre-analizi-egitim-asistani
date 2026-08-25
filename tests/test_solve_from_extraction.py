@@ -508,7 +508,7 @@ def test_sourceless_circuit_with_shared_rail_terminal_raises(tmp_path, monkeypat
         },
     )
 
-    with pytest.raises(sfe.SolveFromExtractionError, match="esdeger direnc hesaplanamadi"):
+    with pytest.raises(sfe.SolveFromExtractionError, match="TAM 2 acik uc gerekiyor"):
         sfe.solve_extraction(data, verbose=False)
 
 
@@ -828,3 +828,24 @@ def test_reactance_read_in_switched_circuit_raises(tmp_path, monkeypatch):
     )
     with pytest.raises(sfe.SolveFromExtractionError, match="reaktans tanimsiz"):
         sfe.solve_extraction(data, verbose=False)
+
+
+def test_sourceless_ac_circuit_returns_equivalent_impedance(tmp_path, monkeypatch):
+    """Kaynaksiz R+C devresi: "Zeq bul" sorusu (OLCULDU, Figure 9.81) --
+    eskiden "hepsi resistor degil" diye reddediliyordu."""
+    readings = {
+        "resistor1": {"value": 10.0, "phase_degrees": 0, "frequency_hz": None},
+        "capacitor1": {"value": 1e-3, "phase_degrees": 0, "frequency_hz": 1000 / (2 * cmath.pi.real)},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "resistor1": {"kind": "resistor", "nets": [0, 1]},
+            "capacitor1": {"kind": "capacitor", "nets": [1, 2]},
+        },
+    )
+    out = sfe.solve_extraction(data, verbose=False)
+    zeq = out["results"]["esdeger_empedans_ohm"]
+    # omega = 1000 rad/s, Zc = -j/(1000*1e-3) = -j1 -> Z = 10 - j1 (seri)
+    assert zeq == pytest.approx(complex(10.0, -1.0), rel=1e-6)

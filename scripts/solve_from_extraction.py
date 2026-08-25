@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import argparse
 import base64
+import cmath
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -27,7 +29,7 @@ from app.circuit.ac import element_results_ac, power_balance_ac, solve_ac  # noq
 from app.circuit.netlist import Element, Netlist  # noqa: E402
 from app.circuit.page_text import extract_frequency_hz, mentions_unsupported_element  # noqa: E402
 from app.circuit.solve import GROUND_NODES, SolverError, element_results, power_balance, solve_dc  # noqa: E402
-from app.circuit.topology import equivalent_resistance  # noqa: E402
+from app.circuit.topology import equivalent_impedance, equivalent_resistance  # noqa: E402
 from app.circuit.transient import rc_step_response, rl_step_response  # noqa: E402
 from app.vision.vlm_read import (  # noqa: E402
     VLMReadError,
@@ -85,6 +87,10 @@ from app.vision.vlm_read import (  # noqa: E402
 # gerekiyor; 50 Hz secildi (nots: deger tamamen keyfi, 1 Hz de olurdu --
 # sadece "ders kitabi sebeke frekansi" olarak okunabilir olsun diye).
 _PHASOR_REFERENCE_HZ = 50.0
+
+# Kaynaksiz "Zeq bul" yolunda indirgenebilen eleman turleri (bkz.
+# topology.equivalent_impedance) -- kaynak/bagimli kaynak varsa o yol gecersiz.
+_PASSIVE_KINDS = ("resistor", "inductor", "capacitor", "impedance")
 
 KIND_MAP = {
     "resistor": "resistor",
@@ -523,10 +529,43 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
                         "results": {"esdeger_direnc_ohm": req, "terminals": terminals},
                         "power_balance": 0.0,
                     }
-        raise SolveFromExtractionError(
-            "devrede kaynak yok ve esdeger direnc hesaplanamadi "
-            "(tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)"
-        )
+        # KAYNAKSIZ AC ("Zeq bul"): reaktif eleman varsa esdeger DIRENC degil
+        # esdeger EMPEDANS aranir -- ayni seri/paralel/Y-Δ kurallari, kompleks
+        # sayilarla (bkz. topology.equivalent_impedance). OLCULDU (14.png,
+        # 48.png, Figure 9.81): ucu de sirf "hepsi resistor degil" diye
+        # reddediliyordu.
+        if elements and all(e.kind in _PASSIVE_KINDS for e in elements):
+            terminals = netlist.dangling_nodes()
+            if len(terminals) == 2:
+                omega = 2 * math.pi * (next(iter(distinct)) if distinct else _PHASOR_REFERENCE_HZ)
+                zeq = equivalent_impedance(netlist, terminals[0], terminals[1], omega)
+                if zeq is not None:
+                    if verbose:
+                        print(f"  (kaynaksiz AC devre -- {terminals[0]}-{terminals[1]} arasi esdeger empedans)")
+                        print(f"  Z_esdeger = {abs(zeq):g} Ohm, aci {math.degrees(cmath.phase(zeq)):g} derece "
+                              f"({zeq.real:g} {'+' if zeq.imag >= 0 else '-'} j{abs(zeq.imag):g})")
+                    return {
+                        "elements": element_log,
+                        "results": {"esdeger_empedans_ohm": zeq, "terminals": terminals},
+                        "power_balance": 0.0,
+                    }
+        # Tek bir "hesaplanamadi" mesaji BES AYRI durumu ayni cop kutusuna
+        # atiyordu (OLCULDU, 2026-08-25, 15 gercek vaka) -- hangi adimda
+        # takildigi soylenmezse hata ayiklanamaz.
+        terminals = netlist.dangling_nodes()
+        if not elements:
+            detail = "devrede hic eleman yok (tespit basarisiz)"
+        elif len(terminals) != 2:
+            detail = (
+                f"esdeger direnc/empedans icin TAM 2 acik uc gerekiyor, {len(terminals)} bulundu "
+                f"({', '.join(terminals) if terminals else 'hicbiri'}) -- baglanti cikarimi eksik olabilir"
+            )
+        else:
+            detail = (
+                f"{terminals[0]}-{terminals[1]} arasi indirgeme tek elemana inmedi "
+                "(seri/paralel/Y-Δ yetmiyor ya da desteklenmeyen eleman turu var)"
+            )
+        raise SolveFromExtractionError(f"devrede kaynak yok ve cozulemedi: {detail}")
 
     # ACIK UC (derece-1 dugum) kontrolu -- SADECE kaynakli yolda. Kaynaksiz
     # (Req) yol acik uclara MUHTAC (terminaller onlar, bkz. yukarisi), ama
@@ -594,6 +633,14 @@ def main() -> None:
         req = out["results"]["esdeger_direnc_ohm"]
         a, b = out["results"]["terminals"]
         print(f"  R_esdeger({a}, {b}) = {req:g} Ohm")
+        return
+    # Kaynaksiz AC yolu (Zeq) da ayni sekilde .describe()'i olmayan bir
+    # kompleks sayi dondurur (bkz. equivalent_impedance dali).
+    if "esdeger_empedans_ohm" in out["results"]:
+        z = out["results"]["esdeger_empedans_ohm"]
+        a, b = out["results"]["terminals"]
+        print(f"  Z_esdeger({a}, {b}) = {z.real:g} {'+' if z.imag >= 0 else '-'} j{abs(z.imag):g} Ohm "
+              f"(buyukluk {abs(z):g}, aci {math.degrees(cmath.phase(z)):g} derece)")
         return
     # Anahtarli gecici rejim yolu da farkli bir sekil dondurur --
     # {"gecici_yanit": FirstOrderResponse} (bkz. solve_extraction'daki
