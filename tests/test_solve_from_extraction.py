@@ -871,3 +871,23 @@ def test_open_end_nets_beat_degree_one_terminal_guess(tmp_path, monkeypatch):
     out = sfe.solve_extraction(data, verbose=False)
     # 3||6=2, +1=3, ||2=1.2, +10 = 11.2 (kitabin cevabi)
     assert out["results"]["esdeger_direnc_ohm"] == pytest.approx(11.2, rel=1e-9)
+
+
+def test_sourceless_real_lc_without_frequency_refuses(tmp_path, monkeypatch):
+    """H/F cinsinden gercek bobin/kondansator varsa Zeq FREKANSA BAGLIDIR --
+    frekans yokken uydurup sayi uretmek sessizce yanlis cevap olur."""
+    readings = {
+        "resistor1": {"value": 200.0, "phase_degrees": 0, "frequency_hz": None},
+        "inductor1": {"value": 0.4, "phase_degrees": 0, "frequency_hz": None},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "resistor1": {"kind": "resistor", "nets": [0, 1]},
+            "inductor1": {"kind": "inductor", "nets": [1, 2]},
+        },
+    )
+    data["open_end_nets"] = [0, 2]
+    with pytest.raises(sfe.SolveFromExtractionError, match="frekansa bagli"):
+        sfe.solve_extraction(data, verbose=False)

@@ -564,7 +564,14 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
         # sayilarla (bkz. topology.equivalent_impedance). OLCULDU (14.png,
         # 48.png, Figure 9.81): ucu de sirf "hepsi resistor degil" diye
         # reddediliyordu.
-        if elements and all(e.kind in _PASSIVE_KINDS for e in elements):
+        # FREKANS SARTI: H/F cinsinden GERCEK bir bobin/kondansator varsa
+        # Zeq FREKANSA BAGLIDIR -- frekans bilinmiyorken bir sayi uretmek
+        # (fazor referans frekansini uydurmak) SESSIZCE YANLIS cevap olurdu.
+        # Yalnizca butun reaktif elemanlar "jX Ω" (impedance) ise devre
+        # fazor bolgesindedir ve secilen frekans sonucu DEGISTIRMEZ -- ayni
+        # gerekce yukaridaki saf fazor dispatch'inde de yaziyor.
+        real_reactive = any(e.kind in ("capacitor", "inductor") for e in elements)
+        if elements and all(e.kind in _PASSIVE_KINDS for e in elements) and (distinct or not real_reactive):
             terminals = _terminal_nodes(data, netlist, node_name)
             if len(terminals) == 2:
                 omega = 2 * math.pi * (next(iter(distinct)) if distinct else _PHASOR_REFERENCE_HZ)
@@ -585,6 +592,11 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
         terminals = _terminal_nodes(data, netlist, node_name)
         if not elements:
             detail = "devrede hic eleman yok (tespit basarisiz)"
+        elif real_reactive and not distinct:
+            detail = (
+                "esdeger empedans frekansa bagli ama devrede/sayfa metninde frekans yok -- "
+                "bobin/kondansator degeri H/F cinsinden verilmis, uydurma frekansla sayi uretilmez"
+            )
         elif len(terminals) != 2:
             detail = (
                 f"esdeger direnc/empedans icin TAM 2 acik uc gerekiyor, {len(terminals)} bulundu "
