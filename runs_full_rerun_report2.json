@@ -1,0 +1,3405 @@
+{
+  "ac2__Figure_10_110": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_112": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_113": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_114": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_115": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_116": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_117": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_118": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_119": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_120": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_121": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_122": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_123": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_131": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_132": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_34": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_41": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_42": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac2__Figure_10_82": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []",
+    "seconds": 0.1
+  },
+  "ac2__Figure_10_86": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 86.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 0.25,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 5.084229945850415e-13,
+    "seconds": 10.1
+  },
+  "ac3__Figure_11_13": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.3
+  },
+  "ac3__Figure_11_18": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 11.6
+  },
+  "ac3__Figure_11_23": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_26": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_3": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 11.0
+  },
+  "ac3__Figure_11_30": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.5
+  },
+  "ac3__Figure_11_42": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_48": {
+    "status": "fail",
+    "reason": "impedance_box1 (impedance_box): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_52": {
+    "status": "fail",
+    "reason": "resistor2: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 4.6
+  },
+  "ac3__Figure_11_54": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_7": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_79": {
+    "status": "fail",
+    "reason": "source_i1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_80": {
+    "status": "fail",
+    "reason": "source_v1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_82": {
+    "status": "fail",
+    "reason": "source_v1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_84": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_88": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac3__Figure_11_91": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok",
+    "seconds": 4.4
+  },
+  "ac__Figure_10_11": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 1.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 1.0,
+    "seconds": 15.6
+  },
+  "ac__Figure_10_14": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 5.0,
+        "nodes": [
+          "n2",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 1.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 14.4
+  },
+  "ac__Figure_10_16": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.4
+  },
+  "ac__Figure_10_22": {
+    "status": "fail",
+    "reason": "resistor1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 0.0
+  },
+  "ac__Figure_10_31": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac__Figure_10_32": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac__Figure_10_33": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac__Figure_9_16": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.4
+  },
+  "ac__Figure_9_18": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.4
+  },
+  "ac__Figure_9_19": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.4
+  },
+  "ac__Figure_9_20": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []",
+    "seconds": 0.0
+  },
+  "ac__Figure_9_21": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []",
+    "seconds": 0.0
+  },
+  "ac__Figure_9_31": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.4
+  },
+  "ac__Figure_9_33": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac__Figure_9_34": {
+    "status": "fail",
+    "reason": "sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)",
+    "seconds": 0.0
+  },
+  "ac__Figure_9_40": {
+    "status": "fail",
+    "reason": "cozulemedi (AC): Devrede kaynak yok",
+    "seconds": 0.0
+  },
+  "ac__Figure_9_62": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []",
+    "seconds": 0.0
+  },
+  "ac__Figure_9_81": {
+    "status": "fail",
+    "reason": "cozulemedi (AC): Devrede kaynak yok",
+    "seconds": 4.5
+  },
+  "ac__Figure_9_9": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.5
+  },
+  "ac__Figure_9_92": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []",
+    "seconds": 0.0
+  },
+  "dc__Figure_2_10": {
+    "status": "fail",
+    "reason": "resistor3: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 19.0
+  },
+  "dc__Figure_2_11": {
+    "status": "fail",
+    "reason": "resistor1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 0.0
+  },
+  "dc__Figure_2_12": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "n2",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 4.218847493575595e-15,
+    "seconds": 14.5
+  },
+  "dc__Figure_2_13": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "n2",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 1.3600232051658168e-15,
+    "seconds": 9.0
+  },
+  "dc__Figure_2_14": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 1.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 4.9960036108132044e-15,
+    "seconds": 20.2
+  },
+  "dc__Figure_2_15": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 1.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 1.5765166949677223e-14,
+    "seconds": 20.2
+  },
+  "dc__Figure_2_18": {
+    "status": "fail",
+    "reason": "source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.2
+  },
+  "dc__Figure_2_19": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.3
+  },
+  "dc__Figure_2_20": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.4
+  },
+  "dc__Figure_2_21": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 20.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 1.4210854715202004e-14,
+    "seconds": 10.9
+  },
+  "dc__Figure_2_22": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 8.0,
+        "nodes": [
+          "n3",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 9.0
+  },
+  "dc__Figure_2_23": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 4.0,
+        "nodes": [
+          "n4",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "dependent_vcvs1",
+        "kind": "vcvs",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ],
+        "control": "resistor1"
+      }
+    ],
+    "power_balance": 3.552713678800501e-14,
+    "seconds": 15.2
+  },
+  "dc__Figure_2_24": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 35.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "dependent_vcvs1",
+        "kind": "vcvs",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ],
+        "control": "resistor1"
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 16.2
+  },
+  "dc__Figure_2_27": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 9.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 30.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 2.5757174171303632e-14,
+    "seconds": 11.0
+  },
+  "dc__Figure_2_28": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 3.0,
+        "nodes": [
+          "n3",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 14.5
+  },
+  "dc__Figure_2_29": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.7
+  },
+  "dc__Figure_2_30": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.2
+  },
+  "dc__Figure_2_4": {
+    "status": "fail",
+    "reason": "resistor1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 0.0
+  },
+  "dc__Figure_2_8": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 30.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5000.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 4.5
+  },
+  "dc__Figure_2_9": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 10000.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 0.002,
+        "nodes": [
+          "n1",
+          "n0"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 4.7
+  },
+  "gt_holdout2__Figure_4_10": {
+    "status": "fail",
+    "reason": "source_ac_sine1: 0 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 24.9
+  },
+  "gt_holdout2__Figure_4_12": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 24.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 3.0,
+        "nodes": [
+          "n4",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 24.7
+  },
+  "gt_holdout2__Figure_4_13": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 14.6
+  },
+  "gt_holdout2__Figure_4_14": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 12.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 16.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 14.4
+  },
+  "gt_holdout2__Figure_4_17": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 3.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 12.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 3.552713678800501e-15,
+    "seconds": 23.6
+  },
+  "gt_holdout2__Figure_4_18": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_i2",
+        "kind": "source_i",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 2.220446049250313e-16,
+    "seconds": 25.4
+  },
+  "gt_holdout2__Figure_4_2": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []",
+    "seconds": 35.6
+  },
+  "gt_holdout2__Figure_4_21": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 18.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 3.0,
+        "nodes": [
+          "n3",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "dependent_vcvs1",
+        "kind": "vcvs",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ],
+        "control": "resistor3"
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 23.4
+  },
+  "gt_holdout2__Figure_4_22": {
+    "status": "fail",
+    "reason": "source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.5
+  },
+  "gt_holdout2__Figure_4_27": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "n3",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 32.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 12.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 1.0658141036401503e-14,
+    "seconds": 14.8
+  },
+  "gt_holdout2__Figure_4_29": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 32.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "n3",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 12.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 3.1086244689504383e-15,
+    "seconds": 4.5
+  },
+  "gt_holdout2__Figure_4_3": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 4.0,
+        "nodes": [
+          "n2",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 3.9968028886505635e-15,
+    "seconds": 18.2
+  },
+  "gt_holdout2__Figure_4_30": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 3.0,
+        "nodes": [
+          "n3",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 18.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 1.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 20.0
+  },
+  "gt_holdout2__Figure_4_4": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 15.0,
+        "nodes": [
+          "gnd",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n2",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n3",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 7.0,
+        "nodes": [
+          "n1",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor6",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 29.2
+  },
+  "gt_holdout2__Figure_4_5": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 30.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 14.7
+  },
+  "gt_holdout2__Figure_4_6": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 6.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 3.0,
+        "nodes": [
+          "n2",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 10.1
+  },
+  "gt_holdout2__Figure_4_7": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 6.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 9.0
+  },
+  "gt_holdout2__Figure_4_8": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 4.0,
+        "nodes": [
+          "n3",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 23.7
+  },
+  "gt_holdout2__Figure_4_9": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: kontrol degiskeni 'o' icin 0 aday bulundu (TEK olmali) -- []",
+    "seconds": 29.6
+  },
+  "gt_holdout__Figure_3_10": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "gnd",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_i2",
+        "kind": "source_i",
+        "value": 7.0,
+        "nodes": [
+          "n0",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "gnd"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 14.5
+  },
+  "gt_holdout__Figure_3_11": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 9.0,
+        "nodes": [
+          "n2",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 21.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 2.0899948438568572e-14,
+    "seconds": 31.2
+  },
+  "gt_holdout__Figure_3_15": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 1.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 1.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor6",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor7",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor8",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 7.112366251504909e-17,
+    "seconds": 47.8
+  },
+  "gt_holdout__Figure_3_17": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.2
+  },
+  "gt_holdout__Figure_3_18": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 15.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      }
+    ],
+    "power_balance": 1.4432899320127035e-15,
+    "seconds": 19.4
+  },
+  "gt_holdout__Figure_3_19": {
+    "status": "fail",
+    "reason": "source_ac_sine1: 0 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 25.6
+  },
+  "gt_holdout__Figure_3_2": {
+    "status": "fail",
+    "reason": "resistor2: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.5
+  },
+  "gt_holdout__Figure_3_20": {
+    "status": "fail",
+    "reason": "source_ac_sine1: 0 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 25.3
+  },
+  "gt_holdout__Figure_3_22": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 5.0,
+        "nodes": [
+          "n3",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 16.6
+  },
+  "gt_holdout__Figure_3_23": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 20.0,
+        "nodes": [
+          "n1",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 6.0,
+        "nodes": [
+          "n4",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 1.0658141036401503e-14,
+    "seconds": 19.2
+  },
+  "gt_holdout__Figure_3_25": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 3.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 6.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 1.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 3.1086244689504383e-15,
+    "seconds": 30.9
+  },
+  "gt_holdout__Figure_3_26": {
+    "status": "fail",
+    "reason": "source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.2
+  },
+  "gt_holdout__Figure_3_28": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 1.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_i2",
+        "kind": "source_i",
+        "value": 3.0,
+        "nodes": [
+          "gnd",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_i3",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "gnd",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n2",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 28.9
+  },
+  "gt_holdout__Figure_3_3": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 5.0,
+        "nodes": [
+          "n1",
+          "n0"
+        ]
+      },
+      {
+        "name": "source_i2",
+        "kind": "source_i",
+        "value": 10.0,
+        "nodes": [
+          "gnd",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n1",
+          "gnd"
+        ]
+      }
+    ],
+    "power_balance": 1.7763568394002505e-14,
+    "seconds": 23.6
+  },
+  "gt_holdout__Figure_3_31": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 120.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 3.0,
+        "nodes": [
+          "n3",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 40.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 30.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 20.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 6.394884621840902e-14,
+    "seconds": 29.3
+  },
+  "gt_holdout__Figure_3_4": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 7.0,
+        "nodes": [
+          "n1",
+          "gnd"
+        ]
+      },
+      {
+        "name": "source_i2",
+        "kind": "source_i",
+        "value": 1.0,
+        "nodes": [
+          "gnd",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "gnd"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 15.5
+  },
+  "gt_validation__Figure_2_10": {
+    "status": "fail",
+    "reason": "resistor3: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 19.0
+  },
+  "gt_validation__Figure_2_12": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "n2",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 4.218847493575595e-15,
+    "seconds": 14.5
+  },
+  "gt_validation__Figure_2_13": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "n2",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 1.3600232051658168e-15,
+    "seconds": 10.0
+  },
+  "gt_validation__Figure_2_14": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 1.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 4.9960036108132044e-15,
+    "seconds": 20.0
+  },
+  "gt_validation__Figure_2_15": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 1.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 1.5765166949677223e-14,
+    "seconds": 20.0
+  },
+  "gt_validation__Figure_2_18": {
+    "status": "fail",
+    "reason": "source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.3
+  },
+  "gt_validation__Figure_2_19": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.2
+  },
+  "gt_validation__Figure_2_20": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.3
+  },
+  "gt_validation__Figure_2_21": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 20.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 1.4210854715202004e-14,
+    "seconds": 10.9
+  },
+  "gt_validation__Figure_2_22": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 8.0,
+        "nodes": [
+          "n3",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 9.0
+  },
+  "gt_validation__Figure_2_23": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 4.0,
+        "nodes": [
+          "n4",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "dependent_vcvs1",
+        "kind": "vcvs",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ],
+        "control": "resistor1"
+      }
+    ],
+    "power_balance": 3.552713678800501e-14,
+    "seconds": 15.0
+  },
+  "gt_validation__Figure_2_24": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 35.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "dependent_vcvs1",
+        "kind": "vcvs",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ],
+        "control": "resistor1"
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 15.2
+  },
+  "gt_validation__Figure_2_27": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 9.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 30.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 2.5757174171303632e-14,
+    "seconds": 10.2
+  },
+  "gt_validation__Figure_2_28": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 3.0,
+        "nodes": [
+          "n3",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 14.4
+  },
+  "gt_validation__Figure_2_29": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.4
+  },
+  "gt_validation__Figure_2_30": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.2
+  },
+  "gt_validation__Figure_2_31": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.3
+  },
+  "gt_validation__Figure_2_32": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.4
+  },
+  "gt_validation__Figure_2_34": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok",
+    "seconds": 35.8
+  },
+  "gt_validation__Figure_2_35": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok",
+    "seconds": 23.4
+  },
+  "gt_validation__Figure_2_36": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok",
+    "seconds": 30.2
+  },
+  "gt_validation__Figure_2_37": {
+    "status": "fail",
+    "reason": "resistor2: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 4.5
+  },
+  "gt_validation__Figure_2_38": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok",
+    "seconds": 26.8
+  },
+  "gt_validation__Figure_2_39": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok",
+    "seconds": 40.5
+  },
+  "gt_validation__Figure_2_40": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.3
+  },
+  "gt_validation__Figure_2_41": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.4
+  },
+  "gt_validation__Figure_2_42": {
+    "status": "fail",
+    "reason": "inductor1: 0 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 15.5
+  },
+  "gt_validation__Figure_2_44": {
+    "status": "fail",
+    "reason": "source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 18.5
+  },
+  "gt_validation__Figure_2_45": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 0.01,
+        "nodes": [
+          "n2",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 1000.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 3000.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 20.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 5000.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 1.2281977735187355e-19,
+    "seconds": 14.9
+  },
+  "gt_validation__Figure_2_46": {
+    "status": "fail",
+    "reason": "source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.8
+  },
+  "gt_validation__Figure_2_47": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.4
+  },
+  "gt_validation__Figure_2_48": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.4
+  },
+  "gt_validation__Figure_2_49": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.6
+  },
+  "gt_validation__Figure_2_50": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok",
+    "seconds": 14.0
+  },
+  "gt_validation__Figure_2_51": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok",
+    "seconds": 13.8
+  },
+  "gt_validation__Figure_2_52": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 120.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 15.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 30.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 20.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 12.5,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor6",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 3.2862601528904634e-13,
+    "seconds": 36.1
+  },
+  "gt_validation__Figure_2_54": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 100.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 13.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 20.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 24.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 50.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor6",
+        "kind": "resistor",
+        "value": 30.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      }
+    ],
+    "power_balance": 7.993605777301127e-14,
+    "seconds": 32.6
+  },
+  "gt_validation__Figure_2_63": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 3.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 5.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 2.7755575615628914e-17,
+    "seconds": 8.9
+  },
+  "gt_validation__Figure_2_64": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 5.5
+  },
+  "gt_validation__Figure_2_65": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): ngspice çözemedi: Command 'run' failed",
+    "seconds": 0.0
+  },
+  "gt_validation__Figure_2_66": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 3.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 5.0,
+        "nodes": [
+          "n1",
+          "n0"
+        ]
+      },
+      {
+        "name": "source_v3",
+        "kind": "source_v",
+        "value": 1.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 4.4
+  },
+  "gt_validation__Figure_2_67": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 9.8
+  },
+  "gt_validation__Figure_2_8": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 30.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5000.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 4.6
+  },
+  "gt_validation__Figure_2_9": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 10000.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 0.002,
+        "nodes": [
+          "n1",
+          "n0"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 4.6
+  }
+}

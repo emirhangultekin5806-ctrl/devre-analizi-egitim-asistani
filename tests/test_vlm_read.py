@@ -330,3 +330,11 @@ def test_crop_has_label_parses_found_field(monkeypatch):
     assert vlm_read.crop_has_label("fake_b64", "x") is True
     monkeypatch.setattr(vlm_read, "_call_vlm_with_prompt", lambda *a, **k: '{"found": false}')
     assert vlm_read.crop_has_label("fake_b64", "x") is False
+
+
+def test_bare_j_unit_counts_as_ohm():
+    """Birimsiz "j2" yaziminda model birim yerine "j" donebiliyor -- bu bir
+    reaktans (ohm), Henry/Farad degil."""
+    for unit in ("j", "jω", "JW", " jomega "):
+        assert vlm_read.is_ohm_unit(unit)
+        assert vlm_read._unit_multiplier(unit) == 1.0

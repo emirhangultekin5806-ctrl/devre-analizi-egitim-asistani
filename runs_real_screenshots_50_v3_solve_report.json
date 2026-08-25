@@ -1,0 +1,375 @@
+{
+  "1-100__1": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "inductor1",
+        "kind": "inductor",
+        "value": 0.025,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "n0"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 6.25e-11,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 6.25e-05,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 2.667107166116032e-25,
+    "seconds": 8.2
+  },
+  "1-100__11": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 1365.0,
+        "nodes": [
+          "n0",
+          "n5"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 1365.0,
+        "nodes": [
+          "n11",
+          "n5"
+        ]
+      },
+      {
+        "name": "source_v3",
+        "kind": "source_v",
+        "value": 1365.0,
+        "nodes": [
+          "n7",
+          "n5"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "inductor",
+        "value": 1365.0,
+        "nodes": [
+          "n7",
+          "n8"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 85.5,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "inductor2",
+        "kind": "inductor",
+        "value": 1365.0,
+        "nodes": [
+          "n11",
+          "n12"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 1.5,
+        "nodes": [
+          "n10",
+          "n12"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 85.5,
+        "nodes": [
+          "n6",
+          "n9"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 85.5,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 1365.0,
+        "nodes": [
+          "n6",
+          "n8"
+        ]
+      },
+      {
+        "name": "resistor6",
+        "kind": "resistor",
+        "value": 1.5,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "inductor3",
+        "kind": "inductor",
+        "value": 85.5,
+        "nodes": [
+          "n3",
+          "n6"
+        ]
+      },
+      {
+        "name": "inductor4",
+        "kind": "inductor",
+        "value": 85.5,
+        "nodes": [
+          "n4",
+          "n10"
+        ]
+      },
+      {
+        "name": "inductor5",
+        "kind": "inductor",
+        "value": 85.5,
+        "nodes": [
+          "n9",
+          "n10"
+        ]
+      },
+      {
+        "name": "inductor6",
+        "kind": "inductor",
+        "value": 1365.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 71.3
+  },
+  "1-100__14": {
+    "status": "fail",
+    "reason": "devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)",
+    "seconds": 11.7
+  },
+  "1-100__18": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 120.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "inductor",
+        "value": 2400.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 8.9
+  },
+  "1-100__21": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 120.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 40.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 60.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 120.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "dependent_vcvs1",
+        "kind": "vcvs",
+        "value": 10.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ],
+        "control": "resistor1"
+      }
+    ],
+    "power_balance": 4.973799150320701e-14,
+    "seconds": 34.1
+  },
+  "1-100__24": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 10.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "inductor",
+        "value": 20.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "dependent_vcvs1",
+        "kind": "ccvs",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ],
+        "control": "resistor2"
+      }
+    ],
+    "power_balance": 2.491495881776388e-25,
+    "seconds": 33.6
+  },
+  "1-100__28": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Kontrol akımı yalnızca bir DİRENCİN üzerinden ölçülebiliyor (bu sürümde); eşleşmeyen: ['source_v1']",
+    "seconds": 41.0
+  },
+  "1-100__31": {
+    "status": "error",
+    "reason": "KeyError: \"'n7' düğümü çözümde yok\""
+  },
+  "1-100__34": {
+    "status": "fail",
+    "reason": "inductor2: VLM deger okuyamadi -- deger/birim okunamadi (10, ':'): bilinmeyen birim: ':'",
+    "seconds": 23.1
+  },
+  "1-100__38": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): Kontrol akımı yalnızca bir DİRENCİN üzerinden ölçülebiliyor (bu sürümde); eşleşmeyen: ['source_i1']",
+    "seconds": 22.3
+  },
+  "1-100__4": {
+    "status": "fail",
+    "reason": "devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)",
+    "seconds": 5.0
+  },
+  "1-100__41": {
+    "status": "fail",
+    "reason": "resistor2: VLM deger okuyamadi -- deger/birim okunamadi (39, 'I'): bilinmeyen birim: 'I'",
+    "seconds": 15.9
+  },
+  "1-100__45": {
+    "status": "fail",
+    "reason": "inductor1: VLM deger okuyamadi -- deger/birim okunamadi (4, ':'): bilinmeyen birim: ':'",
+    "seconds": 14.5
+  }
+}

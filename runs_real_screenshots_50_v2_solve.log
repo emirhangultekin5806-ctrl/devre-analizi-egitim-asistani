@@ -1,0 +1,117 @@
+Warning: singular matrix:  check nodes n4 and n4
+Note: Starting true gmin stepping
+Trying gmin =   1.0000E-03 Warning: singular matrix:  check nodes n4 and n4
+Warning: Further gmin increment
+Trying gmin =   5.6234E-03 Warning: singular matrix:  check nodes n4 and n4
+Warning: Further gmin increment
+Trying gmin =   8.6596E-03 Warning: singular matrix:  check nodes n4 and n4
+Warning: Further gmin increment
+Trying gmin =   9.6466E-03 Warning: singular matrix:  check nodes n4 and n4
+Warning: Further gmin increment
+Trying gmin =   9.9105E-03 Warning: singular matrix:  check nodes n4 and n4
+Warning: Further gmin increment
+Trying gmin =   9.9775E-03 Warning: singular matrix:  check nodes n4 and n4
+Warning: Further gmin increment
+Trying gmin =   9.9944E-03 Warning: singular matrix:  check nodes n4 and n4
+Warning: Further gmin increment
+Trying gmin =   9.9986E-03 Warning: singular matrix:  check nodes n4 and n4
+Warning: Further gmin increment
+Trying gmin =   9.9996E-03 Warning: singular matrix:  check nodes n4 and n4
+Warning: Last gmin step failed
+Warning: singular matrix:  check nodes n4 and n4
+Warning: True gmin stepping failed
+Note: Starting dynamic gmin stepping
+Trying gmin =   1.0000E-03 Note: One successful gmin step
+Trying gmin =   1.0000E-04 Note: One successful gmin step
+Trying gmin =   1.0000E-05 Note: One successful gmin step
+Trying gmin =   1.0000E-06 Note: One successful gmin step
+Trying gmin =   1.0000E-07 Note: One successful gmin step
+Trying gmin =   1.0000E-08 Note: One successful gmin step
+Trying gmin =   1.0000E-09 Note: One successful gmin step
+Trying gmin =   1.0000E-10 Note: One successful gmin step
+Trying gmin =   1.0000E-11 Note: One successful gmin step
+Trying gmin =   1.0000E-12 Note: One successful gmin step
+Trying gmin =   1.0000E-12 Note: One successful gmin step
+Warning: singular matrix:  check nodes n4 and n4
+Warning: Dynamic gmin stepping failed
+Note: Starting source stepping
+Supplies reduced to   0.0000% Warning: singular matrix:  check nodes n4 and n4
+Trying gmin =   1.0000E-02 Note: One successful gmin step
+Trying gmin =   1.0000E-03 Note: One successful gmin step
+Trying gmin =   1.0000E-04 Note: One successful gmin step
+Trying gmin =   1.0000E-05 Note: One successful gmin step
+Trying gmin =   1.0000E-06 Note: One successful gmin step
+Trying gmin =   1.0000E-07 Note: One successful gmin step
+Trying gmin =   1.0000E-08 Note: One successful gmin step
+Trying gmin =   1.0000E-09 Note: One successful gmin step
+Trying gmin =   1.0000E-10 Note: One successful gmin step
+Trying gmin =   1.0000E-11 Note: One successful gmin step
+Trying gmin =   1.0000E-12 Note: One successful gmin step
+Note: One successful source step
+Supplies reduced to   0.1000% Warning: singular matrix:  check nodes n4 and n4
+Supplies reduced to   0.0000% Warning: singular matrix:  check nodes n4 and n4
+Warning: source stepping failed
+doAnalyses: iteration limit reached
+run simulation(s) aborted
+Fatal error: instance vsource_v1 is a shorted VSRC
+doAnalyses: operation not supported
+run simulation(s) aborted
+Error: There are no vectors currently active.
+Fatal error: instance vsource_v1 is a shorted VSRC
+doAnalyses: operation not supported
+run simulation(s) aborted
+Fatal error: instance vsource_ac_sine1 is a shorted VSRC
+doAnalyses: operation not supported
+run simulation(s) aborted
+[1/50] 1-100__1: OK (23.1s)
+[2/50] 1-100__11: OK (71.9s)
+[3/50] 1-100__14: FAIL -- devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)
+[4/50] 1-100__18: OK (9.1s)
+[5/50] 1-100__21: FAIL -- dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []
+[6/50] 1-100__24: FAIL -- dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []
+[7/50] 1-100__28: FAIL -- dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []
+[8/50] 1-100__31: BEKLENMEYEN HATA -- "'n7' düðümü çözümde yok"
+[9/50] 1-100__34: FAIL -- inductor2: VLM deger okuyamadi -- deger/birim okunamadi (10, ':'): bilinmeyen birim: ':'
+[10/50] 1-100__38: FAIL -- dependent_vcvs1: kontrol degiskeni 'i_\u03b4' icin 0 aday bulundu (TEK olmali) -- []
+[11/50] 1-100__4: FAIL -- devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)
+[12/50] 1-100__41: FAIL -- resistor2: VLM deger okuyamadi -- deger/birim okunamadi (39, 'I'): bilinmeyen birim: 'I'
+[13/50] 1-100__45: FAIL -- inductor1: VLM deger okuyamadi -- deger/birim okunamadi (4, ':'): bilinmeyen birim: ':'
+[14/50] 1-100__48: FAIL -- impedance_box1: empedans okunamadi -- VLM yanýtý geçerli JSON deðil: Expecting ',' delimiter: line 1 column 23 (char 22)
+[15/50] 1-100__51: OK (8.8s)
+[16/50] 1-100__55: OK (16.2s)
+[17/50] 1-100__58: FAIL -- dependent_ccvs1 (dependent_ccvs): bu tur henuz desteklenmiyor, cozulemez
+[18/50] 1-100__62: FAIL -- resistor3: VLM degeri okuyamadi (null dondu), elle girilmeli
+[19/50] 1-100__65: OK (11.6s)
+[20/50] 1-100__68: FAIL -- dependent_vcvs1: kontrol degiskeni '1' icin 0 aday bulundu (TEK olmali) -- []
+[21/50] 1-100__7: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[22/50] 1-100__72: FAIL -- dependent_ccvs1 (dependent_ccvs): bu tur henuz desteklenmiyor, cozulemez
+[23/50] 1-100__75: FAIL -- dependent_vcvs1: kontrol degiskeni '\u03b4' icin 0 aday bulundu (TEK olmali) -- []
+[24/50] 1-100__79: FAIL -- cozulemedi (DC): ngspice çözemedi: Command 'run' failed
+[25/50] 1-100__82: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[26/50] 1-100__86: FAIL -- dependent_vcvs1: kontrol degiskeni '\u03b2' icin 0 aday bulundu (TEK olmali) -- []
+[27/50] 1-100__89: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[28/50] 1-100__92: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[29/50] 1-100__96: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[30/50] 1-100__99: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[31/50] 101-131__103: OK (12.5s)
+[32/50] 101-131__106: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[33/50] 101-131__109: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[34/50] 101-131__113: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[35/50] 101-131__116: BEKLENMEYEN HATA -- "'n4' düðümü çözümde yok"
+[36/50] 101-131__120: FAIL -- capacitor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[37/50] 101-131__123: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[38/50] 101-131__126: FAIL -- resistor1: VLM deger okuyamadi -- deger/birim okunamadi (2, 'm'): bilinmeyen birim: 'm'
+[39/50] 101-131__130: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[40/50] 132-170__133: FAIL -- gecici rejim cozulemedi: ngspice çözemedi: Command 'run' failed
+[41/50] 132-170__137: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[42/50] 132-170__140: FAIL -- cozulemedi (DC): ngspice çözemedi: Command 'run' failed
+[43/50] 132-170__143: FAIL -- cozulemedi (DC): ngspice çözemedi: Command 'run' failed
+[44/50] 132-170__147: FAIL -- dependent_ccvs1 (dependent_ccvs): bu tur henuz desteklenmiyor, cozulemez
+[45/50] 132-170__150: FAIL -- dependent_vcvs1: kontrol degiskeni 'null' icin 0 aday bulundu (TEK olmali) -- []
+[46/50] 132-170__154: OK (31.6s)
+[47/50] 132-170__157: OK (31.8s)
+[48/50] 132-170__160: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[49/50] 132-170__164: FAIL -- source_ac_i2: VLM degeri okuyamadi (null dondu), elle girilmeli
+[50/50] 132-170__167: FAIL -- cozulemedi (DC): ngspice çözemedi: Command 'run' failed
+
+9/50 basarili -> runs_real_screenshots_50_v2_solve_report.json

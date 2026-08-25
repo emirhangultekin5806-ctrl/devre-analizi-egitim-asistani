@@ -1,0 +1,62 @@
+Fatal error: instance vsource_v1 is a shorted VSRC
+doAnalyses: operation not supported
+run simulation(s) aborted
+Error: There are no vectors currently active.
+Fatal error: instance vsource_v1 is a shorted VSRC
+doAnalyses: operation not supported
+run simulation(s) aborted
+Fatal error: instance vsource_ac_sine1 is a shorted VSRC
+doAnalyses: operation not supported
+run simulation(s) aborted
+[1/50] 1-100__1: OK (8.3s)
+[2/50] 1-100__11: FAIL -- inductor6: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[3/50] 1-100__14: FAIL -- devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)
+[4/50] 1-100__18: OK (8.8s)
+[5/50] 1-100__21: FAIL -- dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []
+[6/50] 1-100__24: FAIL -- dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []
+[7/50] 1-100__28: FAIL -- dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []
+[8/50] 1-100__31: OK (40.9s)
+[9/50] 1-100__34: FAIL -- inductor3: VLM degeri okuyamadi (null dondu), elle girilmeli
+[10/50] 1-100__38: FAIL -- dependent_vcvs1: kontrol degiskeni 'i_\u03b4' icin 0 aday bulundu (TEK olmali) -- []
+[11/50] 1-100__4: FAIL -- devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)
+[12/50] 1-100__41: FAIL -- dependent_vcvs1: 0 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[13/50] 1-100__45: FAIL -- resistor2: VLM degeri okuyamadi (null dondu), elle girilmeli
+[14/50] 1-100__48: FAIL -- devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)
+[15/50] 1-100__51: OK (8.7s)
+[16/50] 1-100__55: FAIL -- devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)
+[17/50] 1-100__58: FAIL -- dependent_ccvs1 (dependent_ccvs): bu tur henuz desteklenmiyor, cozulemez
+[18/50] 1-100__62: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[19/50] 1-100__65: FAIL -- diode1 (diode): bu tur henuz desteklenmiyor, cozulemez
+[20/50] 1-100__68: FAIL -- resistor3: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[21/50] 1-100__7: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[22/50] 1-100__72: FAIL -- resistor2: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[23/50] 1-100__75: FAIL -- resistor3: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[24/50] 1-100__79: FAIL -- devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)
+[25/50] 1-100__82: FAIL -- resistor2: VLM degeri okuyamadi (null dondu), elle girilmeli
+[26/50] 1-100__86: FAIL -- devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)
+[27/50] 1-100__89: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[28/50] 1-100__92: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[29/50] 1-100__96: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[30/50] 1-100__99: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[31/50] 101-131__103: OK (12.5s)
+[32/50] 101-131__106: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[33/50] 101-131__109: OK (19.5s)
+[34/50] 101-131__113: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[35/50] 101-131__116: OK (32.8s)
+[36/50] 101-131__120: FAIL -- capacitor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[37/50] 101-131__123: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[38/50] 101-131__126: FAIL -- resistor3: VLM deger okuyamadi -- deger/birim okunamadi (2, 'm'): bilinmeyen birim: 'm'
+[39/50] 101-131__130: FAIL -- op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez
+[40/50] 132-170__133: FAIL -- gecici rejim cozulemedi: ngspice çözemedi: Command 'run' failed
+[41/50] 132-170__137: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[42/50] 132-170__140: FAIL -- cozulemedi (DC): ngspice çözemedi: Command 'run' failed
+[43/50] 132-170__143: FAIL -- cozulemedi (DC): ngspice çözemedi: Command 'run' failed
+[44/50] 132-170__147: FAIL -- dependent_ccvs1 (dependent_ccvs): bu tur henuz desteklenmiyor, cozulemez
+[45/50] 132-170__150: FAIL -- dependent_ac_vcvs1 (dependent_ac_vcvs): bu tur henuz desteklenmiyor, cozulemez
+[46/50] 132-170__154: FAIL -- cozulemedi (DC): 'n0' düðümü devrede yok. Mevcut: ['gnd', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7']
+[47/50] 132-170__157: OK (31.3s)
+[48/50] 132-170__160: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[49/50] 132-170__164: FAIL -- source_ac_i2: VLM degeri okuyamadi (null dondu), elle girilmeli
+[50/50] 132-170__167: FAIL -- cozulemedi (DC): ngspice çözemedi: Command 'run' failed
+
+8/50 basarili -> runs_real_screenshots_50_solve_report.json

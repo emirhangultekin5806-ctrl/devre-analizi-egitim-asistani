@@ -1,0 +1,208 @@
+[1/156] ac2__Figure_10_110: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[2/156] ac2__Figure_10_112: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[3/156] ac2__Figure_10_113: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[4/156] ac2__Figure_10_114: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[5/156] ac2__Figure_10_115: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[6/156] ac2__Figure_10_116: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[7/156] ac2__Figure_10_117: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[8/156] ac2__Figure_10_118: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[9/156] ac2__Figure_10_119: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[10/156] ac2__Figure_10_120: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[11/156] ac2__Figure_10_121: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[12/156] ac2__Figure_10_122: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[13/156] ac2__Figure_10_123: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[14/156] ac2__Figure_10_131: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[15/156] ac2__Figure_10_132: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[16/156] ac2__Figure_10_34: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[17/156] ac2__Figure_10_41: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[18/156] ac2__Figure_10_42: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[19/156] ac2__Figure_10_82: FAIL -- cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []
+[20/156] ac2__Figure_10_86: OK (10.1s)
+[21/156] ac3__Figure_11_13: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[22/156] ac3__Figure_11_18: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[23/156] ac3__Figure_11_23: FAIL -- cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []
+[24/156] ac3__Figure_11_26: FAIL -- cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []
+[25/156] ac3__Figure_11_3: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[26/156] ac3__Figure_11_30: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[27/156] ac3__Figure_11_42: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[28/156] ac3__Figure_11_48: FAIL -- impedance_box1 (impedance_box): bu tur henuz desteklenmiyor, cozulemez
+[29/156] ac3__Figure_11_52: FAIL -- resistor2: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[30/156] ac3__Figure_11_54: FAIL -- cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok
+[31/156] ac3__Figure_11_7: FAIL -- cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []
+[32/156] ac3__Figure_11_79: FAIL -- source_i1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[33/156] ac3__Figure_11_80: FAIL -- source_v1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[34/156] ac3__Figure_11_82: FAIL -- source_v1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[35/156] ac3__Figure_11_84: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[36/156] ac3__Figure_11_88: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[37/156] ac3__Figure_11_91: FAIL -- cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok
+[38/156] ac__Figure_10_11: OK (15.6s)
+[39/156] ac__Figure_10_14: OK (14.4s)
+[40/156] ac__Figure_10_16: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[41/156] ac__Figure_10_22: FAIL -- resistor1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[42/156] ac__Figure_10_31: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[43/156] ac__Figure_10_32: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[44/156] ac__Figure_10_33: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[45/156] ac__Figure_9_16: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[46/156] ac__Figure_9_18: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[47/156] ac__Figure_9_19: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[48/156] ac__Figure_9_20: FAIL -- cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []
+[49/156] ac__Figure_9_21: FAIL -- cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []
+[50/156] ac__Figure_9_31: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[51/156] ac__Figure_9_33: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[52/156] ac__Figure_9_34: FAIL -- sayfa metninde 'op amp' geciyor -- bu devre turu desteklenmiyor (YOLO bu elemani tespit edemeyebilir, sessizce yanlis cozmek yerine reddediliyor)
+[53/156] ac__Figure_9_40: FAIL -- cozulemedi (AC): Devrede kaynak yok
+[54/156] ac__Figure_9_62: FAIL -- cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []
+[55/156] ac__Figure_9_81: FAIL -- cozulemedi (AC): Devrede kaynak yok
+[56/156] ac__Figure_9_9: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[57/156] ac__Figure_9_92: FAIL -- cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: []
+[58/156] dc__Figure_2_10: FAIL -- resistor3: VLM degeri okuyamadi (null dondu), elle girilmeli
+[59/156] dc__Figure_2_11: FAIL -- resistor1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[60/156] dc__Figure_2_12: OK (14.5s)
+[61/156] dc__Figure_2_13: OK (9.0s)
+[62/156] dc__Figure_2_14: OK (20.2s)
+[63/156] dc__Figure_2_15: OK (20.2s)
+[64/156] dc__Figure_2_18: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[65/156] dc__Figure_2_19: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[66/156] dc__Figure_2_20: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeliWarning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Note: Starting true gmin stepping
+Trying gmin =   1.0000E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   5.6234E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   8.6596E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.6466E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.9105E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.9775E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.9944E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.9986E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.9996E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Last gmin step failed
+Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: True gmin stepping failed
+Note: Starting dynamic gmin stepping
+Trying gmin =   1.0000E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   5.6234E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   8.6596E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.6466E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.9105E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.9775E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.9944E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.9986E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Further gmin increment
+Trying gmin =   9.9996E-03 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Last gmin step failed
+Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: Dynamic gmin stepping failed
+Note: Starting source stepping
+Supplies reduced to   0.0000% Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Trying gmin =   1.0000E-02 Warning: singular matrix:  check nodes vsource_v1#branch and vsource_v1#branch
+Warning: gmin step failed
+Warning: source stepping failed
+doAnalyses: iteration limit reached
+run simulation(s) aborted
+
+[67/156] dc__Figure_2_21: OK (10.9s)
+[68/156] dc__Figure_2_22: OK (9.0s)
+[69/156] dc__Figure_2_23: OK (15.2s)
+[70/156] dc__Figure_2_24: OK (16.2s)
+[71/156] dc__Figure_2_27: OK (11.0s)
+[72/156] dc__Figure_2_28: OK (14.5s)
+[73/156] dc__Figure_2_29: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[74/156] dc__Figure_2_30: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[75/156] dc__Figure_2_4: FAIL -- resistor1: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[76/156] dc__Figure_2_8: OK (4.5s)
+[77/156] dc__Figure_2_9: OK (4.7s)
+[78/156] gt_holdout2__Figure_4_10: FAIL -- source_ac_sine1: 0 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[79/156] gt_holdout2__Figure_4_12: OK (24.7s)
+[80/156] gt_holdout2__Figure_4_13: OK (14.6s)
+[81/156] gt_holdout2__Figure_4_14: OK (14.4s)
+[82/156] gt_holdout2__Figure_4_17: OK (23.6s)
+[83/156] gt_holdout2__Figure_4_18: OK (25.4s)
+[84/156] gt_holdout2__Figure_4_2: FAIL -- dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []
+[85/156] gt_holdout2__Figure_4_21: OK (23.4s)
+[86/156] gt_holdout2__Figure_4_22: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[87/156] gt_holdout2__Figure_4_27: OK (14.8s)
+[88/156] gt_holdout2__Figure_4_29: OK (4.5s)
+[89/156] gt_holdout2__Figure_4_3: OK (18.2s)
+[90/156] gt_holdout2__Figure_4_30: OK (20.0s)
+[91/156] gt_holdout2__Figure_4_4: OK (29.2s)
+[92/156] gt_holdout2__Figure_4_5: OK (14.7s)
+[93/156] gt_holdout2__Figure_4_6: OK (10.1s)
+[94/156] gt_holdout2__Figure_4_7: OK (9.0s)
+[95/156] gt_holdout2__Figure_4_8: OK (23.7s)
+[96/156] gt_holdout2__Figure_4_9: FAIL -- dependent_vcvs1: kontrol degiskeni 'o' icin 0 aday bulundu (TEK olmali) -- []
+[97/156] gt_holdout__Figure_3_10: OK (14.5s)
+[98/156] gt_holdout__Figure_3_11: OK (31.2s)
+[99/156] gt_holdout__Figure_3_15: OK (47.8s)
+[100/156] gt_holdout__Figure_3_17: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[101/156] gt_holdout__Figure_3_18: OK (19.4s)
+[102/156] gt_holdout__Figure_3_19: FAIL -- source_ac_sine1: 0 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[103/156] gt_holdout__Figure_3_2: FAIL -- resistor2: VLM degeri okuyamadi (null dondu), elle girilmeli
+[104/156] gt_holdout__Figure_3_20: FAIL -- source_ac_sine1: 0 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[105/156] gt_holdout__Figure_3_22: OK (16.6s)
+[106/156] gt_holdout__Figure_3_23: OK (19.2s)
+[107/156] gt_holdout__Figure_3_25: OK (30.9s)
+[108/156] gt_holdout__Figure_3_26: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[109/156] gt_holdout__Figure_3_28: OK (28.9s)
+[110/156] gt_holdout__Figure_3_3: OK (23.6s)
+[111/156] gt_holdout__Figure_3_31: OK (29.3s)
+[112/156] gt_holdout__Figure_3_4: OK (15.5s)
+[113/156] gt_validation__Figure_2_10: FAIL -- resistor3: VLM degeri okuyamadi (null dondu), elle girilmeli
+[114/156] gt_validation__Figure_2_12: OK (14.5s)
+[115/156] gt_validation__Figure_2_13: OK (10.0s)
+[116/156] gt_validation__Figure_2_14: OK (20.0s)
+[117/156] gt_validation__Figure_2_15: OK (20.0s)
+[118/156] gt_validation__Figure_2_18: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[119/156] gt_validation__Figure_2_19: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[120/156] gt_validation__Figure_2_20: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[121/156] gt_validation__Figure_2_21: OK (10.9s)
+[122/156] gt_validation__Figure_2_22: OK (9.0s)
+[123/156] gt_validation__Figure_2_23: OK (15.0s)
+[124/156] gt_validation__Figure_2_24: OK (15.2s)
+[125/156] gt_validation__Figure_2_27: OK (10.2s)
+[126/156] gt_validation__Figure_2_28: OK (14.4s)
+[127/156] gt_validation__Figure_2_29: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[128/156] gt_validation__Figure_2_30: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[129/156] gt_validation__Figure_2_31: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[130/156] gt_validation__Figure_2_32: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[131/156] gt_validation__Figure_2_34: FAIL -- cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok
+[132/156] gt_validation__Figure_2_35: FAIL -- cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok
+[133/156] gt_validation__Figure_2_36: FAIL -- cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok
+[134/156] gt_validation__Figure_2_37: FAIL -- resistor2: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[135/156] gt_validation__Figure_2_38: FAIL -- cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok
+[136/156] gt_validation__Figure_2_39: FAIL -- cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok
+[137/156] gt_validation__Figure_2_40: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[138/156] gt_validation__Figure_2_41: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[139/156] gt_validation__Figure_2_42: FAIL -- inductor1: 0 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)
+[140/156] gt_validation__Figure_2_44: FAIL -- source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[141/156] gt_validation__Figure_2_45: OK (14.9s)
+[142/156] gt_validation__Figure_2_46: FAIL -- source_v1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[143/156] gt_validation__Figure_2_47: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[144/156] gt_validation__Figure_2_48: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[145/156] gt_validation__Figure_2_49: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[146/156] gt_validation__Figure_2_50: FAIL -- cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok
+[147/156] gt_validation__Figure_2_51: FAIL -- cozulemedi (DC): Devrede kaynak yok; çözülecek bir şey yok
+[148/156] gt_validation__Figure_2_52: OK (36.1s)
+[149/156] gt_validation__Figure_2_54: OK (32.6s)
+[150/156] gt_validation__Figure_2_63: OK (8.9s)
+[151/156] gt_validation__Figure_2_64: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[152/156] gt_validation__Figure_2_65: FAIL -- cozulemedi (DC): ngspice çözemedi: Command 'run' failed
+[153/156] gt_validation__Figure_2_66: OK (4.4s)
+[154/156] gt_validation__Figure_2_67: FAIL -- resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli
+[155/156] gt_validation__Figure_2_8: OK (4.6s)
+[156/156] gt_validation__Figure_2_9: OK (4.6s)
+
+58/156 basarili -> runs_full_rerun_report2.json

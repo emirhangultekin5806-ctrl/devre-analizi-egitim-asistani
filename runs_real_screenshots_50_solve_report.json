@@ -1,0 +1,664 @@
+{
+  "1-100__1": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "n0"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 6.25e-11,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 6.25e-05,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "inductor",
+        "value": 0.025,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 2.667107166116032e-25,
+    "seconds": 8.3
+  },
+  "1-100__11": {
+    "status": "fail",
+    "reason": "inductor6: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 51.5
+  },
+  "1-100__14": {
+    "status": "fail",
+    "reason": "devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)",
+    "seconds": 11.9
+  },
+  "1-100__18": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 120.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 8.8
+  },
+  "1-100__21": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []",
+    "seconds": 28.3
+  },
+  "1-100__24": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []",
+    "seconds": 27.8
+  },
+  "1-100__28": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []",
+    "seconds": 29.4
+  },
+  "1-100__31": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 300.0,
+        "nodes": [
+          "n0",
+          "n7"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "inductor",
+        "value": 1200.0,
+        "nodes": [
+          "n3",
+          "n6"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 200.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "inductor2",
+        "kind": "inductor",
+        "value": 1200.0,
+        "nodes": [
+          "n3",
+          "n7"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 2500.0,
+        "nodes": [
+          "n5",
+          "n6"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 800.0,
+        "nodes": [
+          "n4",
+          "n5"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 100.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "inductor3",
+        "kind": "inductor",
+        "value": 200.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 500.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.023542125954466125,
+    "seconds": 40.9
+  },
+  "1-100__34": {
+    "status": "fail",
+    "reason": "inductor3: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 22.8
+  },
+  "1-100__38": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: kontrol degiskeni 'i_δ' icin 0 aday bulundu (TEK olmali) -- []",
+    "seconds": 16.4
+  },
+  "1-100__4": {
+    "status": "fail",
+    "reason": "devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)",
+    "seconds": 5.0
+  },
+  "1-100__41": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: 0 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 0.0
+  },
+  "1-100__45": {
+    "status": "fail",
+    "reason": "resistor2: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 13.6
+  },
+  "1-100__48": {
+    "status": "fail",
+    "reason": "devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)",
+    "seconds": 9.0
+  },
+  "1-100__51": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 8.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 8.7
+  },
+  "1-100__55": {
+    "status": "fail",
+    "reason": "devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)",
+    "seconds": 11.4
+  },
+  "1-100__58": {
+    "status": "fail",
+    "reason": "dependent_ccvs1 (dependent_ccvs): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "1-100__62": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.7
+  },
+  "1-100__65": {
+    "status": "fail",
+    "reason": "diode1 (diode): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "1-100__68": {
+    "status": "fail",
+    "reason": "resistor3: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 12.3
+  },
+  "1-100__7": {
+    "status": "fail",
+    "reason": "source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 7.6
+  },
+  "1-100__72": {
+    "status": "fail",
+    "reason": "resistor2: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 3.8
+  },
+  "1-100__75": {
+    "status": "fail",
+    "reason": "resistor3: 1 net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)",
+    "seconds": 7.9
+  },
+  "1-100__79": {
+    "status": "fail",
+    "reason": "devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)",
+    "seconds": 19.8
+  },
+  "1-100__82": {
+    "status": "fail",
+    "reason": "resistor2: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 8.6
+  },
+  "1-100__86": {
+    "status": "fail",
+    "reason": "devrede kaynak yok ve esdeger direnc hesaplanamadi (tam olarak 2 acik uc bulunamadi ya da indirgeme tek dirence inmedi)",
+    "seconds": 31.3
+  },
+  "1-100__89": {
+    "status": "fail",
+    "reason": "op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "1-100__92": {
+    "status": "fail",
+    "reason": "op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "1-100__96": {
+    "status": "fail",
+    "reason": "op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "1-100__99": {
+    "status": "fail",
+    "reason": "source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.6
+  },
+  "101-131__103": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 20.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 6.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "inductor",
+        "value": 1.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      }
+    ],
+    "power_balance": 3.999999999999973e-09,
+    "seconds": 12.5
+  },
+  "101-131__106": {
+    "status": "fail",
+    "reason": "source_i1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 12.5
+  },
+  "101-131__109": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 60000.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 10000.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "source_i",
+        "value": 0.009000000000000001,
+        "nodes": [
+          "n1",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 20000.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 9.999999999999999e-06,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 7.28583859910259e-17,
+    "seconds": 19.5
+  },
+  "101-131__113": {
+    "status": "fail",
+    "reason": "op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "101-131__116": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 10.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 20.0,
+        "nodes": [
+          "n1",
+          "n4"
+        ]
+      },
+      {
+        "name": "source_ac_sine1",
+        "kind": "source_ac_sine",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "inductor",
+        "value": 5.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      }
+    ],
+    "power_balance": 2.5874295707561146e-05,
+    "seconds": 32.8
+  },
+  "101-131__120": {
+    "status": "fail",
+    "reason": "capacitor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 3.8
+  },
+  "101-131__123": {
+    "status": "fail",
+    "reason": "op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "101-131__126": {
+    "status": "fail",
+    "reason": "resistor3: VLM deger okuyamadi -- deger/birim okunamadi (2, 'm'): bilinmeyen birim: 'm'",
+    "seconds": 12.6
+  },
+  "101-131__130": {
+    "status": "fail",
+    "reason": "op_amp_right_plus_bottom1 (op_amp_right_plus_bottom): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "132-170__133": {
+    "status": "fail",
+    "reason": "gecici rejim cozulemedi: ngspice çözemedi: Command 'run' failed",
+    "seconds": 11.9
+  },
+  "132-170__137": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.7
+  },
+  "132-170__140": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): ngspice çözemedi: Command 'run' failed",
+    "seconds": 0.0
+  },
+  "132-170__143": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): ngspice çözemedi: Command 'run' failed",
+    "seconds": 11.7
+  },
+  "132-170__147": {
+    "status": "fail",
+    "reason": "dependent_ccvs1 (dependent_ccvs): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "132-170__150": {
+    "status": "fail",
+    "reason": "dependent_ac_vcvs1 (dependent_ac_vcvs): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 16.6
+  },
+  "132-170__154": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): 'n0' düğümü devrede yok. Mevcut: ['gnd', 'n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7']",
+    "seconds": 31.0
+  },
+  "132-170__157": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 20000.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 7500.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 3000.0,
+        "nodes": [
+          "n1",
+          "n5"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 10000.0,
+        "nodes": [
+          "n2",
+          "gnd"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "source_v",
+        "value": 20.0,
+        "nodes": [
+          "n4",
+          "gnd"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "source_v",
+        "value": 30.0,
+        "nodes": [
+          "n5",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 15000.0,
+        "nodes": [
+          "n3",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor6",
+        "kind": "resistor",
+        "value": 8000.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor7",
+        "kind": "resistor",
+        "value": 5000.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      }
+    ],
+    "power_balance": 8.023096076392733e-18,
+    "seconds": 31.3
+  },
+  "132-170__160": {
+    "status": "fail",
+    "reason": "resistor1: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 4.5
+  },
+  "132-170__164": {
+    "status": "fail",
+    "reason": "source_ac_i2: VLM degeri okuyamadi (null dondu), elle girilmeli",
+    "seconds": 9.6
+  },
+  "132-170__167": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): ngspice çözemedi: Command 'run' failed",
+    "seconds": 16.5
+  }
+}

@@ -81,6 +81,9 @@ KURALLAR:
   "kohm", "V", "mA", "kV", "uF" vb. — KRİTİK: "mΩ" (miliohm) ile "MΩ"
   (megaohm) SADECE harf büyüklüğüyle ayrışır, birbirine ÇEVİRME/normalize
   ETME, gördüğün harfi (küçük m mi büyük M mi) AYNEN yaz.
+- Sayının başında "j" ya da "-j" varsa (fazör bölgesi reaktansı: "j2", "-j16")
+  bu bir OHM değeridir: "number" alanına yalnızca sayıyı (2, 16) yaz ve birim
+  yazıda GÖRÜNMESE BİLE "unit" alanına "ohm" yaz. "j"yi sayının parçası SAYMA.
 - Fazör olarak yazılmışsa ("10∠30° V" gibi) "phase_degrees" derece cinsinden yaz; yoksa 0.
 - Bir frekans/açısal frekans yazılıysa Hz cinsinden "frequency_hz" yaz (ω verilmişse f=ω/(2π)); yoksa null.
 - KRİTİK: görüntüde SAYISAL bir değer YAZILI DEĞİLSE (yalnızca "R_eq", "v",
@@ -114,6 +117,7 @@ _UNIT_MULTIPLIERS = {
 # olarak, kucuk/buyuk harf KORUNARAK ele alinir (asagida _unit_multiplier).
 _OHM_M_PREFIX_MULTIPLIER = {"m": 1e-3, "M": 1e6}
 _OHM_TAILS = {"ohm", "ω"}
+_J_UNITS = {"j", "jω", "jw", "jomega"}
 
 
 def _unit_multiplier(unit: str | None) -> float:
@@ -128,6 +132,10 @@ def _unit_multiplier(unit: str | None) -> float:
     if not unit:
         return 1.0
     stripped = unit.strip().replace("μ", "µ").replace(" ", "")
+    # Birimsiz "j2" yaziminda model birim yerine sadece "j"/"jω" yazabiliyor
+    # -- bu bir OHM degeri, carpan 1.0 (tanimsiz birim hatasina dusmesin).
+    if stripped.lower() in _J_UNITS:
+        return 1.0
     # Buyuk/kucuk harf AYRIMI burada BILEREK korunuyor (genel yol asagida
     # hepsini kucultuyor) -- "MΩ" ile "mΩ" 1e9 kat FARKLI deger, ikisini
     # ayni sanmak (eski davranis) miliohm'u megaohm okurdu.
@@ -249,6 +257,11 @@ def is_ohm_unit(unit: str | None) -> bool:
     if not unit:
         return False
     stripped = unit.strip().replace("μ", "µ").replace(" ", "")
+    # Birimsiz "j2"/"-j16" yaziminda birim hic yazmaz; model bu durumda
+    # "j"/"jω" donebiliyor. Bu da REAKTANS (ohm) demektir -- kacirilirsa
+    # deger sessizce Henry/Farad sanilir.
+    if stripped.lower() in _J_UNITS:
+        return True
     if stripped[:1] in _OHM_M_PREFIX_MULTIPLIER and stripped[1:].lower() in _OHM_TAILS:
         return True
     return stripped.lower() in {"ohm", "ω", "kohm", "kω", "megaohm"}
