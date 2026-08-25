@@ -120,6 +120,84 @@ def test_impedance_box_solves_like_manual_rectangular_form():
     assert angle == pytest.approx(-36.8699, abs=0.1)
 
 
+# --- AC'de bagimli kaynaklar ------------------------------------------------
+# ac.py'de vcvs/ccvs HIC yoktu -- ikisi de "AC cozumde desteklenmiyor"
+# hatasina dusuyordu, yani bagimli kaynakli TUM AC devreler (Sadiku Bolum
+# 10'un buyuk kismi) cozulemiyordu.
+
+
+def test_ac_vcvs_is_supported():
+    """Gerilim-kontrollu gerilim kaynagi: R1 uzerindeki gerilimin 2 kati.
+    R1-R2 esit bolucu oldugu icin V(a)=10 -> V(b)=5 -> bagimli kaynak 10 V."""
+    net = Netlist(
+        [
+            V("s", "a", "gnd", 10.0),
+            R("1", "a", "b", 100.0),
+            R("2", "b", "gnd", 100.0),
+            Element("E1", "vcvs", ("c", "gnd"), 2.0, control_nodes=("b", "gnd")),
+            R("3", "c", "gnd", 50.0),
+        ]
+    )
+    solution = solve_ac(net, 1e3)
+    magnitude, _ = ACSolution.polar(solution.node_voltages["c"])
+    assert magnitude == pytest.approx(10.0, rel=1e-6)  # 2 * 5 V
+
+
+def test_ac_ccvs_is_supported():
+    """Akim-kontrollu gerilim kaynagi: R1'in akiminin 100 kati.
+    I(R1) = 10V/200Ω = 50 mA -> bagimli kaynak 5 V."""
+    net = Netlist(
+        [
+            V("s", "a", "gnd", 10.0),
+            R("1", "a", "b", 100.0),
+            R("2", "b", "gnd", 100.0),
+            Element("H1", "ccvs", ("c", "gnd"), 100.0, control_element="R1"),
+            R("3", "c", "gnd", 50.0),
+        ]
+    )
+    solution = solve_ac(net, 1e3)
+    magnitude, _ = ACSolution.polar(solution.node_voltages["c"])
+    assert magnitude == pytest.approx(5.0, rel=1e-6)  # 100 * 0.05 A
+
+
+def test_ac_ccvs_can_sense_impedance_current():
+    """Kontrol akimi bir EMPEDANS uzerinden de okunabilmeli -- fazor bolgesi
+    devrelerinde ("j2 Ω" gosterimi) kontrol elemani cogu zaman direnc DEGIL
+    bobin/kondansator/empedanstir (OLCULDU, Devre Fotoları 1-100/28.png:
+    kontrol akimi -j16 Ω'luk kondansatorden geciyor). Onceden yalnizca
+    direnc destekleniyordu ve boyle devreler hic cozulemiyordu.
+
+    El hesabi: Z_toplam = 100 + j100 -> |Z| = 141.421, I = 10/141.421 =
+    70.711 mA; bagimli kaynak 100*I = 7.0711 V."""
+    net = Netlist(
+        [
+            V("s", "a", "gnd", 10.0),
+            R("1", "a", "b", 100.0),
+            Z("1", "b", "gnd", 100.0, 90.0),
+            Element("H1", "ccvs", ("c", "gnd"), 100.0, control_element="Z1"),
+            R("3", "c", "gnd", 50.0),
+        ]
+    )
+    solution = solve_ac(net, 1e3)
+    magnitude, _ = ACSolution.polar(solution.node_voltages["c"])
+    assert magnitude == pytest.approx(7.0711, rel=1e-3)
+
+
+def test_ac_ccvs_sensing_current_source_is_rejected():
+    """Akim kaynagi uzerinden kontrol KAPSAM DISI -- sessizce yanlis sonuc
+    yerine acik hata."""
+    net = Netlist(
+        [
+            Element("i1", "current_source", ("a", "gnd"), 1.0),
+            R("1", "a", "gnd", 100.0),
+            Element("H1", "ccvs", ("c", "gnd"), 100.0, control_element="i1"),
+            R("3", "c", "gnd", 50.0),
+        ]
+    )
+    with pytest.raises(SolverError, match="eşleşmeyen"):
+        solve_ac(net, 1e3)
+
+
 def test_rejects_zero_valued_impedance():
     net = Netlist([V("s", "a", "gnd", 10.0), Z("1", "a", "gnd", 0.0, 30.0)])
     with pytest.raises(SolverError, match="impedance değeri 0"):

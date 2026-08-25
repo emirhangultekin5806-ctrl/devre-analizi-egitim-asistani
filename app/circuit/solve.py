@@ -60,6 +60,14 @@ class Solution:
         return self.node_voltages[key]
 
 
+# Akimi bir bagimli kaynak tarafindan okunabilen turler (DC). Kapasitor
+# BILEREK YOK: DC'de acik devredir, akimi tanimi geregi sifirdir -- bir
+# kontrol degiskeni olarak anlamsiz. `impedance` de yok, o yalnizca fazor
+# (AC) cozumune ait. bkz. app/circuit/ac.py'deki karsiligi.
+_DC_PASSIVE_KINDS = ("resistor", "inductor")
+_DC_SENSEABLE_KINDS = (*_DC_PASSIVE_KINDS, "voltage_source")
+
+
 def _ground_of(netlist: Netlist, reference: str | None = None) -> str:
     """Devrenin referans (toprak) düğümü.
 
@@ -115,12 +123,19 @@ def solve_dc(netlist: Netlist, reference: str | None = None) -> Solution:
     # eşittir (0 V'luk kaynak ideal, düğümde başka çıkış yok). Öğrenciye
     # gösterilen sonuçlar etkilenmez: hayalet düğümün gerilimi, direncin asıl
     # ikinci ucuyla (0 V'luk kaynak üzerinden) her zaman aynıdır.
+    # AC tarafiyla AYNI kural, bkz. app/circuit/ac.py `_SENSEABLE_KINDS`.
+    # DC'de kapasitor ACIK DEVRE (akimi tanimi geregi 0) oldugu icin
+    # okunabilir turler arasinda YOK -- bobin ise kisa devre olarak
+    # modellendiginden okunabilir.
     sensed = {e.control_element for e in netlist.elements if e.control_element is not None}
-    resistor_names = {e.name for e in netlist.elements if e.kind == "resistor"}
-    if sensed - resistor_names:
+    by_name = {e.name: e for e in netlist.elements}
+    unsupported = sorted(
+        n for n in sensed if n not in by_name or by_name[n].kind not in _DC_SENSEABLE_KINDS
+    )
+    if unsupported:
         raise SolverError(
-            "Kontrol akımı yalnızca bir DİRENCİN üzerinden ölçülebiliyor (bu sürümde); "
-            f"eşleşmeyen: {sorted(sensed - resistor_names)}"
+            "Kontrol akımı yalnızca direnç/bobin ya da gerilim kaynağı üzerinden "
+            f"ölçülebiliyor (DC'de kapasitör akımı sıfırdır); eşleşmeyen: {unsupported}"
         )
 
     has_source = False
@@ -136,13 +151,11 @@ def solve_dc(netlist: Netlist, reference: str | None = None) -> Solution:
         if element.kind == "resistor" and element.value == 0:
             raise SolverError(f"{element.name}: direnç değeri 0 -- muhtemelen okuma hatası, çözülemez")
 
+        sensed_here = element.name in sensed and element.kind in _DC_PASSIVE_KINDS
+        b_eff = f"__amm_{element.name}" if sensed_here else b
+
         if element.kind == "resistor":
-            if element.name in sensed:
-                phantom = f"__amm_{element.name}"
-                circuit.R(element.name, node(a), phantom, element.value)
-                circuit.V(f"amm_{element.name}", phantom, node(b), 0)
-            else:
-                circuit.R(element.name, node(a), node(b), element.value)
+            circuit.R(element.name, node(a), node(b_eff), element.value)
         elif element.kind == "voltage_source":
             circuit.V(element.name, node(a), node(b), element.value)
             has_source = True
@@ -152,7 +165,7 @@ def solve_dc(netlist: Netlist, reference: str | None = None) -> Solution:
         elif element.kind == "capacitor":
             continue  # DC'de açık devre
         elif element.kind == "inductor":
-            circuit.R(element.name, node(a), node(b), 1e-9)  # DC'de kısa devre
+            circuit.R(element.name, node(a), node(b_eff), 1e-9)  # DC'de kısa devre
         elif element.kind == "vcvs":
             nc_plus, nc_minus = element.control_nodes
             circuit.VCVS(
@@ -160,12 +173,19 @@ def solve_dc(netlist: Netlist, reference: str | None = None) -> Solution:
             )
             has_source = True
         elif element.kind == "ccvs":
-            circuit.CCVS(
-                element.name, node(a), node(b), f"vamm_{element.control_element}", element.value
+            control = by_name[element.control_element]
+            reference = (
+                f"v{element.control_element}"
+                if control.kind == "voltage_source"
+                else f"vamm_{element.control_element}"
             )
+            circuit.CCVS(element.name, node(a), node(b), reference, element.value)
             has_source = True
         else:
             raise SolverError(f"{element.name}: {element.kind} DC çözümde desteklenmiyor")
+
+        if sensed_here:
+            circuit.V(f"amm_{element.name}", node(b_eff), node(b), 0)
 
 
     if not has_source:

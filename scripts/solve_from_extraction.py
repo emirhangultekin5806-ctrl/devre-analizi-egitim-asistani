@@ -31,6 +31,7 @@ from app.circuit.topology import equivalent_resistance  # noqa: E402
 from app.circuit.transient import rc_step_response, rl_step_response  # noqa: E402
 from app.vision.vlm_read import (  # noqa: E402
     VLMReadError,
+    is_ohm_unit,
     parse_ocr_value_hint,
     read_component_value,
     read_control_variable_target,
@@ -78,6 +79,13 @@ from app.vision.vlm_read import (  # noqa: E402
 # "8+j6 Ω" gibi karmasik bir ifade, ayri bir okuyucu (read_impedance) ve
 # ayri bir parse/donusum (kartezyen -> buyukluk+faz) gerektiriyor (bkz.
 # asagidaki ozel dal + app/vision/vlm_read.py read_impedance docstring'i).
+# Saf fazor devresinde (tum reaktif elemanlar "jX Ω" olarak verilmis)
+# cozum frekansi sonucu ETKILEMEZ -- ac.py her empedansi secilen frekansta
+# tam o Z'yi verecek sekilde kuruyor. Yine de ngspice'a BIR frekans vermek
+# gerekiyor; 50 Hz secildi (nots: deger tamamen keyfi, 1 Hz de olurdu --
+# sadece "ders kitabi sebeke frekansi" olarak okunabilir olsun diye).
+_PHASOR_REFERENCE_HZ = 50.0
+
 KIND_MAP = {
     "resistor": "resistor",
     "source_v": "voltage_source",
@@ -231,12 +239,30 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
         if reading["frequency_hz"] is not None:
             frequencies[name] = reading["frequency_hz"]
 
+        # FAZOR BOLGESI: bir bobinin/kondansatorun degeri Ω ile yazilmissa o
+        # bir INDUKTANS/KAPASITANS DEGIL, REAKTANStir ("j2 Ω" / "-j16 Ω" --
+        # Sadiku Bolum 9-11'de standart gosterim). Boyle bir eleman zaten
+        # var olan `impedance` turune cevrilir: buyukluk = okunan sayi, faz
+        # = bobinde +90°, kondansatorde -90° (isaretin kendisi YOLO'nun
+        # sembol sinifindan gelir -- "j" mi "-j" mi oldugunu ayrica okumaya
+        # gerek yok, bobin her zaman +jX, kondansator her zaman -jX).
+        #
+        # BULUNDU (2026-08-25, Devre Fotoları 1-100/28.png): bu ayrim
+        # yokken j2Ω -> 2 HENRY, -j16Ω -> 16 FARAD okunuyordu ve devrede
+        # hic frekans yazmadigi icin DC saniliip kondansator acik devre /
+        # bobin kisa devre olarak cozulecekti -- sessizce, tamamen yanlis.
+        if mapped in ("inductor", "capacitor") and is_ohm_unit(reading.get("unit")):
+            mapped, kind_label = "impedance", f"{kind}->impedance"
+            phase = 90.0 if kind == "inductor" else -90.0
+        else:
+            kind_label, phase = kind, reading["phase_degrees"]
+
         elements.append(
-            Element(name=name, kind=mapped, nodes=node_pair, value=reading["value"], phase=reading["phase_degrees"])
+            Element(name=name, kind=mapped, nodes=node_pair, value=reading["value"], phase=phase)
         )
-        element_log.append({"name": name, "kind": kind, "value": reading["value"], "nodes": node_pair})
+        element_log.append({"name": name, "kind": mapped, "value": reading["value"], "nodes": node_pair})
         if verbose:
-            print(f"  {name} ({kind}): {reading['value']:g}  [{node_pair[0]} <-> {node_pair[1]}]")
+            print(f"  {name} ({kind_label}): {reading['value']:g}  [{node_pair[0]} <-> {node_pair[1]}]")
 
     # IKINCI GECIS: her bekleyen bagimli kaynak icin, control_symbol'unu
     # TASIYAN TEK elemani control_targets'tan bul (bkz. yukaridaki toplama
@@ -391,6 +417,26 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             distinct = {page_freq}
             if verbose:
                 print(f"  (frekans semada yok, sayfa metninden alindi: {page_freq:g} Hz)")
+
+    # SAF FAZOR DEVRESI: butun reaktif elemanlar `impedance` (yani semada
+    # zaten "jX Ω" olarak verilmis) ise devre FAZOR BOLGESINDEDIR ve
+    # frekansa HIC IHTIYAC YOKTUR -- empedanslar dogrudan biliniyor.
+    # ac.py'nin `_add_fixed_impedance`'i her empedansi COZUM FREKANSINDA
+    # tam o Z'yi verecek R+L/C'ye ceviriyor, yani hangi frekansi sectigimiz
+    # sonucu DEGISTIRMEZ (bkz. ac.py impedance() docstring'i + o modulun
+    # "frekanstan bagimsiz" testi).
+    #
+    # Sart BILEREK dar: H/F cinsinden GERCEK bir bobin/kondansator varsa
+    # frekans sonucu degistirir, o zaman uydurmak YASAK -- eskisi gibi
+    # sayfa metni/sema frekansi sart kalir.
+    if (
+        not distinct
+        and any(e.kind == "impedance" for e in elements)
+        and not any(e.kind in ("capacitor", "inductor") for e in elements)
+    ):
+        distinct = {_PHASOR_REFERENCE_HZ}
+        if verbose:
+            print("  (saf fazor devresi -- empedanslar verilmis, frekans gerekmiyor)")
 
     netlist = Netlist(elements)
 

@@ -19,7 +19,7 @@ import math
 from dataclasses import dataclass, field
 
 from app.circuit.netlist import Netlist
-from app.circuit.solve import GROUND_NODES, SolverError, _ground_of
+from app.circuit.solve import _BRANCH_PREFIX, GROUND_NODES, SolverError, _ground_of
 
 # solve.py'deki ElementResult/element_results/power_balance'ın fazör
 # karşılığı -- DC yolu bunlarsız zaten çalışıyordu ama AC yolunun eleman
@@ -130,6 +130,24 @@ def _add_fixed_impedance(circuit, node_fn, name: str, a: str, b: str, z: complex
         circuit.C(f"{name}_x", mid, nb, -1 / (omega * x))
 
 
+# Akimi bir bagimli kaynak tarafindan OKUNABILEN eleman turleri. Pasif
+# olanlarda araya 0 V'luk "hayalet ampermetre" konur (SPICE'ta CCVS yalnizca
+# bir GERILIM KAYNAGININ dal akimini referans alabilir); gerilim kaynaginin
+# dal akimini ise SPICE zaten dogrudan sunar, hile gerekmez.
+_PASSIVE_KINDS = ("resistor", "capacitor", "inductor", "impedance")
+_SENSEABLE_KINDS = (*_PASSIVE_KINDS, "voltage_source")
+
+
+def _ccvs_reference(kind: str, control_name: str) -> str:
+    """CCVS'in referans alacagi SPICE gerilim-kaynagi adi.
+
+    Pasif elemanda hayalet ampermetre ("Vamm_<ad>"), gerilim kaynaginda
+    elemanin KENDI SPICE adi ("V<ad>") -- ikisi de kucuk harfe cevrilir
+    (SPICE buyuk/kucuk harf duyarsiz, PySpice referansi boyle bekliyor).
+    """
+    return f"v{control_name}" if kind == "voltage_source" else f"vamm_{control_name}"
+
+
 def _add_phased_source(circuit, prefix: str, name: str, plus, minus, magnitude: float, phase: float) -> None:
     """Faz açılı bağımsız kaynak — ham SPICE satırıyla (bkz. `solve_ac` notu).
 
@@ -162,6 +180,28 @@ def solve_ac(netlist: Netlist, frequency: float, reference: str | None = None) -
     def node(name: str):
         return circuit.gnd if name == ground else name
 
+    # Akim-kontrollu bagimli kaynaklarin OKUDUGU elemanlar. SPICE'ta CCVS
+    # yalnizca bir GERILIM KAYNAGININ dal akimini referans alabilir, bu
+    # yuzden pasif bir elemanin akimi ancak araya 0 V'luk "hayalet
+    # ampermetre" konarak okunur (bkz. solve.py'deki ayni desen -- DC
+    # tarafinda zaten vardi, AC tarafinda bagimli kaynaklar HIC
+    # desteklenmiyordu: vcvs/ccvs asagidaki else'e dusup "AC cozumde
+    # desteklenmiyor" hatasi veriyordu).
+    sensed = {e.control_element for e in netlist.elements if e.control_element is not None}
+    by_name = {e.name: e for e in netlist.elements}
+    # Pasif elemanin akimi hayalet ampermetreyle okunur; GERILIM KAYNAGININ
+    # dal akimini ise SPICE zaten dogrudan veriyor (hile GEREKMEZ). Akim
+    # kaynagi disarida: akimi zaten kendi degeri, ama CCVS referansi icin
+    # bir gerilim kaynagi dali gerekiyor -- kapsam disi, acikca reddediliyor.
+    unsupported = sorted(
+        n for n in sensed if n not in by_name or by_name[n].kind not in _SENSEABLE_KINDS
+    )
+    if unsupported:
+        raise SolverError(
+            "Kontrol akımı yalnızca pasif eleman (direnç/bobin/kondansatör/empedans) ya da "
+            f"gerilim kaynağı üzerinden ölçülebiliyor; eşleşmeyen: {unsupported}"
+        )
+
     has_source = False
     for element in netlist.elements:
         a, b = element.nodes
@@ -185,15 +225,23 @@ def solve_ac(netlist: Netlist, frequency: float, reference: str | None = None) -
         # inductor kontrolleriyle AYNI mantık).
         if element.kind == "impedance" and element.value == 0:
             raise SolverError(f"{element.name}: impedance değeri 0 -- muhtemelen okuma hatası, çözülemez")
+        # Akim-kontrollu bir bagimli kaynagin OKUDUGU pasif eleman: ikinci
+        # ucu hayali bir ara dugume kaydirilir ve arasina 0 V'luk kaynak
+        # ("hayalet ampermetre") konur -- o kaynagin dal akimi elemanin
+        # GERCEK akimidir. Sonuclar etkilenmez: 0 V'luk kaynak ideal, hayali
+        # dugumun gerilimi asil ucla her zaman aynidir.
+        sensed_here = element.name in sensed and element.kind in _PASSIVE_KINDS
+        b_eff = f"__amm_{element.name}" if sensed_here else b
+
         if element.kind == "resistor":
-            circuit.R(element.name, node(a), node(b), element.value)
+            circuit.R(element.name, node(a), node(b_eff), element.value)
         elif element.kind == "capacitor":
-            circuit.C(element.name, node(a), node(b), element.value)
+            circuit.C(element.name, node(a), node(b_eff), element.value)
         elif element.kind == "inductor":
-            circuit.L(element.name, node(a), node(b), element.value)
+            circuit.L(element.name, node(a), node(b_eff), element.value)
         elif element.kind == "impedance":
             z = cmath.rect(element.value, math.radians(element.phase))
-            _add_fixed_impedance(circuit, node, element.name, a, b, z, omega)
+            _add_fixed_impedance(circuit, node, element.name, a, b_eff, z, omega)
         # ac_magnitude ZORUNLU: `amplitude` yalnızca zaman-domeni (SIN)
         # genliğini ayarlıyor, AC analizinde kullanılan büyüklük bu değil.
         # Yalnızca `amplitude` verildiğinde ngspice AC genliğini 1 V kabul
@@ -231,8 +279,19 @@ def solve_ac(netlist: Netlist, frequency: float, reference: str | None = None) -
                     ac_magnitude=element.value,
                 )
             has_source = True
+        elif element.kind == "vcvs":
+            nc_plus, nc_minus = element.control_nodes
+            circuit.VCVS(element.name, node(a), node(b), node(nc_plus), node(nc_minus), element.value)
+            has_source = True
+        elif element.kind == "ccvs":
+            reference = _ccvs_reference(by_name[element.control_element].kind, element.control_element)
+            circuit.CCVS(element.name, node(a), node(b), reference, element.value)
+            has_source = True
         else:
             raise SolverError(f"{element.name}: {element.kind} AC çözümde desteklenmiyor")
+
+        if sensed_here:
+            circuit.V(f"amm_{element.name}", node(b_eff), node(b), 0)
 
     if not has_source:
         raise SolverError("Devrede kaynak yok")
@@ -262,10 +321,15 @@ def solve_ac(netlist: Netlist, frequency: float, reference: str | None = None) -
         str(name).lower(): -complex(waveform.as_ndarray()[0])
         for name, waveform in analysis.branches.items()
     }
+    # Dal akimi adlandirmasi DC ile AYNI (SPICE onek + eleman adi): gerilim
+    # kaynagi "v...", VCVS "e...", CCVS "h..." -- solve.py'deki _BRANCH_PREFIX
+    # tek dogru kaynak, burada tekrar tanimlanmiyor ki ikisi birbirinden
+    # sessizce sapmasin.
     currents = {
-        element.name: raw[f"v{element.name}".lower()]
+        element.name: raw[f"{_BRANCH_PREFIX[element.kind]}{element.name}".lower()]
         for element in netlist.elements
-        if element.kind == "voltage_source" and f"v{element.name}".lower() in raw
+        if element.kind in _BRANCH_PREFIX
+        and f"{_BRANCH_PREFIX[element.kind]}{element.name}".lower() in raw
     }
     return ACSolution(frequency=frequency, node_voltages=voltages, source_currents=currents, reference=ground)
 
@@ -302,10 +366,13 @@ def element_results_ac(netlist: Netlist, solution: ACSolution, frequency: float)
             current = voltage / impedance(element.kind, element.value, frequency, element.phase)
         elif element.kind == "current_source":
             current = cmath.rect(element.value, cmath.pi / 180 * element.phase)
-        elif element.kind == "voltage_source":
+        elif element.kind in ("voltage_source", "vcvs", "ccvs"):
             # solve_ac kaynaktan ÇIKAN akımı pozitif veriyor (bkz. DC
             # tarafındaki aynı işaret notu) -- pasif işaret kuralına
-            # çevirmek için ters çevrilir.
+            # çevirmek için ters çevrilir. vcvs/ccvs de aynı kurala tabi
+            # (solve.py'deki element_results ile BİREBİR aynı davranış --
+            # orada zaten üçü tek dalda toplanmıştı, AC tarafında bağımlı
+            # kaynaklar hiç desteklenmediği için eksik kalmıştı).
             current = -solution.source_currents.get(element.name, 0j)
         else:
             raise SolverError(f"{element.name}: {element.kind} AC çözümde desteklenmiyor")

@@ -9,6 +9,7 @@ bagimli olmadan degistirilen dispatch mantigini test eder.
 from __future__ import annotations
 
 import base64
+import cmath
 import json
 import sys
 from pathlib import Path
@@ -149,6 +150,95 @@ def test_conflicting_frequencies_raise(tmp_path, monkeypatch):
     )
     with pytest.raises(sfe.SolveFromExtractionError, match="birden fazla farkli frekans"):
         sfe.solve_extraction(data, verbose=False)
+
+
+# --- fazor bolgesi ("j2 Ω" gosterimi) ---------------------------------------
+#
+# BULUNDU (2026-08-25, Devre Fotoları 1-100/28.png): Sadiku Bolum 9-11'de
+# devreler FAZOR BOLGESINDE cizilir -- bobin "j2 Ω", kondansator "-j16 Ω"
+# olarak ETIKETLENIR (H/F degil). Bu ayrim yokken j2Ω -> 2 HENRY, -j16Ω ->
+# 16 FARAD okunuyor, ve semada frekans yazmadigi icin devre DC saniliip
+# kondansator acik / bobin kisa devre olarak SESSIZCE yanlis cozuluyordu.
+
+
+def test_ohm_labelled_inductor_becomes_impedance(tmp_path, monkeypatch):
+    """Birimi Ω olan bir bobin = fazor reaktansi -> `impedance` elemani
+    (buyukluk = sayi, faz = +90°). Ve saf fazor devresi FREKANS ISTEMEZ."""
+    readings = {
+        "source_v1": {"value": 50.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "V"},
+        "resistor1": {"value": 3.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "Ω"},
+        "inductor1": {"value": 4.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "Ω"},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "ground": {"kind": "ground", "nets": [0]},
+            "source_v1": {"kind": "source_v", "nets": [1, 0]},
+            "resistor1": {"kind": "resistor", "nets": [1, 2]},
+            "inductor1": {"kind": "inductor", "nets": [2, 0]},
+        },
+    )
+    out = sfe.solve_extraction(data, verbose=False)
+
+    ind = next(e for e in out["elements"] if e["name"] == "inductor1")
+    assert ind["kind"] == "impedance", "Ω birimli bobin impedance olmaliydi"
+    # Seri 3+j4 -> |Z|=5, I = 50/5 = 10 A. Fazor cozumu yapildiginin kaniti.
+    assert isinstance(out["power_balance"], complex)
+    assert abs(out["results"]["resistor1"].current) == pytest.approx(10.0, rel=1e-3)
+
+
+def test_ohm_labelled_capacitor_gets_negative_phase(tmp_path, monkeypatch):
+    """Kondansator fazor bolgesinde HER ZAMAN -jX -- isaret YOLO'nun sembol
+    sinifindan gelir, ayrica "j" mi "-j" mi diye okumaya gerek yok."""
+    readings = {
+        "source_v1": {"value": 50.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "V"},
+        "resistor1": {"value": 3.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "Ω"},
+        "capacitor1": {"value": 4.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "Ω"},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "ground": {"kind": "ground", "nets": [0]},
+            "source_v1": {"kind": "source_v", "nets": [1, 0]},
+            "resistor1": {"kind": "resistor", "nets": [1, 2]},
+            "capacitor1": {"kind": "capacitor", "nets": [2, 0]},
+        },
+    )
+    out = sfe.solve_extraction(data, verbose=False)
+
+    cap = next(e for e in out["elements"] if e["name"] == "capacitor1")
+    assert cap["kind"] == "impedance"
+    # 3-j4 -> |Z|=5, akim 10 A ama faz POZITIF (kapasitif devre akimi ilerler).
+    current = out["results"]["resistor1"].current
+    assert abs(current) == pytest.approx(10.0, rel=1e-3)
+    assert cmath.phase(current) > 0, "kapasitif devrede akim gerilimi ONCELER"
+
+
+def test_henry_labelled_inductor_stays_inductor(tmp_path, monkeypatch):
+    """GERCEK (H cinsinden) bir bobin DOKUNULMADAN kalmali -- ve boyle bir
+    devre frekans olmadan cozulememeli (frekans sonucu DEGISTIRIR, uydurmak
+    YASAK)."""
+    readings = {
+        "source_v1": {"value": 50.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "V"},
+        "inductor1": {"value": 1e-3, "phase_degrees": 0.0, "frequency_hz": None, "unit": "mH"},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "ground": {"kind": "ground", "nets": [0]},
+            "source_v1": {"kind": "source_v", "nets": [1, 0]},
+            "inductor1": {"kind": "inductor", "nets": [1, 0]},
+        },
+    )
+    out = sfe.solve_extraction(data, verbose=False)
+
+    ind = next(e for e in out["elements"] if e["name"] == "inductor1")
+    assert ind["kind"] == "inductor", "H birimli bobin DEGISMEMELIYDI"
+    # Frekans yok -> DC yolu (bobin kisa devre), fazor yoluna KAYMAMALI.
+    assert isinstance(out["power_balance"], float)
 
 
 # --- bagimli kaynak (dependent_vcvs) cozumlemesi ----------------------------

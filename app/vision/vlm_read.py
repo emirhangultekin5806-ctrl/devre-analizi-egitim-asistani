@@ -181,7 +181,7 @@ def parse_ocr_value_hint(text: str) -> dict | None:
         value = float(number_str) * _unit_multiplier(unit or None)
     except ValueError:
         return None
-    return {"value": value, "phase_degrees": 0.0, "frequency_hz": None}
+    return {"value": value, "phase_degrees": 0.0, "frequency_hz": None, "unit": unit}
 
 
 def read_component_value(image_base64: str) -> dict:
@@ -228,7 +228,30 @@ def read_component_value(image_base64: str) -> dict:
         except (TypeError, ValueError) as exc:
             raise VLMReadError(f"Sayısal olmayan frequency_hz: {frequency!r}", raw=raw) from exc
 
-    return {"value": value, "phase_degrees": phase, "frequency_hz": frequency}
+    # `unit` de doner: YOLO'nun "bobin"/"kondansator" dedigi bir elemanin
+    # birimi Ω ise, o etiket bir INDUKTANS/KAPASITANS degil bir REAKTANStir
+    # (fazor bolgesi gosterimi, "j2 Ω" / "-j16 Ω" -- Sadiku Bolum 9-11'de
+    # standart). Cagiran taraf bu ayrimi yapabilsin diye ham birim yukari
+    # tasiniyor (bkz. scripts/solve_from_extraction.py, is_ohm_unit).
+    return {"value": value, "phase_degrees": phase, "frequency_hz": frequency, "unit": payload.get("unit")}
+
+
+def is_ohm_unit(unit: str | None) -> bool:
+    """Birim bir OHM birimi mi ("Ω", "ohm", "kΩ", "MΩ"...).
+
+    Neden gerekli: bir bobinin/kondansatorun degeri H/F ile yazilir; Ω ile
+    yazilmissa o deger INDUKTANS DEGIL, fazor bolgesindeki REAKTANStir
+    ("j2 Ω"). Bu ayrim yapilmazsa "j2 Ω" sessizce 2 HENRY olarak cozulur --
+    GERCEK VERIDE OLCULDU (2026-08-25, Devre Fotoları 1-100/28.png:
+    j2Ω->2H, j3Ω->3H, -j16Ω->16F okundu, devre DC saniliip tamamen yanlis
+    cozulecekti).
+    """
+    if not unit:
+        return False
+    stripped = unit.strip().replace("μ", "µ").replace(" ", "")
+    if stripped[:1] in _OHM_M_PREFIX_MULTIPLIER and stripped[1:].lower() in _OHM_TAILS:
+        return True
+    return stripped.lower() in {"ohm", "ω", "kohm", "kω", "megaohm"}
 
 
 _DEPENDENT_SYSTEM_PROMPT = """Sen bir devre şeması okuyucususun. Sana bağımlı (kontrollü)

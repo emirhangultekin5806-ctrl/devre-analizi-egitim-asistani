@@ -163,7 +163,25 @@ def test_zero_with_explicit_unit_is_accepted():
 
 def test_clean_value_still_parses():
     result = parse_ocr_value_hint("10 kΩ")
-    assert result == {"value": 10000.0, "phase_degrees": 0.0, "frequency_hz": None}
+    # `unit` de doner -- cagiran taraf "bobin ama birimi Ω" (fazor reaktansi)
+    # ayrimini yapabilsin diye (bkz. is_ohm_unit).
+    assert result == {"value": 10000.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "kΩ"}
+
+
+# --- fazor bolgesi ayrimi (is_ohm_unit) --------------------------------------
+# BULUNDU (2026-08-25, Devre Fotoları 1-100/28.png): "j2 Ω" 2 HENRY, "-j16 Ω"
+# 16 FARAD olarak okunuyordu -- devre DC saniliip sessizce tamamen yanlis
+# cozulecekti. Bir bobinin/kondansatorun birimi Ω ise deger REAKTANStir.
+
+
+@pytest.mark.parametrize("unit", ["Ω", "ohm", "kΩ", "kohm", "MΩ", "mΩ", " Ω "])
+def test_is_ohm_unit_true(unit):
+    assert vlm_read.is_ohm_unit(unit) is True
+
+
+@pytest.mark.parametrize("unit", [None, "", "H", "mH", "F", "uF", "V", "A", "Hz"])
+def test_is_ohm_unit_false(unit):
+    assert vlm_read.is_ohm_unit(unit) is False
 
 
 # --- draft_to_netlist --------------------------------------------------------
