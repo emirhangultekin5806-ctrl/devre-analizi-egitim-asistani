@@ -280,7 +280,18 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             except VLMReadError as exc:
                 raise SolveFromExtractionError(f"{name}: VLM deger okuyamadi -- {exc}") from exc
         if reading["value"] is None:
-            raise SolveFromExtractionError(f"{name}: VLM degeri okuyamadi (null dondu), elle girilmeli")
+            # Iki AYRI durum ayni mesaji aliyordu (OLCULDU, 2026-08-25, 121
+            # null vakasinin kirpimlari incelendi): (1) sekilde gercekten
+            # sayi YOK -- deger yerine sembol yazili (Figure 2.29 "R2/v2",
+            # 2.19 "v4", 2.18 "I3"): bu devre SEMBOLIKTIR, null DOGRU
+            # cevaptir, okuma hatasi degildir; (2) sayi var ama okunamadi.
+            # Ikisini ayirmadan "elle girilmeli" demek kullaniciyi olmayan
+            # bir hatayi aramaya gonderiyordu.
+            raise SolveFromExtractionError(
+                f"{name}: sayisal deger okunamadi -- sekilde deger yerine SEMBOL yaziyorsa "
+                "(R1, v_o, I3 gibi) devre semboliktir ve sayisal cozulemez; sayi yaziliysa "
+                "okuma basarisiz, elle girilmeli"
+            )
         if reading["frequency_hz"] is not None:
             frequencies[name] = reading["frequency_hz"]
 
