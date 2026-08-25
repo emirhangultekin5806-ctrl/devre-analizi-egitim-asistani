@@ -169,6 +169,10 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
     # dispatch'inin BEFORE/AFTER netlist'lerini kurmak icin gereken bir
     # DURUM bilgisi (bkz. asagidaki, ana dongu SONRASI islenen blok).
     switches: list[dict] = []
+    # Ω ile yazildigi icin reaktansa cevrilen bobin/kondansatorler -- gecici
+    # rejimde (anahtarli devre) bu FIZIKSEL OLARAK IMKANSIZ, asagida kontrol
+    # edilir (bkz. "if switches:" blogu).
+    reactance_reads: list[str] = []
     for name, comp in components.items():
         kind = comp["kind"]
         if kind == "ground":
@@ -277,6 +281,7 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             # KEZ uygulayip kapasitifi induktife CEVIRIR -- sessizce yanlis
             # devre. Buyukluk her zaman pozitif.
             value = abs(value)
+            reactance_reads.append(name)
         else:
             kind_label, phase = kind, reading["phase_degrees"]
 
@@ -353,6 +358,16 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
     # anahtarin CIZILI (t<0) durumu kapaliysa iki ucu BIRLESTIRILIR (tel),
     # aciksa hic eklenmez (kopuk) -- t>=0'da (after) TERSI uygulanir.
     if switches:
+        # Gecici rejim ZAMAN BOLGESIDIR: bir bobinin/kondansatorun degeri H/F
+        # cinsindendir, reaktans (Ω) diye bir sey YOKTUR (reaktans ancak
+        # sinusoidal kararli hal/fazor bolgesinde tanimli). Boyle bir okuma
+        # geldiyse deger YANLIS okunmustur (OLCULDU, 133.png: bobinin degeri
+        # "667 kΩ" okundu) -- sessizce yanlis cozmek yerine acikca durur.
+        if reactance_reads:
+            raise SolveFromExtractionError(
+                f"{', '.join(reactance_reads)}: anahtarli (gecici rejim) devrede deger Ω olarak "
+                "okundu -- zaman bolgesinde reaktans tanimsiz, H/F bekleniyor; okuma hatali, elle girilmeli"
+            )
         if len(switches) != 1:
             raise SolveFromExtractionError(
                 f"{len(switches)} anahtar bulundu -- su an yalnizca TEK anahtarli devreler destekleniyor"

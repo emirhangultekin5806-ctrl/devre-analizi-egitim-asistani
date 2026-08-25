@@ -804,3 +804,27 @@ def test_phased_source_in_resistive_circuit_keeps_phase(tmp_path, monkeypatch):
     v = out["results"]["resistor1"].voltage
     assert abs(v) == pytest.approx(150.0, rel=1e-6)
     assert cmath.phase(v) == pytest.approx(cmath.pi / 6, rel=1e-6)
+
+
+def test_reactance_read_in_switched_circuit_raises(tmp_path, monkeypatch):
+    """Anahtarli devre zaman bolgesidir -- bobinin degeri Ω okunmussa bu bir
+    okuma hatasi (OLCULDU, 133.png), sessizce cozulmemeli."""
+    readings = {
+        "source_v1": {"value": 16.67, "phase_degrees": 0, "frequency_hz": None, "unit": "V"},
+        "resistor1": {"value": 5.0, "phase_degrees": 0, "frequency_hz": None, "unit": "ohm"},
+        "inductor1": {"value": 667000.0, "phase_degrees": 0, "frequency_hz": None, "unit": "ohm"},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    monkeypatch.setattr(sfe, "read_switch_state", lambda _b64: {"closed": False})
+    data = _extraction(
+        tmp_path,
+        {
+            "ground": {"kind": "ground", "nets": [0]},
+            "source_v1": {"kind": "source_v", "nets": [1, 0]},
+            "switch1": {"kind": "switch", "nets": [1, 2]},
+            "resistor1": {"kind": "resistor", "nets": [2, 3]},
+            "inductor1": {"kind": "inductor", "nets": [3, 0]},
+        },
+    )
+    with pytest.raises(sfe.SolveFromExtractionError, match="reaktans tanimsiz"):
+        sfe.solve_extraction(data, verbose=False)
