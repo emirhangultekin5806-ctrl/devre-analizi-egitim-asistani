@@ -251,18 +251,23 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
         # yokken j2Ω -> 2 HENRY, -j16Ω -> 16 FARAD okunuyordu ve devrede
         # hic frekans yazmadigi icin DC saniliip kondansator acik devre /
         # bobin kisa devre olarak cozulecekti -- sessizce, tamamen yanlis.
+        value = reading["value"]
         if mapped in ("inductor", "capacitor") and is_ohm_unit(reading.get("unit")):
             mapped, kind_label = "impedance", f"{kind}->impedance"
             phase = 90.0 if kind == "inductor" else -90.0
+            # VLM "-j16 Ω" icin sayiyi -16 dondurebiliyor (eksi isareti
+            # okuyup birlikte veriyor). Isaret ZATEN sembol sinifindan
+            # geliyor (faz +90/-90); negatif buyukluk birakmak isareti IKI
+            # KEZ uygulayip kapasitifi induktife CEVIRIR -- sessizce yanlis
+            # devre. Buyukluk her zaman pozitif.
+            value = abs(value)
         else:
             kind_label, phase = kind, reading["phase_degrees"]
 
-        elements.append(
-            Element(name=name, kind=mapped, nodes=node_pair, value=reading["value"], phase=phase)
-        )
-        element_log.append({"name": name, "kind": mapped, "value": reading["value"], "nodes": node_pair})
+        elements.append(Element(name=name, kind=mapped, nodes=node_pair, value=value, phase=phase))
+        element_log.append({"name": name, "kind": mapped, "value": value, "nodes": node_pair})
         if verbose:
-            print(f"  {name} ({kind_label}): {reading['value']:g}  [{node_pair[0]} <-> {node_pair[1]}]")
+            print(f"  {name} ({kind_label}): {value:g}  [{node_pair[0]} <-> {node_pair[1]}]")
 
     # IKINCI GECIS: her bekleyen bagimli kaynak icin, control_symbol'unu
     # TASIYAN TEK elemani control_targets'tan bul (bkz. yukaridaki toplama

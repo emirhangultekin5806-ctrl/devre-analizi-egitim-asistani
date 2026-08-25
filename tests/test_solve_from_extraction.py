@@ -216,6 +216,34 @@ def test_ohm_labelled_capacitor_gets_negative_phase(tmp_path, monkeypatch):
     assert cmath.phase(current) > 0, "kapasitif devrede akim gerilimi ONCELER"
 
 
+def test_negative_reactance_reading_does_not_flip_sign(tmp_path, monkeypatch):
+    """VLM "-j16 Ω" icin sayiyi -16 dondurebilir (eksi isaretini birlikte
+    okur). Isaret ZATEN sembol sinifindan geliyor (kondansator -> -90°);
+    negatif buyuklugu oldugu gibi birakmak isareti IKI KEZ uygulayip
+    KAPASITIF elemani INDUKTIF yapar -- sessizce yanlis devre."""
+    readings = {
+        "source_v1": {"value": 50.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "V"},
+        "resistor1": {"value": 3.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "Ω"},
+        "capacitor1": {"value": -4.0, "phase_degrees": 0.0, "frequency_hz": None, "unit": "Ω"},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "ground": {"kind": "ground", "nets": [0]},
+            "source_v1": {"kind": "source_v", "nets": [1, 0]},
+            "resistor1": {"kind": "resistor", "nets": [1, 2]},
+            "capacitor1": {"kind": "capacitor", "nets": [2, 0]},
+        },
+    )
+    out = sfe.solve_extraction(data, verbose=False)
+
+    cap = next(e for e in out["elements"] if e["name"] == "capacitor1")
+    assert cap["value"] == 4.0, "buyukluk POZITIF olmaliydi"
+    # Hala KAPASITIF: akim gerilimi onceler (faz pozitif).
+    assert cmath.phase(out["results"]["resistor1"].current) > 0
+
+
 def test_henry_labelled_inductor_stays_inductor(tmp_path, monkeypatch):
     """GERCEK (H cinsinden) bir bobin DOKUNULMADAN kalmali -- ve boyle bir
     devre frekans olmadan cozulememeli (frekans sonucu DEGISTIRIR, uydurmak
