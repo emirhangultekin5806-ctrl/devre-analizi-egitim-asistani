@@ -91,9 +91,14 @@ KURALLAR:
   yazı yoksa), "number" alanını KESİNLİKLE null bırak. Yokluğunda bir sayı
   TAHMİN ETME/UYDURMA — devre elemanının TİPİK bir değeri olabileceğini
   düşünüp sayı üretmek YASAK, sadece görüntüde GERÇEKTEN YAZILI olanı bildir.
+- "I", "l" ve "O" HARFTİR, rakam DEĞİLDİR: "I1", "I2", "Vs", "iL" gibi bir
+  yazı elemanın ADIDIR, değeri değil — bunları 11, 12 gibi SAYIYA ÇEVİRME,
+  "number" null olmalı.
+- "text" alanına gördüğün değer/isim yazısını AYNEN, olduğu gibi kopyala
+  ("16u0(t) mA", "I2", "0.4 + j0.2 A", "5 kΩ"). Hiçbir yazı yoksa null.
 
 ÇIKTI BİÇİMİ — yalnızca şu JSON'u yaz, başka hiçbir şey yazma:
-{"number": 5, "unit": "kohm", "phase_degrees": 0, "frequency_hz": null}"""
+{"number": 5, "unit": "kohm", "phase_degrees": 0, "frequency_hz": null, "text": "5 kΩ"}"""
 
 _VALUE_JSON_RE = re.compile(r"\{.*\}", re.DOTALL)
 
@@ -241,7 +246,63 @@ def read_component_value(image_base64: str) -> dict:
     # (fazor bolgesi gosterimi, "j2 Ω" / "-j16 Ω" -- Sadiku Bolum 9-11'de
     # standart). Cagiran taraf bu ayrimi yapabilsin diye ham birim yukari
     # tasiniyor (bkz. scripts/solve_from_extraction.py, is_ohm_unit).
-    return {"value": value, "phase_degrees": phase, "frequency_hz": frequency, "unit": payload.get("unit")}
+    # `text` = kirpimda GORULEN ham yazi. Sayinin kendisi kadar onemli:
+    # OLCULDU (2026-08-25 kosusu, 132-170/164.png) VLM "I2" ve "I1"
+    # etiketlerini 12 ve 11 SAYISI olarak dondurdu -- devre "cozuldu",
+    # guc dengesi 0 cikti, degerler tamamen UYDURMAYDI. Ham yaziyi geri
+    # almak, boyle bir okumayi deterministik olarak reddetmeyi mumkun
+    # kiliyor (bkz. looks_like_symbol_not_value).
+    return {
+        "value": value,
+        "phase_degrees": phase,
+        "frequency_hz": frequency,
+        "unit": payload.get("unit"),
+        "text": payload.get("text"),
+    }
+
+
+# Birimin ima ettigi eleman turu -- YOLO'nun sembol sinifiyla CELISIRSE
+# etiketin dedigi dogrudur (bkz. unit_implies_kind kullanicilari).
+_UNIT_KIND_HINTS = {
+    "v": "voltage_source", "kv": "voltage_source", "mv": "voltage_source",
+    "a": "current_source", "ma": "current_source", "ua": "current_source", "µa": "current_source",
+    "f": "capacitor", "uf": "capacitor", "µf": "capacitor", "nf": "capacitor", "pf": "capacitor",
+    "h": "inductor", "mh": "inductor", "uh": "inductor", "µh": "inductor",
+}
+
+
+# "I1", "I2", "Vs", "iL", "R_eq" gibi ISIMLER -- deger degil. Harf(ler) +
+# istege bagli tek rakam/alt indis, birim YOK.
+_SYMBOL_ONLY_RE = re.compile(r"^[+\-]?\s*[A-Za-z][A-Za-z_]*\s*[₀-₉0-9]?\s*$")
+
+
+def looks_like_symbol_not_value(text: str | None) -> bool:
+    """Bu ham yazi bir ISIM mi (deger degil)?
+
+    OLCULDU (2026-08-25, 132-170/164.png): iki akim kaynaginin etiketi "I2"
+    ve "I1" -- VLM bunlari 12 ve 11 diye SAYI dondurdu ("I" harfini 1 rakami
+    okuyarak). Devre "cozuldu", guc dengesi 0 cikti, iki kaynak degeri de
+    uydurmaydi. Prompt'a kural eklemek tek basina yeterli degil (model yine
+    kacirabiliyor); ham yazi geri geldigi icin burada DETERMINISTIK olarak
+    reddedilir.
+    """
+    if not text:
+        return False
+    return bool(_SYMBOL_ONLY_RE.match(text.strip()))
+
+
+def unit_implies_kind(unit: str | None) -> str | None:
+    """Bu birim hangi eleman turunu ima eder ("30 V" -> voltage_source)?
+
+    Ohm BILEREK yok: bir direnc de, fazor bolgesindeki bir bobin/kondansator
+    de ("j2 Ω") ohm ile yazilir -- ohm tek basina turu belirlemez (bkz.
+    is_ohm_unit ve onu kullanan reaktans donusumu).
+
+    Bilinmeyen/bos birim icin None -- bu bir CELISKI degil, bilgi yoklugudur.
+    """
+    if not unit:
+        return None
+    return _UNIT_KIND_HINTS.get(unit.strip().replace("μ", "µ").replace(" ", "").lower())
 
 
 def is_ohm_unit(unit: str | None) -> bool:

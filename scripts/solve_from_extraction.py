@@ -34,12 +34,14 @@ from app.circuit.transient import rc_step_response, rl_step_response  # noqa: E4
 from app.vision.vlm_read import (  # noqa: E402
     VLMReadError,
     is_ohm_unit,
+    looks_like_symbol_not_value,
     parse_ocr_value_hint,
     read_component_value,
     read_control_variable_target,
     read_dependent_source,
     read_impedance,
     read_switch_state,
+    unit_implies_kind,
 )
 
 # YOLO/taxonomy sinif adi -> Netlist eleman turu. Kapsam disi kalanlar (diyot,
@@ -279,6 +281,14 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
                 reading = read_component_value(image_b64)
             except VLMReadError as exc:
                 raise SolveFromExtractionError(f"{name}: VLM deger okuyamadi -- {exc}") from exc
+        # ISIM SAYI SANILDI MI: VLM "I2"yi 12, "I1"i 11 diye dondurebiliyor
+        # (OLCULDU, 132-170/164.png -- iki kaynak degeri de uydurmaydi, devre
+        # yine de "cozuldu"). Ham yazi bir ISIM ise okunan sayi gecersizdir.
+        if looks_like_symbol_not_value(reading.get("text")):
+            raise SolveFromExtractionError(
+                f"{name}: kirpimda deger degil bir ISIM yaziyor ({reading['text']!r}) -- "
+                "sembolik devre ya da etiket kirpima girmemis; sayi uydurulmadi"
+            )
         if reading["value"] is None:
             # Iki AYRI durum ayni mesaji aliyordu (OLCULDU, 2026-08-25, 121
             # null vakasinin kirpimlari incelendi): (1) sekilde gercekten
@@ -320,6 +330,23 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             reactance_reads.append(name)
         else:
             kind_label, phase = kind, reading["phase_degrees"]
+            # BIRIM <-> SINIF CELISKISI: etiketteki birim YOLO'nun sembol
+            # sinifiyla uyusmuyorsa (kondansator sanilan bir sembolde "30 V",
+            # gerilim kaynagi sanilan bir sembolde "1 A") biri yanlis ve
+            # etiket daha guclu kanittir -- ama HANGI ucun arti oldugu
+            # (kaynak yonu) sembolden gelir, o yuzden sessizce tur
+            # DEGISTIRMEK de yanlis isaretli bir cevap uretebilir.
+            # OLCULDU (2026-08-25 kosusu): 132-170/154.png'de "30 V" pil
+            # kondansator sinifina dusup 30 FARAD olarak, 1-100/51.png'de
+            # "1 A" akim kaynagi gerilim kaynagi olarak cozuldu -- ikisi de
+            # "basarili" raporlandi, guc dengesi 0 cikti, cevap yanlis.
+            implied = unit_implies_kind(reading.get("unit"))
+            if implied is not None and implied != mapped:
+                raise SolveFromExtractionError(
+                    f"{name}: sembol '{kind}' olarak taninmis ama etiketin birimi "
+                    f"({reading['unit']!r}) '{implied}' diyor -- biri yanlis, sessizce "
+                    "cozmek yerine duruluyor (elemani elle duzeltin)"
+                )
 
         elements.append(Element(name=name, kind=mapped, nodes=node_pair, value=value, phase=phase))
         element_log.append({"name": name, "kind": mapped, "value": value, "nodes": node_pair})

@@ -338,3 +338,25 @@ def test_bare_j_unit_counts_as_ohm():
     for unit in ("j", "jω", "JW", " jomega "):
         assert vlm_read.is_ohm_unit(unit)
         assert vlm_read._unit_multiplier(unit) == 1.0
+
+
+def test_unit_implies_kind():
+    """Birim eleman turunu ima eder; ohm ETMEZ (direnc de fazor reaktansi da
+    ohm ile yazilir)."""
+    assert vlm_read.unit_implies_kind("V") == "voltage_source"
+    assert vlm_read.unit_implies_kind("mA") == "current_source"
+    assert vlm_read.unit_implies_kind("uF") == "capacitor"
+    assert vlm_read.unit_implies_kind("mH") == "inductor"
+    assert vlm_read.unit_implies_kind("ohm") is None
+    assert vlm_read.unit_implies_kind("Ω") is None
+    assert vlm_read.unit_implies_kind(None) is None
+    assert vlm_read.unit_implies_kind("") is None
+
+
+def test_looks_like_symbol_not_value():
+    """OLCULDU (132-170/164.png): "I2"/"I1" etiketleri 12/11 SAYISI olarak
+    donmustu -- ham yazi isimse okunan sayi gecersizdir."""
+    for name in ("I2", "I1", "Vs", "iL", "R_eq", " io "):
+        assert vlm_read.looks_like_symbol_not_value(name), name
+    for value in ("5 kΩ", "30 V", "0.4 + j0.2 A", "16u0(t) mA", "j2 Ω", None, ""):
+        assert not vlm_read.looks_like_symbol_not_value(value), value
