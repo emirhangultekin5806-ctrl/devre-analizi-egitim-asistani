@@ -360,3 +360,21 @@ def test_looks_like_symbol_not_value():
         assert vlm_read.looks_like_symbol_not_value(name), name
     for value in ("5 kΩ", "30 V", "0.4 + j0.2 A", "16u0(t) mA", "j2 Ω", None, ""):
         assert not vlm_read.looks_like_symbol_not_value(value), value
+
+
+def test_parse_cartesian_phasor():
+    """OLCULDU (1-100/7.png): "0.4 + j0.2 A" kaynaginda sanal kisim dusuyordu."""
+    magnitude, phase = vlm_read.parse_cartesian_phasor("0.4 + j0.2 A")
+    assert magnitude == pytest.approx(0.4472136, rel=1e-6)
+    assert phase == pytest.approx(26.565051, rel=1e-6)
+    magnitude, phase = vlm_read.parse_cartesian_phasor("3 - j4 V")
+    assert (magnitude, phase) == (pytest.approx(5.0), pytest.approx(-53.130102, rel=1e-6))
+    for other in ("j2 Ω", "5 kΩ", "30 V", None, ""):
+        assert vlm_read.parse_cartesian_phasor(other) is None
+
+
+def test_mentions_step_function():
+    for step in ("16u0(t) mA", "9u_0(t-1) mA", "u(t)", "5u₀(t) A"):
+        assert vlm_read.mentions_step_function(step), step
+    for other in ("5 kΩ", "30 V", "0.4 + j0.2 A", None, ""):
+        assert not vlm_read.mentions_step_function(other), other

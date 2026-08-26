@@ -252,6 +252,14 @@ def read_component_value(image_base64: str) -> dict:
     # guc dengesi 0 cikti, degerler tamamen UYDURMAYDI. Ham yaziyi geri
     # almak, boyle bir okumayi deterministik olarak reddetmeyi mumkun
     # kiliyor (bkz. looks_like_symbol_not_value).
+    # KARTEZYEN FAZOR ("0.4 + j0.2 A"): yalnizca KAYNAK biriminde -- pasif bir
+    # elemanda "8 + j6 Ω" yazmasi baska bir sey demektir (empedans kutusu,
+    # kendi okuyucusu var), orada tahmin yurutulmez.
+    cartesian = parse_cartesian_phasor(payload.get("text"))
+    if cartesian is not None and unit_implies_kind(payload.get("unit")) in ("voltage_source", "current_source"):
+        magnitude, phase = cartesian
+        value = magnitude * _unit_multiplier(payload.get("unit"))
+
     return {
         "value": value,
         "phase_degrees": phase,
@@ -289,6 +297,46 @@ def looks_like_symbol_not_value(text: str | None) -> bool:
     if not text:
         return False
     return bool(_SYMBOL_ONLY_RE.match(text.strip()))
+
+
+# "0.4 + j0.2 A", "3 - j4 V" -- KARTEZYEN fazor. Sadece kaynaklarda ele
+# alinir (bkz. read_component_value); empedans kutusunun kendi okuyucusu var.
+_CARTESIAN_RE = re.compile(
+    r"^\s*(?P<real>[+-]?\d+(?:[.,]\d+)?)\s*(?P<sign>[+\-−])\s*j\s*(?P<imag>\d+(?:[.,]\d+)?)",
+)
+# "16u0(t)", "9u_0(t-1)", "u(t)" -- birim basamak (step) fonksiyonu.
+_STEP_RE = re.compile(r"u\s*[_]?\s*[0₀]?\s*\(\s*t", re.IGNORECASE)
+
+
+def parse_cartesian_phasor(text: str | None) -> tuple[float, float] | None:
+    """"0.4 + j0.2" -> (buyukluk, faz derece). Uymuyorsa None.
+
+    Neden gerekli: OLCULDU (2026-08-25 kosusu, 1-100/7.png) kaynak etiketi
+    "0.4 + j0.2 A" iken sayi 0.4 okundu -- SANAL KISIM sessizce dustu, devre
+    yine "cozuldu". Cevrim VLM'e degil Python'a yaptirilir (bkz. modul
+    docstring'indeki ayni ilke).
+    """
+    if not text:
+        return None
+    match = _CARTESIAN_RE.match(text.replace("−", "-"))
+    if match is None:
+        return None
+    real = float(match.group("real").replace(",", "."))
+    imag = float(match.group("imag").replace(",", "."))
+    if match.group("sign") in "-−":
+        imag = -imag
+    z = complex(real, imag)
+    return abs(z), math.degrees(cmath.phase(z))
+
+
+def mentions_step_function(text: str | None) -> bool:
+    """Etikette birim basamak fonksiyonu mu var ("16u0(t) A")?
+
+    Boyle bir kaynak ZAMANA BAGLIDIR; DC calisma noktasi gibi cozmek yanlis
+    cevap verir -- OLCULDU (101-131/106.png ve 109.png): "16u0(t) A" sabit
+    16 A sanilip devre "cozuldu".
+    """
+    return bool(text) and bool(_STEP_RE.search(text))
 
 
 def unit_implies_kind(unit: str | None) -> str | None:

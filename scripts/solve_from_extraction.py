@@ -23,6 +23,14 @@ import math
 import sys
 from pathlib import Path
 
+# Windows konsolu cp1254 -- gercek devre verisinde gecen "∠", Yunan harfleri
+# ve "Ω" bu kod sayfasinda YOK ve print() UnicodeEncodeError ile COKUYOR
+# (OLCULDU: fazorlu bir AC devrenin sonucunu yazdirirken). batch_solve.py'de
+# ayni koruma zaten vardi, tek devrelik CLI yolunda yoktu.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(errors="backslashreplace")
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.circuit.ac import element_results_ac, power_balance_ac, solve_ac  # noqa: E402
@@ -35,6 +43,7 @@ from app.vision.vlm_read import (  # noqa: E402
     VLMReadError,
     is_ohm_unit,
     looks_like_symbol_not_value,
+    mentions_step_function,
     parse_ocr_value_hint,
     read_component_value,
     read_control_variable_target,
@@ -284,6 +293,16 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
         # ISIM SAYI SANILDI MI: VLM "I2"yi 12, "I1"i 11 diye dondurebiliyor
         # (OLCULDU, 132-170/164.png -- iki kaynak degeri de uydurmaydi, devre
         # yine de "cozuldu"). Ham yazi bir ISIM ise okunan sayi gecersizdir.
+        # BIRIM BASAMAK (step) KAYNAK: "16u0(t) A" zamana bagli bir kaynaktir,
+        # DC calisma noktasi gibi cozmek yanlis cevap uretir -- OLCULDU
+        # (101-131/106.png, 109.png): sabit 16 A / 9 mA sanilip "cozuldu".
+        # Gecici rejim yolu (transient.py) TEK anahtar + TEK depolama elemani
+        # icin yazilmis, basamak kaynagi kapsaminda degil.
+        if mentions_step_function(reading.get("text")):
+            raise SolveFromExtractionError(
+                f"{name}: birim basamak kaynagi ({reading['text']!r}) -- zamana bagli, "
+                "bu yolda desteklenmiyor (DC calisma noktasi gibi cozmek yanlis olur)"
+            )
         if looks_like_symbol_not_value(reading.get("text")):
             raise SolveFromExtractionError(
                 f"{name}: kirpimda deger degil bir ISIM yaziyor ({reading['text']!r}) -- "
