@@ -36,6 +36,9 @@
   (şekil PDF'in vektör verisinden geometrik olarak okunur — görsel model yok; `--page` 0'dan başlayan indeks)
 - Cevap kalitesi regresyon seti: `.venv\Scripts\python scripts\evaluate_rag.py`
   (prompt/model değiştirdiysen bunu çalıştır — sessiz gerilemeleri yakalar)
+- **Devre çözme regresyon seti (44 gerçek fotoğraf): `.venv\Scripts\python scripts\regression_44.py`**
+  (gözetimsiz ~25 dk; baseline `evaluation/regression_44_baseline.json`, kabul edilen sonucu
+  `--promote` ile baseline yap. Bozulan devre varsa çıkış kodu 1)
 
 # Code Standards
 - Follow existing naming and folder conventions (bkz. Önerilen Klasör Yapısı).
@@ -47,6 +50,11 @@
 # Definition of Done
 - Acceptance criteria are met.
 - Tests, lint, and type-check pass.
+- Değer okuma, etiket atama, connectivity veya netlist yollarına dokunulduysa
+  `scripts/regression_44.py` çalıştırılmış ve **bozulan devre listesi boş** olmalıdır.
+  Birim testleri bu soruyu cevaplamaz: 2026-08-26'da 448 test + 4 devre ile doğrulanan
+  8 commit, bu setteki çözülen devre sayısını 15'ten 6'ya düşürmüştü.
+- "Düzeldi/bitti" denmeden önce öncesi–sonrası sayı verilmelidir; ölçüm yoksa iddia yok.
 - Changed files are reviewed with git diff.
 - README/docs are updated when behavior or setup changes.
 

@@ -1,0 +1,1101 @@
+{
+  "1-100__1": {
+    "status": "fail",
+    "reason": "resistor1: sayisal deger okunamadi -- sekilde deger yerine SEMBOL yaziyorsa (R1, v_o, I3 gibi) devre semboliktir ve sayisal cozulemez; sayi yaziliysa okuma basarisiz, elle girilmeli",
+    "seconds": 20.5
+  },
+  "1-100__11": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "voltage_source",
+        "value": 1365.0,
+        "nodes": [
+          "n0",
+          "n5"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "voltage_source",
+        "value": 1365.0,
+        "nodes": [
+          "n11",
+          "n5"
+        ]
+      },
+      {
+        "name": "source_v3",
+        "kind": "voltage_source",
+        "value": 2.0,
+        "nodes": [
+          "n7",
+          "n5"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "impedance",
+        "value": 2.0,
+        "nodes": [
+          "n7",
+          "n8"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 85.5,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "inductor2",
+        "kind": "impedance",
+        "value": 2.0,
+        "nodes": [
+          "n11",
+          "n12"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 1.5,
+        "nodes": [
+          "n10",
+          "n12"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 85.5,
+        "nodes": [
+          "n6",
+          "n9"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 85.5,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 1365.0,
+        "nodes": [
+          "n6",
+          "n8"
+        ]
+      },
+      {
+        "name": "resistor6",
+        "kind": "resistor",
+        "value": 1.5,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "inductor3",
+        "kind": "impedance",
+        "value": 114.0,
+        "nodes": [
+          "n3",
+          "n6"
+        ]
+      },
+      {
+        "name": "inductor4",
+        "kind": "impedance",
+        "value": 114.0,
+        "nodes": [
+          "n4",
+          "n10"
+        ]
+      },
+      {
+        "name": "inductor5",
+        "kind": "impedance",
+        "value": 114.0,
+        "nodes": [
+          "n9",
+          "n10"
+        ]
+      },
+      {
+        "name": "inductor6",
+        "kind": "impedance",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 4.587460454932305e-10,
+    "seconds": 63.8
+  },
+  "1-100__14": {
+    "status": "fail",
+    "reason": "devrede kaynak yok ve cozulemedi: esdeger empedans frekansa bagli ama devrede/sayfa metninde frekans yok -- bobin/kondansator degeri H/F cinsinden verilmis, uydurma frekansla sayi uretilmez",
+    "seconds": 12.0
+  },
+  "1-100__18": {
+    "status": "fail",
+    "reason": "acik uc: inductor1, source_v1 elemani devrenin geri kalanina baglanmamis (dugum n0, n1 yalnizca tek elemana degiyor) -- baglanti cikarimi eksik, cozulemez",
+    "seconds": 8.7
+  },
+  "1-100__21": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "voltage_source",
+        "value": 120.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "impedance",
+        "value": 40.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 60.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 120.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "dependent_vcvs1",
+        "kind": "vcvs",
+        "value": 10.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ],
+        "control": "resistor1"
+      }
+    ],
+    "power_balance": 7.499885442698834e-12,
+    "seconds": 42.6
+  },
+  "1-100__24": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "current_source",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "impedance",
+        "value": 10.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 20.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "impedance",
+        "value": 10.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "dependent_vcvs1",
+        "kind": "ccvs",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ],
+        "control": "resistor1"
+      }
+    ],
+    "power_balance": 7.944109290391274e-15,
+    "seconds": 42.1
+  },
+  "1-100__28": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: kontrol degiskeni 'x' icin 0 aday bulundu (TEK olmali) -- []",
+    "seconds": 54.8
+  },
+  "1-100__31": {
+    "status": "fail",
+    "reason": "acik uc: inductor3 elemani devrenin geri kalanina baglanmamis (dugum n0 yalnizca tek elemana degiyor) -- baglanti cikarimi eksik, cozulemez",
+    "seconds": 40.9
+  },
+  "1-100__34": {
+    "status": "fail",
+    "reason": "inductor2: VLM deger okuyamadi -- deger/birim okunamadi (10, ':'): bilinmeyen birim: ':'",
+    "seconds": 23.0
+  },
+  "1-100__38": {
+    "status": "fail",
+    "reason": "source_i1: sayisal deger okunamadi -- sekilde deger yerine SEMBOL yaziyorsa (R1, v_o, I3 gibi) devre semboliktir ve sayisal cozulemez; sayi yaziliysa okuma basarisiz, elle girilmeli",
+    "seconds": 9.0
+  },
+  "1-100__4": {
+    "status": "fail",
+    "reason": "devrede kaynak yok ve cozulemedi: esdeger empedans frekansa bagli ama devrede/sayfa metninde frekans yok -- bobin/kondansator degeri H/F cinsinden verilmis, uydurma frekansla sayi uretilmez",
+    "seconds": 4.0
+  },
+  "1-100__41": {
+    "status": "fail",
+    "reason": "source_v1: sayisal deger okunamadi -- sekilde deger yerine SEMBOL yaziyorsa (R1, v_o, I3 gibi) devre semboliktir ve sayisal cozulemez; sayi yaziliysa okuma basarisiz, elle girilmeli",
+    "seconds": 8.1
+  },
+  "1-100__45": {
+    "status": "fail",
+    "reason": "inductor2: VLM deger okuyamadi -- deger/birim okunamadi (4, ':'): bilinmeyen birim: ':'",
+    "seconds": 21.3
+  },
+  "1-100__48": {
+    "status": "fail",
+    "reason": "impedance_box1: empedans okunamadi -- empedans alanları eksik/null: {'resistance': None, 'reactance': None, 'magnitude': None, 'phase_degrees': None}",
+    "seconds": 4.9
+  },
+  "1-100__51": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "voltage_source",
+        "value": 1.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 8.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 0.0,
+    "seconds": 7.6
+  },
+  "1-100__55": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "voltage_source",
+        "value": 24.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 3.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 7.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 8.881784197001252e-14,
+    "seconds": 15.3
+  },
+  "1-100__58": {
+    "status": "fail",
+    "reason": "dependent_ccvs1 (dependent_ccvs): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 15.8
+  },
+  "1-100__62": {
+    "status": "fail",
+    "reason": "resistor3: sayisal deger okunamadi -- sekilde deger yerine SEMBOL yaziyorsa (R1, v_o, I3 gibi) devre semboliktir ve sayisal cozulemez; sayi yaziliysa okuma basarisiz, elle girilmeli",
+    "seconds": 11.6
+  },
+  "1-100__65": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "voltage_source",
+        "value": 40.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 50.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 8.43769498715119e-15,
+    "seconds": 11.5
+  },
+  "1-100__68": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "current_source",
+        "value": 0.01,
+        "nodes": [
+          "n3",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 6000.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 2000.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 4000.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "dependent_vcvs1",
+        "kind": "vcvs",
+        "value": 0.5,
+        "nodes": [
+          "n1",
+          "n3"
+        ],
+        "control": "resistor3"
+      }
+    ],
+    "power_balance": 1.0408340855860843e-17,
+    "seconds": 29.3
+  },
+  "1-100__7": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "capacitor1",
+        "kind": "impedance",
+        "value": 20.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "current_source",
+        "value": 0.4,
+        "nodes": [
+          "n3",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 40.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 20.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "impedance",
+        "value": 16.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      }
+    ],
+    "power_balance": 9.0190518875331e-16,
+    "seconds": 19.4
+  },
+  "1-100__72": {
+    "status": "fail",
+    "reason": "dependent_ccvs1 (dependent_ccvs): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "1-100__75": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: kontrol degiskeni 'δ' icin 0 aday bulundu (TEK olmali) -- []",
+    "seconds": 61.3
+  },
+  "1-100__79": {
+    "status": "fail",
+    "reason": "acik uc: source_i1 elemani devrenin geri kalanina baglanmamis (dugum n0, n3 yalnizca tek elemana degiyor) -- baglanti cikarimi eksik, cozulemez",
+    "seconds": 19.5
+  },
+  "1-100__82": {
+    "status": "fail",
+    "reason": "resistor5: sayisal deger okunamadi -- sekilde deger yerine SEMBOL yaziyorsa (R1, v_o, I3 gibi) devre semboliktir ve sayisal cozulemez; sayi yaziliysa okuma basarisiz, elle girilmeli",
+    "seconds": 31.1
+  },
+  "1-100__86": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: kontrol degiskeni 'β' icin 0 aday bulundu (TEK olmali) -- []",
+    "seconds": 54.4
+  },
+  "1-100__99": {
+    "status": "fail",
+    "reason": "source_i1: sayisal deger okunamadi -- sekilde deger yerine SEMBOL yaziyorsa (R1, v_o, I3 gibi) devre semboliktir ve sayisal cozulemez; sayi yaziliysa okuma basarisiz, elle girilmeli",
+    "seconds": 4.6
+  },
+  "101-131__103": {
+    "status": "fail",
+    "reason": "acik uc: resistor2 elemani devrenin geri kalanina baglanmamis (dugum n2 yalnizca tek elemana degiyor) -- baglanti cikarimi eksik, cozulemez",
+    "seconds": 11.4
+  },
+  "101-131__106": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_i1",
+        "kind": "current_source",
+        "value": 16.0,
+        "nodes": [
+          "n2",
+          "n0"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "inductor",
+        "value": 0.001,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 0.00018600234760115194,
+    "seconds": 19.1
+  },
+  "101-131__109": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_i1",
+        "kind": "current_source",
+        "value": 0.009000000000000001,
+        "nodes": [
+          "n1",
+          "n0"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 10000.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 60000.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 20000.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 9.999999999999999e-06,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 7.28583859910259e-17,
+    "seconds": 19.7
+  },
+  "101-131__116": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "capacitor1",
+        "kind": "impedance",
+        "value": 10.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "impedance",
+        "value": 5.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 5.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_ac_sine1",
+        "kind": "voltage_source",
+        "value": 12.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 20.0,
+        "nodes": [
+          "n1",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 2.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 5.3224165907981095e-15,
+    "seconds": 32.1
+  },
+  "101-131__120": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_ac_sine1",
+        "kind": "voltage_source",
+        "value": 10.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 4.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "impedance",
+        "value": 5.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "impedance",
+        "value": 2.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      }
+    ],
+    "power_balance": 1.7763568394002505e-15,
+    "seconds": 16.3
+  },
+  "101-131__126": {
+    "status": "fail",
+    "reason": "source_ac_sine1: sayisal deger okunamadi -- sekilde deger yerine SEMBOL yaziyorsa (R1, v_o, I3 gibi) devre semboliktir ve sayisal cozulemez; sayi yaziliysa okuma basarisiz, elle girilmeli",
+    "seconds": 27.8
+  },
+  "132-170__133": {
+    "status": "fail",
+    "reason": "gecici rejim cozulemedi: ngspice çözemedi: Command 'run' failed",
+    "seconds": 12.8
+  },
+  "132-170__137": {
+    "status": "fail",
+    "reason": "resistor1: sayisal deger okunamadi -- sekilde deger yerine SEMBOL yaziyorsa (R1, v_o, I3 gibi) devre semboliktir ve sayisal cozulemez; sayi yaziliysa okuma basarisiz, elle girilmeli",
+    "seconds": 3.7
+  },
+  "132-170__140": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): ngspice çözemedi: Command 'run' failed",
+    "seconds": 0.0
+  },
+  "132-170__143": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): ngspice çözemedi: Command 'run' failed",
+    "seconds": 11.9
+  },
+  "132-170__147": {
+    "status": "fail",
+    "reason": "dependent_ccvs1 (dependent_ccvs): bu tur henuz desteklenmiyor, cozulemez",
+    "seconds": 0.0
+  },
+  "132-170__150": {
+    "status": "fail",
+    "reason": "dependent_vcvs1: bagimli kaynak okunamadi -- bağımlı kaynak alanları eksik/null: {'gain': 20, 'control_symbol': None, 'control_is_current': None}",
+    "seconds": 19.9
+  },
+  "132-170__154": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 15000.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "source_v1",
+        "kind": "voltage_source",
+        "value": 25.0,
+        "nodes": [
+          "n5",
+          "gnd"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "voltage_source",
+        "value": 10.0,
+        "nodes": [
+          "n6",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 4000.0,
+        "nodes": [
+          "n3",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 10000.0,
+        "nodes": [
+          "n2",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 7000.0,
+        "nodes": [
+          "n2",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 9000.0,
+        "nodes": [
+          "n3",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor6",
+        "kind": "resistor",
+        "value": 2000.0,
+        "nodes": [
+          "n0",
+          "n5"
+        ]
+      },
+      {
+        "name": "resistor7",
+        "kind": "resistor",
+        "value": 3000.0,
+        "nodes": [
+          "n0",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor8",
+        "kind": "resistor",
+        "value": 5000.0,
+        "nodes": [
+          "n4",
+          "n6"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "capacitor",
+        "value": 30.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      }
+    ],
+    "power_balance": 1.2468324983583301e-18,
+    "seconds": 31.4
+  },
+  "132-170__157": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_v1",
+        "kind": "voltage_source",
+        "value": 30.0,
+        "nodes": [
+          "n5",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 8000.0,
+        "nodes": [
+          "n2",
+          "n3"
+        ]
+      },
+      {
+        "name": "source_v2",
+        "kind": "voltage_source",
+        "value": 20.0,
+        "nodes": [
+          "n4",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 7500.0,
+        "nodes": [
+          "n0",
+          "n2"
+        ]
+      },
+      {
+        "name": "resistor3",
+        "kind": "resistor",
+        "value": 20000.0,
+        "nodes": [
+          "n1",
+          "n3"
+        ]
+      },
+      {
+        "name": "resistor4",
+        "kind": "resistor",
+        "value": 10000.0,
+        "nodes": [
+          "n2",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor5",
+        "kind": "resistor",
+        "value": 5000.0,
+        "nodes": [
+          "n0",
+          "n4"
+        ]
+      },
+      {
+        "name": "resistor6",
+        "kind": "resistor",
+        "value": 3000.0,
+        "nodes": [
+          "n1",
+          "n5"
+        ]
+      },
+      {
+        "name": "resistor7",
+        "kind": "resistor",
+        "value": 15000.0,
+        "nodes": [
+          "n3",
+          "gnd"
+        ]
+      }
+    ],
+    "power_balance": 8.023096076392733e-18,
+    "seconds": 31.5
+  },
+  "132-170__160": {
+    "status": "fail",
+    "reason": "resistor1: sayisal deger okunamadi -- sekilde deger yerine SEMBOL yaziyorsa (R1, v_o, I3 gibi) devre semboliktir ve sayisal cozulemez; sayi yaziliysa okuma basarisiz, elle girilmeli",
+    "seconds": 4.6
+  },
+  "132-170__164": {
+    "status": "ok",
+    "elements": [
+      {
+        "name": "source_ac_i1",
+        "kind": "current_source",
+        "value": 12.0,
+        "nodes": [
+          "gnd",
+          "n1"
+        ]
+      },
+      {
+        "name": "source_ac_i2",
+        "kind": "current_source",
+        "value": 11.0,
+        "nodes": [
+          "n0",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor1",
+        "kind": "resistor",
+        "value": 120.0,
+        "nodes": [
+          "n0",
+          "n1"
+        ]
+      },
+      {
+        "name": "inductor1",
+        "kind": "impedance",
+        "value": 25.0,
+        "nodes": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "name": "capacitor1",
+        "kind": "impedance",
+        "value": 35.0,
+        "nodes": [
+          "n0",
+          "gnd"
+        ]
+      },
+      {
+        "name": "resistor2",
+        "kind": "resistor",
+        "value": 43.0,
+        "nodes": [
+          "n2",
+          "gnd"
+        ]
+      }
+    ],
+    "power_balance": 1.7053025658242404e-13,
+    "seconds": 24.5
+  },
+  "132-170__167": {
+    "status": "fail",
+    "reason": "cozulemedi (DC): ngspice çözemedi: Command 'run' failed",
+    "seconds": 16.8
+  }
+}
