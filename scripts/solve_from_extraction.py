@@ -273,19 +273,28 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
         if mapped is None:
             raise SolveFromExtractionError(f"{name} ({kind}): bu tur henuz desteklenmiyor, cozulemez")
 
-        # OCR (bkz. devre-yolo-dedektor/extract_for_solve.py ocr_value_hint)
-        # kirpimin yakininda TEK, acik bir deger-benzeri metin bulmussa VLM'i
-        # HIC CAGIRMADAN parse edilir -- VLM (ag uzerinden model calistirma)
-        # pipeline'in en yavas adimi, OCR zaten net bir sinyal verdiyse
-        # tekrar sormanin bir faydasi yok. OCR belirsizse/bulamamissa
-        # (None) ya da parse basarisizsa (Omega'yi "0" okumasi gibi) VLM'e
-        # DUSER -- asla tahmin etmez.
+        # DEGERIN KAYNAGI: bu elemana ATANAN etiket (bkz. devre-yolo-dedektor/
+        # label_assign.py -- global, esiksiz atama). "Kirpimda ne gorunuyorsa
+        # o" yaklasimi BIRAKILDI: kirpim sinirlari cizim olcegine gore
+        # degistigi icin komsunun etiketi iceri girip sessizce yanlis deger
+        # uretiyordu (OLCULDU: 1-100/11.png, Figure 2.10).
+        #
+        # Etiketin metni deterministik ayristirilabiliyorsa VLM HIC
+        # CAGRILMAZ. Ayristirilamiyorsa (OCR "Ω"yi "0" okumus olabilir) VLM'e
+        # ETIKETIN KENDI KIRPIMI gonderilir -- icinde tek bir yazi vardir,
+        # "hangi degeri okuyayim" belirsizligi yapisal olarak yoktur.
         ocr_hint = comp.get("ocr_value_hint")
         reading = parse_ocr_value_hint(ocr_hint) if ocr_hint else None
         if reading is not None and verbose:
-            print(f"  {name}: OCR'dan dogrudan okundu ({ocr_hint!r}), VLM atlandi")
+            print(f"  {name}: etiketten dogrudan okundu ({ocr_hint!r}), VLM atlandi")
         if reading is None:
-            image_b64 = base64.b64encode(Path(comp["crop"]).read_bytes()).decode()
+            label_crop = comp.get("value_label_crop")
+            if label_crop is None:
+                raise SolveFromExtractionError(
+                    f"{name}: bu elemana hicbir deger etiketi eslesmedi -- sekilde degeri "
+                    "yazmiyor olabilir (sembolik devre) ya da OCR etiketi bulamamis"
+                )
+            image_b64 = base64.b64encode(Path(label_crop).read_bytes()).decode()
             try:
                 reading = read_component_value(image_b64)
             except VLMReadError as exc:
@@ -676,6 +685,19 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             f"(dugum {', '.join(dangling)} yalnizca tek elemana degiyor) -- "
             "baglanti cikarimi eksik, cozulemez"
         )
+
+    # REFERANS (toprak) SECIMI: ders kitabi sekillerinin cogunda toprak
+    # sembolu YOKTUR (Test Sorulari/Soru1 ve Soru4 dahil) -- devre havada
+    # cizilir. Boyle bir devrede referans dugum SERBESTCE secilebilir:
+    # elemanlarin gerilim ve akimlari secimden BAGIMSIZDIR (yalnizca dugum
+    # potansiyellerinin ortak ofseti degisir). Cagiran acikca bir referans
+    # vermediyse ilk dugumu sec -- eskiden cozucu "referans yok" diye
+    # reddediyordu ve toprak cizilmemis her devre bu yuzden cozulemiyordu.
+    if reference is None and not any(node in GROUND_NODES for e in elements for node in e.nodes):
+        reference = sorted({node for e in elements for node in e.nodes})[0]
+        if verbose:
+            print(f"  (sekilde toprak yok -- referans dugum {reference} secildi; "
+                  "eleman gerilim/akimlari bu secimden etkilenmez)")
 
     if distinct:
         frequency = distinct.pop()

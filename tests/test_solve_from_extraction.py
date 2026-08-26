@@ -42,9 +42,18 @@ def _write_crop(tmp_path: Path, name: str) -> str:
 
 
 def _extraction(tmp_path: Path, components: dict[str, dict]) -> dict:
+    """Sahte extraction. `value_label_crop` da yazilir: gercek boru hattinda
+    deger, elemana ATANAN etiketin kendi kirpimindan okunur (bkz.
+    devre-yolo-dedektor/label_assign.py) -- sahte okuyucu da ayni dosyayi
+    gorup bilesen adina gore sabit deger doner."""
     return {
         "components": {
-            name: {**comp, "crop": _write_crop(tmp_path, name)} for name, comp in components.items()
+            name: {
+                "crop": _write_crop(tmp_path, name),
+                "value_label_crop": _write_crop(tmp_path, name),
+                **comp,
+            }
+            for name, comp in components.items()
         }
     }
 
@@ -913,3 +922,25 @@ def test_unit_contradicting_yolo_class_raises(tmp_path, monkeypatch):
     )
     with pytest.raises(sfe.SolveFromExtractionError, match="birimi"):
         sfe.solve_extraction(data, verbose=False)
+
+
+def test_reference_is_chosen_when_no_ground_is_drawn(tmp_path, monkeypatch):
+    """Ders kitabi sekillerinin cogunda toprak sembolu yok (OLCULDU, Test
+    Sorulari/Soru1 ve Soru4). Referans serbestce secilebilir -- eleman
+    gerilim/akimlari secimden etkilenmez."""
+    readings = {
+        "source_v1": {"value": 120.0, "phase_degrees": 0, "frequency_hz": None, "unit": "V"},
+        "resistor1": {"value": 20.0, "phase_degrees": 0, "frequency_hz": None, "unit": "ohm"},
+        "resistor2": {"value": 40.0, "phase_degrees": 0, "frequency_hz": None, "unit": "ohm"},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {   # toprak YOK
+            "source_v1": {"kind": "source_v", "nets": [0, 2]},
+            "resistor1": {"kind": "resistor", "nets": [0, 1]},
+            "resistor2": {"kind": "resistor", "nets": [1, 2]},
+        },
+    )
+    out = sfe.solve_extraction(data, verbose=False)
+    assert abs(out["results"]["resistor1"].current) == pytest.approx(2.0)  # 120 / 60
