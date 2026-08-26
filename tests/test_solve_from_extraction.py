@@ -944,3 +944,27 @@ def test_reference_is_chosen_when_no_ground_is_drawn(tmp_path, monkeypatch):
     )
     out = sfe.solve_extraction(data, verbose=False)
     assert abs(out["results"]["resistor1"].current) == pytest.approx(2.0)  # 120 / 60
+
+
+def test_shorted_component_reports_zero_volts(tmp_path, monkeypatch):
+    """Uzerinden tel gecirilmis eleman (iki ucu ayni dugumde) bir cikarim
+    hatasi degil, devrenin kendisidir -- GERCEK VERI (Test Sorulari/Soru3):
+    60 Ω direnc kisa devre, sorunun cevabi 0 V. Kalan devre normal cozulur."""
+    readings = {
+        "source_v1": {"value": 120.0, "phase_degrees": 0, "frequency_hz": None, "unit": "V"},
+        "resistor_shorted": {"value": 60.0, "phase_degrees": 0, "frequency_hz": None, "unit": "ohm"},
+        "resistor1": {"value": 40.0, "phase_degrees": 0, "frequency_hz": None, "unit": "ohm"},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "source_v1": {"kind": "source_v", "nets": [0, 1]},
+            "resistor_shorted": {"kind": "resistor", "nets": [0, 0]},  # kisa devre
+            "resistor1": {"kind": "resistor", "nets": [0, 1]},
+        },
+    )
+    out = sfe.solve_extraction(data, verbose=False)
+    assert out["results"]["resistor_shorted"].voltage == 0.0
+    assert out["results"]["resistor_shorted"].current == 0.0
+    assert abs(out["results"]["resistor1"].current) == pytest.approx(3.0)  # 120 / 40

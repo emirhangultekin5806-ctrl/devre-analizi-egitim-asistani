@@ -36,7 +36,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.circuit.ac import element_results_ac, power_balance_ac, solve_ac  # noqa: E402
 from app.circuit.netlist import Element, Netlist  # noqa: E402
 from app.circuit.page_text import extract_frequency_hz, mentions_unsupported_element  # noqa: E402
-from app.circuit.solve import GROUND_NODES, SolverError, element_results, power_balance, solve_dc  # noqa: E402
+from app.circuit.solve import (  # noqa: E402
+    GROUND_NODES,
+    ElementResult,
+    SolverError,
+    element_results,
+    power_balance,
+    solve_dc,
+)
 from app.circuit.topology import equivalent_impedance, equivalent_resistance  # noqa: E402
 from app.circuit.transient import rc_step_response, rl_step_response  # noqa: E402
 from app.vision.vlm_read import (  # noqa: E402
@@ -137,6 +144,18 @@ def _terminal_nodes(data: dict, netlist: Netlist, node_name) -> list[str]:
     return netlist.dangling_nodes()
 
 
+def _with_shorted(results: dict, shorted: list[tuple[str, str, str]]) -> dict:
+    """Kisa devre edilmis elemanlari sonuclara ekler: V = 0, I = 0, P = 0.
+
+    Guc dengesi HESAPLANDIKTAN SONRA eklenir -- sifir katkili olduklari icin
+    dengeyi degistirmezler, ama ogrencinin sorusu tam da bu eleman olabilir
+    (Test Sorulari/Soru3: "60 Ω direnc uzerindeki gerilim nedir" -> 0 V).
+    """
+    for name, kind, _node in shorted:
+        results[name] = ElementResult(name=name, kind=kind, current=0.0, voltage=0.0, power=0.0)
+    return results
+
+
 def _control_is_current(dep: dict) -> bool:
     """Bagimli kaynak AKIM mi GERILIM mi kontrollu -- once ETIKET METNI, sonra bayrak.
 
@@ -205,6 +224,8 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
     # dispatch'inin BEFORE/AFTER netlist'lerini kurmak icin gereken bir
     # DURUM bilgisi (bkz. asagidaki, ana dongu SONRASI islenen blok).
     switches: list[dict] = []
+    # Uzerinden tel gecirilmis (iki ucu ayni dugumde) elemanlar.
+    shorted: list[tuple[str, str, str]] = []
     # Ω ile yazildigi icin reaktansa cevrilen bobin/kondansatorler -- gecici
     # rejimde (anahtarli devre) bu FIZIKSEL OLARAK IMKANSIZ, asagida kontrol
     # edilir (bkz. "if switches:" blogu).
@@ -219,6 +240,18 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
                 f"{name}: {len(nets)} net'e degiyor, 2 bekleniyor (extraction.json'daki uyarilara bak)"
             )
         node_pair = (node_name(nets[0]), node_name(nets[1]))
+
+        # KISA DEVRE: iki ucu da AYNI dugumde olan eleman (uzerinden tel
+        # gecirilmis). Bu bir cikarim hatasi degil, devrenin kendisi --
+        # GERCEK VERI (Test Sorulari/Soru3): 60 Ω direncin ustunden gecen
+        # tel onu kisa devre ediyor ve sorunun cevabi da bu: gerilim 0 V.
+        # Boyle bir eleman netlist'e KONULAMAZ (iki ucu ayni dugum) ama
+        # sonuclarda gorunmeli: uzerindeki gerilim 0, akimi 0.
+        if node_pair[0] == node_pair[1]:
+            shorted.append((name, KIND_MAP.get(kind, kind), node_pair[0]))
+            if verbose:
+                print(f"  {name} ({kind}): KISA DEVRE -- iki ucu da {node_pair[0]} dugumunde (V = 0)")
+            continue
 
         if kind == "dependent_vcvs":
             image_b64 = base64.b64encode(Path(comp["crop"]).read_bytes()).decode()
@@ -707,6 +740,7 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             raise SolveFromExtractionError(f"cozulemedi (AC): {exc}") from exc
         results = element_results_ac(netlist, solution, frequency)
         balance = power_balance_ac(results)
+        results = _with_shorted(results, shorted)
         if verbose:
             print(f"  (AC, f = {frequency:g} Hz)")
     else:
@@ -716,6 +750,7 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             raise SolveFromExtractionError(f"cozulemedi (DC): {exc}") from exc
         results = element_results(netlist, solution)
         balance = power_balance(results)
+        results = _with_shorted(results, shorted)
 
     return {"elements": element_log, "results": results, "power_balance": balance}
 
