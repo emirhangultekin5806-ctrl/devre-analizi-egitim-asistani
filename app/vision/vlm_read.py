@@ -539,6 +539,37 @@ KURALLAR:
 ÇIKTI BİÇİMİ — yalnızca şu JSON'u yaz, başka hiçbir şey yazma:
 {{"found": true}}"""
 
+# ALT INDISSIZ ozel durum: kontrol degiskeni bazen bir dalin KENDI akimi/
+# gerilimidir, tek basina "i"/"v" olarak (alt indis YOK) -- OLCULDU (Test
+# Sorulari/Soru12: bagimli kaynak "0.5i", kontrolu bobinin kendi akimi "i").
+# _LABEL_PRESENT_SYSTEM_PROMPT'un "i{sub}" kalibi bu durumda ANLAMSIZLASIR
+# ("ii"/"vi" araniyor gibi olur) ve VLM hicbir kirpimda "buluyorum" demiyor
+# -- 0 isabetle TUM devre reddediliyordu. Ayri, cIPLAK harf arayan bir
+# prompt gerekiyor.
+_BARE_LABEL_PRESENT_SYSTEM_PROMPT = """Sen bir devre şeması okuyucususun. Sana TEK BİR
+devre elemanının kırpılmış görüntüsü verilecek.
+
+Görüntüde, o elemanın/dalın AKIMINI ya da GERİLİMİNİ gösteren, ALT İNDİSSİZ
+tek bir harf ("{sub}" ya da büyük hali) — genellikle bir OK ile birlikte —
+yazıyor mu?
+
+KURALLAR:
+- Harfin YANINDA/ALTINDA bir alt indis (küçük ek harf) varsa ("i_x", "vo"
+  gibi) false yaz -- bu durum ayrı bir sorguyla arandı, burada YALNIZCA
+  çıplak harf aranıyor.
+- Harf, ARADA BOŞLUK OLMADAN bir sayıya BİTİŞİK yazılmışsa ("0.5i", "2v",
+  "4Io" gibi TEK KELİME/YAZI olarak) bu bir BAĞIMLI KAYNAĞIN KENDİ KATSAYI
+  YAZISIDIR, false yaz. Görüntüde BAŞKA YERDE ayrı bir sayı/değer
+  (örneğin "6 H" gibi bileşen değeri) yazması bunu ETKİLEMEZ — yalnızca
+  harfe BİTİŞİK yazılmış sayıya bak.
+- Harf bir OK ile birlikte, kendi başına duruyorsa (araya boşluk/ok
+  girerek, bitişik sayı OLMADAN) true yaz.
+- Sadece sayı/birim varsa (örn. "10 Ω", "5 mH") false yaz.
+- Emin değilsen false yaz.
+
+ÇIKTI BİÇİMİ — yalnızca şu JSON'u yaz, başka hiçbir şey yazma:
+{{"found": true}}"""
+
 
 def crop_has_label(image_base64: str, subscript: str) -> bool:
     """Bu kirpimda alt indisi `subscript` olan bir akim/gerilim etiketi var mi.
@@ -549,10 +580,18 @@ def crop_has_label(image_base64: str, subscript: str) -> bool:
     "gerilim" dedi). Oneki arama metnine koymak, bayrak yanlissa etiketi
     HICBIR kirpimda bulamamaya yol aciyordu (0 isabet, tum devre reddediliyor).
     Alt indis tek basina hem daha saglam hem ayirt etmeye yetiyor.
+
+    `subscript` TEK BASINA "i"/"v" ise (alt indis YOK, kontrol degiskeni bir
+    dalin kendi akimi/gerilimi) ozel, ÇIPLAK HARF arayan promptA gecilir --
+    bkz. `_BARE_LABEL_PRESENT_SYSTEM_PROMPT` docstring notu.
     """
+    if subscript.lower() in ("i", "v"):
+        prompt = _BARE_LABEL_PRESENT_SYSTEM_PROMPT.format(sub=subscript)
+    else:
+        prompt = _LABEL_PRESENT_SYSTEM_PROMPT.format(sub=subscript)
     raw = _call_vlm_with_prompt(
         image_base64,
-        _LABEL_PRESENT_SYSTEM_PROMPT.format(sub=subscript),
+        prompt,
         f"alt indis '{subscript}' var mı?",
     )
     match = _VALUE_JSON_RE.search(raw)
