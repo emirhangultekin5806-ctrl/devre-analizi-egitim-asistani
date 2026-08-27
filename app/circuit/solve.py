@@ -19,7 +19,7 @@ de gerekiyor:
 
 from dataclasses import dataclass, field
 
-from app.circuit.netlist import Netlist
+from app.circuit.netlist import CURRENT_OUTPUT_KINDS, Netlist
 
 GROUND_NODES = {"gnd", "0", "ground", "toprak"}
 
@@ -181,6 +181,21 @@ def solve_dc(netlist: Netlist, reference: str | None = None) -> Solution:
             )
             circuit.CCVS(element.name, node(a), node(b), reference, element.value)
             has_source = True
+        elif element.kind == "vccs":
+            nc_plus, nc_minus = element.control_nodes
+            circuit.VCCS(
+                element.name, node(a), node(b), node(nc_plus), node(nc_minus), element.value
+            )
+            has_source = True
+        elif element.kind == "cccs":
+            control = by_name[element.control_element]
+            reference = (
+                f"v{element.control_element}"
+                if control.kind == "voltage_source"
+                else f"vamm_{element.control_element}"
+            )
+            circuit.CCCS(element.name, node(a), node(b), reference, element.value)
+            has_source = True
         else:
             raise SolverError(f"{element.name}: {element.kind} DC çözümde desteklenmiyor")
 
@@ -255,7 +270,11 @@ def element_results(netlist: Netlist, solution: Solution) -> dict[str, ElementRe
     onları tek yerde üretir.
     """
     results: dict[str, ElementResult] = {}
-    for element in netlist.elements:
+    # ÇIKIŞI AKIM olan bağımlı kaynaklar (vccs/cccs) SONA bırakılır: SPICE
+    # onlara dal akımı vermez, akımları kontrol büyüklüğünden hesaplanır ve
+    # cccs'in kontrol elemanının akımı ÖNCE bilinmelidir.
+    ordered = sorted(netlist.elements, key=lambda e: e.kind in CURRENT_OUTPUT_KINDS)
+    for element in ordered:
         a, b = element.nodes
         voltage = solution.voltage_across(a, b)
 
@@ -271,6 +290,24 @@ def element_results(netlist: Netlist, solution: Solution) -> dict[str, ElementRe
             # dallarını da "v" ile aynı yönde raporluyor (gerçek devrede
             # doğrulandı, bkz. solve.py testleri).
             current = -solution.source_currents.get(element.name, 0.0)
+        elif element.kind == "vccs":
+            # G kartı: akım nc+ / nc- arasındaki gerilimle orantılı ve
+            # nodes[0]→nodes[1] yönünde akar (bağımsız akım kaynağıyla aynı
+            # yön kuralı), yani pasif işaret kuralında doğrudan pozitiftir.
+            nc_plus, nc_minus = element.control_nodes
+            current = element.value * solution.voltage_across(nc_plus, nc_minus)
+        elif element.kind == "cccs":
+            control = results.get(element.control_element)
+            if control is None:
+                # Kontrol elemanının akımı henüz hesaplanmadı -- tek sebebi
+                # başka bir AKIM ÇIKIŞLI bağımlı kaynağı kontrol değişkeni
+                # olarak kullanmaktır (zincirleme bağımlılık). Sıfır varsayıp
+                # sessizce yanlış cevap üretmek yerine açıkça durur.
+                raise SolverError(
+                    f"{element.name}: kontrol elemanı {element.control_element!r} akımı "
+                    "hesaplanamadı (akım çıkışlı bağımlı kaynaklar zincirlenemez)"
+                )
+            current = element.value * control.current
         else:
             # Kapasitör DC'de açık devre, bobin kısa devre.
             current = 0.0 if element.kind == "capacitor" else voltage / 1e-9

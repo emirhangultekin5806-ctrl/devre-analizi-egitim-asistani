@@ -18,7 +18,7 @@ import cmath
 import math
 from dataclasses import dataclass, field
 
-from app.circuit.netlist import Netlist
+from app.circuit.netlist import CURRENT_OUTPUT_KINDS, Netlist
 from app.circuit.solve import _BRANCH_PREFIX, GROUND_NODES, SolverError, _ground_of
 
 # solve.py'deki ElementResult/element_results/power_balance'ın fazör
@@ -287,6 +287,14 @@ def solve_ac(netlist: Netlist, frequency: float, reference: str | None = None) -
             reference = _ccvs_reference(by_name[element.control_element].kind, element.control_element)
             circuit.CCVS(element.name, node(a), node(b), reference, element.value)
             has_source = True
+        elif element.kind == "vccs":
+            nc_plus, nc_minus = element.control_nodes
+            circuit.VCCS(element.name, node(a), node(b), node(nc_plus), node(nc_minus), element.value)
+            has_source = True
+        elif element.kind == "cccs":
+            reference = _ccvs_reference(by_name[element.control_element].kind, element.control_element)
+            circuit.CCCS(element.name, node(a), node(b), reference, element.value)
+            has_source = True
         else:
             raise SolverError(f"{element.name}: {element.kind} AC çözümde desteklenmiyor")
 
@@ -358,7 +366,9 @@ class ACElementResult:
 def element_results_ac(netlist: Netlist, solution: ACSolution, frequency: float) -> dict[str, ACElementResult]:
     """Her eleman için fazör akım/gerilim/güç -- solve.py'deki element_results'ın AC karşılığı."""
     results: dict[str, ACElementResult] = {}
-    for element in netlist.elements:
+    # Çıkışı AKIM olan bağımlı kaynaklar sona (bkz. solve.py'deki aynı not).
+    ordered = sorted(netlist.elements, key=lambda e: e.kind in CURRENT_OUTPUT_KINDS)
+    for element in ordered:
         a, b = element.nodes
         voltage = solution.voltage_across(a, b)
 
@@ -374,6 +384,17 @@ def element_results_ac(netlist: Netlist, solution: ACSolution, frequency: float)
             # orada zaten üçü tek dalda toplanmıştı, AC tarafında bağımlı
             # kaynaklar hiç desteklenmediği için eksik kalmıştı).
             current = -solution.source_currents.get(element.name, 0j)
+        elif element.kind == "vccs":
+            nc_plus, nc_minus = element.control_nodes
+            current = element.value * solution.voltage_across(nc_plus, nc_minus)
+        elif element.kind == "cccs":
+            control = results.get(element.control_element)
+            if control is None:
+                raise SolverError(
+                    f"{element.name}: kontrol elemanı {element.control_element!r} akımı "
+                    "hesaplanamadı (akım çıkışlı bağımlı kaynaklar zincirlenemez)"
+                )
+            current = element.value * control.current
         else:
             raise SolverError(f"{element.name}: {element.kind} AC çözümde desteklenmiyor")
 

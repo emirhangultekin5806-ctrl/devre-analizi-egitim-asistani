@@ -253,17 +253,25 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
                 print(f"  {name} ({kind}): KISA DEVRE -- iki ucu da {node_pair[0]} dugumunde (V = 0)")
             continue
 
-        if kind == "dependent_vcvs":
+        if kind in ("dependent_vcvs", "dependent_ccvs"):
             image_b64 = base64.b64encode(Path(comp["crop"]).read_bytes()).decode()
             try:
                 dep = read_dependent_source(image_b64)
             except VLMReadError as exc:
                 raise SolveFromExtractionError(f"{name}: bagimli kaynak okunamadi -- {exc}") from exc
-            pending_dependent.append({"name": name, "nodes": node_pair, **dep})
+            # YOLO sinifi CIKISIN turunu soyler (baklava icinde +/- = GERILIM,
+            # ok = AKIM); kontrolun turunu ise etiket metni soyler. Ikisi
+            # BIRBIRINDEN BAGIMSIZ ve dordu de gercek bir eleman turudur
+            # (vcvs/ccvs/vccs/cccs) -- asagidaki ikinci geciste birlestirilir.
+            pending_dependent.append(
+                {"name": name, "nodes": node_pair, "current_output": kind == "dependent_ccvs", **dep}
+            )
             if verbose:
                 gain, sym = dep["gain"], dep["control_symbol"]
                 kontrol = "akim" if _control_is_current(dep) else "gerilim"
-                print(f"  {name} (dependent_vcvs): {gain:g} * {kontrol}({sym})  [{node_pair[0]} <-> {node_pair[1]}]")
+                cikis = "akim" if kind == "dependent_ccvs" else "gerilim"
+                print(f"  {name} ({kind}): {cikis} cikisi = {gain:g} * {kontrol}({sym})"
+                      f"  [{node_pair[0]} <-> {node_pair[1]}]")
             continue
 
         if kind == "impedance_box":
@@ -443,7 +451,8 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             candidates = [
                 (name, comp)
                 for name, comp in components.items()
-                if comp["kind"] not in ("ground", "dependent_vcvs", "switch") and len(comp["nets"]) == 2
+                if comp["kind"] not in ("ground", "dependent_vcvs", "dependent_ccvs", "switch")
+                and len(comp["nets"]) == 2
             ]
             try:
                 found = read_control_variable_target(
@@ -462,9 +471,11 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             )
         control_name, control_nodes = matches[0]
         if _control_is_current(dep):
-            netlist_kind, extra = "ccvs", {"control_element": control_name}
+            netlist_kind = "cccs" if dep.get("current_output") else "ccvs"
+            extra = {"control_element": control_name}
         else:
-            netlist_kind, extra = "vcvs", {"control_nodes": control_nodes}
+            netlist_kind = "vccs" if dep.get("current_output") else "vcvs"
+            extra = {"control_nodes": control_nodes}
         elements.append(
             Element(name=dep["name"], kind=netlist_kind, nodes=dep["nodes"], value=dep["gain"], **extra)
         )

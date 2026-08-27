@@ -33,7 +33,10 @@ from dataclasses import dataclass
 #   - "ccvs" (akım kontrollü gerilim kaynağı): kontrol büyüklüğü netlist'teki
 #     BAŞKA bir elemanın üzerinden geçen AKIM (`control_element` — o elemanın
 #     kendi nodes[0]→nodes[1] yönünde ölçülür).
-# VCCS ve CCCS (çıkışı akım olan bağımlı kaynaklar) henüz desteklenmiyor.
+#   - "vccs"/"cccs" (çıkışı AKIM olan bağımlı kaynaklar): kontrol büyüklüğü
+#     yukarıdakiyle aynı okunur, tek fark çıkışın akım olması. Ders kitabı
+#     şemasında bunlar elmas içinde OK ile çizilir (gerilim çıkışlılar +/-
+#     ile) -- bkz. devre-yolo-dedektor "dependent_ccvs" YOLO sınıfı.
 #
 # "impedance": Sadiku'nun AC bölümünde çok sık görülen "Z = 8+j6 Ω" kutusu
 # -- SADECE AC'de anlamlı (bkz. app/circuit/ac.py), solve_dc BİLEREK
@@ -46,10 +49,16 @@ ELEMENT_KINDS = {
     "inductor",
     "vcvs",
     "ccvs",
+    "vccs",
+    "cccs",
     "impedance",
 }
-CONTROLLED_BY_NODES = {"vcvs"}
-CONTROLLED_BY_ELEMENT = {"ccvs"}
+CONTROLLED_BY_NODES = {"vcvs", "vccs"}
+CONTROLLED_BY_ELEMENT = {"ccvs", "cccs"}
+# Çıkışı AKIM olan bağımlı kaynaklar. SPICE bu elemanlara (G/F kartı) DAL
+# AKIMI vermez -- akımları kontrol büyüklüğünden hesaplanır, bkz.
+# app/circuit/solve.py `element_results`.
+CURRENT_OUTPUT_KINDS = {"vccs", "cccs"}
 CONTROLLED_KINDS = CONTROLLED_BY_NODES | CONTROLLED_BY_ELEMENT
 
 
