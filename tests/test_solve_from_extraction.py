@@ -968,3 +968,57 @@ def test_shorted_component_reports_zero_volts(tmp_path, monkeypatch):
     assert out["results"]["resistor_shorted"].voltage == 0.0
     assert out["results"]["resistor_shorted"].current == 0.0
     assert abs(out["results"]["resistor1"].current) == pytest.approx(3.0)  # 120 / 40
+
+
+def test_sourceless_closed_network_with_one_storage_element_returns_time_constant(tmp_path, monkeypatch):
+    """GERCEK VERI (Test Sorulari/Soru11): kaynak/anahtar yok, kapali bir
+    direnc agi + TEK kondansator -- soru "zaman sabitini bul" diyor. Onceden
+    hicbir dal bunu yakalamiyordu, "esdeger empedans frekansa bagli" hatasiyla
+    reddediliyordu (frekans burada gereksiz, tau = R_th*C).
+
+    Devre (koprulu): 10k(n0-n1), 20k(n1-n2), 40k(n1-n3), 30k(n2-n3),
+    C=100pF(n0-n3). C'nin uclarindan R_th = 10k + (40k || (20k+30k))
+    = 10k + 22.222k = 32.222k -> tau = 32222 * 100e-12 = 3.2222e-6 s.
+    """
+    readings = {
+        "capacitor1": {"value": 100e-12, "phase_degrees": 0, "frequency_hz": None},
+        "resistor_10k": {"value": 10000.0, "phase_degrees": 0, "frequency_hz": None},
+        "resistor_20k": {"value": 20000.0, "phase_degrees": 0, "frequency_hz": None},
+        "resistor_30k": {"value": 30000.0, "phase_degrees": 0, "frequency_hz": None},
+        "resistor_40k": {"value": 40000.0, "phase_degrees": 0, "frequency_hz": None},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "capacitor1": {"kind": "capacitor", "nets": [0, 3]},
+            "resistor_10k": {"kind": "resistor", "nets": [0, 1]},
+            "resistor_20k": {"kind": "resistor", "nets": [1, 2]},
+            "resistor_30k": {"kind": "resistor", "nets": [2, 3]},
+            "resistor_40k": {"kind": "resistor", "nets": [1, 3]},
+        },
+    )
+    out = sfe.solve_extraction(data, verbose=False)
+    assert out["results"]["zaman_sabiti_s"] == pytest.approx(3.2222222e-6, rel=1e-5)
+    assert out["results"]["depolama_elemani"] == "capacitor1"
+
+
+def test_sourceless_two_storage_elements_is_not_a_time_constant_question(tmp_path, monkeypatch):
+    """IKI depolama elemani (RLC, ikinci derece) tau=R*C/L formulune
+    UYMAZ -- bu dal BILEREK yalnizca TEK depolama elemaninda calisir."""
+    readings = {
+        "capacitor1": {"value": 1e-6, "phase_degrees": 0, "frequency_hz": None},
+        "inductor1": {"value": 1e-3, "phase_degrees": 0, "frequency_hz": None},
+        "resistor1": {"value": 100.0, "phase_degrees": 0, "frequency_hz": None},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "capacitor1": {"kind": "capacitor", "nets": [0, 1]},
+            "inductor1": {"kind": "inductor", "nets": [1, 2]},
+            "resistor1": {"kind": "resistor", "nets": [2, 0]},
+        },
+    )
+    with pytest.raises(sfe.SolveFromExtractionError):
+        sfe.solve_extraction(data, verbose=False)

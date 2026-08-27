@@ -44,6 +44,7 @@ from app.circuit.solve import (  # noqa: E402
     power_balance,
     solve_dc,
 )
+from app.circuit.theorems import thevenin_resistance  # noqa: E402
 from app.circuit.topology import equivalent_impedance, equivalent_resistance  # noqa: E402
 from app.circuit.transient import rc_step_response, rl_step_response  # noqa: E402
 from app.vision.vlm_read import (  # noqa: E402
@@ -254,7 +255,15 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             continue
 
         if kind in ("dependent_vcvs", "dependent_ccvs"):
-            image_b64 = base64.b64encode(Path(comp["crop"]).read_bytes()).decode()
+            # control_search_crop kullanilir: katsayi ("0.5i" gibi) cogu
+            # zaman elmasin GOVDESINDE degil, YANINDA yazili -- OLCULDU
+            # (Test Sorulari/Soru12): dar kirpim "0.5i"yi TAMAMEN disarida
+            # birakiyordu, VLM sembolu goruyor ama yaziyi goremeyince
+            # katsayi/kontrol degiskenini UYDURUYORDU (gain=1,
+            # control_symbol="null" -- sessizce yanlis, hata da vermiyordu).
+            image_b64 = base64.b64encode(
+                Path(comp.get("control_search_crop", comp["crop"])).read_bytes()
+            ).decode()
             try:
                 dep = read_dependent_source(image_b64)
             except VLMReadError as exc:
@@ -455,6 +464,15 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
                 and len(comp["nets"]) == 2
             ]
             try:
+                # DENENDI, GERI ALINDI (Test Sorulari/Soru12, 2026-08-27):
+                # control_search_crop (genis kirpim) burada kullanilinca
+                # komsu bir bagimli kaynagin KENDI katsayi yazisi ("0.5i")
+                # de kirpima giriyor ve VLM "i" var diye orayi da isaretliyor
+                # -- iki aday (dogru eleman + komsu) 1 yerine, "TEK olmali"
+                # reddediyor. 3 farkli prompt denendi, kucuk VLM (8B) katsayi
+                # ile bagimsiz kontrol harfini guvenilir ayiramadi. Dar kirpim
+                # (c["crop"]) bu belirsizligi yaratmiyor, riskli kazanc
+                # yerine BILINEN davranis tercih edildi.
                 found = read_control_variable_target(
                     core,
                     [(name, base64.b64encode(Path(c["crop"]).read_bytes()).decode()) for name, c in candidates],
@@ -658,6 +676,65 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
                         "results": {"esdeger_direnc_ohm": req, "terminals": terminals},
                         "power_balance": 0.0,
                     }
+        # KAYNAKSIZ, TEK DEPOLAMA ELEMANLI devre: "zaman sabitini bulun" tarzi
+        # sorular (Sadiku Bolum 7, Test Sorulari/Soru11) -- ne kaynak ne
+        # anahtar var, sadece direncler + TEK bobin/kondansator. tau = R_th*C
+        # (kondansator) ya da L/R_th (bobin); R_th depolama elemani
+        # CIKARILMIS devrede, onun eski uclarindan Thevenin direnci --
+        # transient.py'nin anahtarli akista zaten kullandigi AYNI yontem
+        # (_thevenin_resistance_without), burada anahtar/before-after
+        # olmadan DOGRUDAN uygulanir. IKI depolama elemani varsa (RLC,
+        # ikinci derece) BILEREK reddedilir -- bu cozucu birinci derece
+        # icin yazildi, ikinci derece farkli bir denklem gerektirir.
+        # Bu dal SADECE devrenin ACIK IKI UCU YOKSA (kapali, kendi icinde
+        # tam bir ag) devreye girer -- iki acik ucu OLAN devreler zaten
+        # "Zeq/Req bul" sorusudur (asagidaki mevcut yollar), onlarla
+        # KARISTIRILMAMALI. OLCULDU (test_sourceless_ac_circuit_returns_
+        # equivalent_impedance, test_sourceless_real_lc_without_frequency_
+        # refuses): ikisi de tek reaktif eleman + direnc ama IKI ACIK UCU
+        # var -- bu dal onlari yanlislikla yakalayip Zeq yerine tau
+        # dondurmemeli.
+        reactive = [e for e in elements if e.kind in ("capacitor", "inductor")]
+        terminals_probe = _terminal_nodes(data, netlist, node_name)
+        if (
+            len(terminals_probe) != 2
+            and len(reactive) == 1
+            and all(e.kind in ("resistor", "capacitor", "inductor") for e in elements)
+        ):
+            storage = reactive[0]
+            remaining = Netlist([e for e in elements if e.name != storage.name])
+            node_a, node_b = storage.nodes
+            # thevenin_resistance kendi ic solve_dc'si icin bir referans
+            # dugume ihtiyac duyar -- ana akistaki OTOMATIK referans secimi
+            # (asagida, "sekilde toprak yok" bloğu) bu daldan SONRA calisiyor,
+            # burada erken donuldugu icin AYNI mantik tekrarlanir.
+            tau_reference = reference
+            if tau_reference is None and not any(
+                node in GROUND_NODES for e in remaining.elements for node in e.nodes
+            ):
+                tau_reference = sorted({node for e in remaining.elements for node in e.nodes})[0]
+            try:
+                r_th = thevenin_resistance(remaining, node_a, node_b, reference=tau_reference)
+            except SolverError as exc:
+                raise SolveFromExtractionError(
+                    f"{storage.name} cikarilmis devrede Thevenin direnci bulunamadi: {exc}"
+                ) from exc
+            if storage.kind == "capacitor":
+                tau = r_th * storage.value
+            elif r_th == 0:
+                raise SolveFromExtractionError(
+                    f"{storage.name}: Thevenin direnci 0 -- zaman sabiti (L/R) tanimsiz"
+                )
+            else:
+                tau = storage.value / r_th
+            if verbose:
+                print(f"  (kaynaksiz devre, tek depolama elemani -- zaman sabiti tau = {tau:g} s)")
+            return {
+                "elements": element_log,
+                "results": {"zaman_sabiti_s": tau, "depolama_elemani": storage.name},
+                "power_balance": 0.0,
+            }
+
         # KAYNAKSIZ AC ("Zeq bul"): reaktif eleman varsa esdeger DIRENC degil
         # esdeger EMPEDANS aranir -- ayni seri/paralel/Y-Δ kurallari, kompleks
         # sayilarla (bkz. topology.equivalent_impedance). OLCULDU (14.png,
