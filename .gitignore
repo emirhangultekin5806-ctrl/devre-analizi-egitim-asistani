@@ -29,3 +29,9 @@ data/chunks/*
 # MCP kimlik bilgileri (bearer token icerir, asla commit edilmez)
 .mcp.json
 .higgsfield_token.json
+
+# Regresyon/degerlendirme kosu ciktilari (kok dizine birikiyor -- bkz.
+# scripts/regression_44.py, scripts/batch_solve.py). evaluation/ altındaki
+# kalici dosyalar (baseline, ground truth) bu kuraldan ETKİLENMEZ.
+/runs_*.log
+/runs_*.json
