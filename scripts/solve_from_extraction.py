@@ -184,6 +184,21 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
     """
     components: dict[str, dict] = data["components"]
 
+    # KARSILIKLI ENDUKTANS: yan yana cizilmis sargi cifti (trafo ya da
+    # "j1200 Ω" ile etiketlenmis kuplaj -- bkz. devre-yolo-dedektor/
+    # extract_for_solve.py coupled_winding_pairs). Bu cozucu eslesmeyi
+    # MODELLEMIYOR: iki bagimsiz bobin gibi cozerse butun degerler dogru
+    # okunsa BILE cevap yanlis cikar, ustelik power_balance ~0 oldugu icin
+    # sessizce (OLCULDU, 1-100/31.png: 9 degerin 9'u dogru okundu, cevap
+    # yine de yanlisti ve "cozuldu" diye raporlandi).
+    coupled = data.get("coupled_winding_pairs") or []
+    if coupled:
+        eslesmeler = ", ".join(f"{a}+{b}" for a, b in coupled)
+        raise SolveFromExtractionError(
+            f"karsilikli enduktans (yan yana sargi cifti: {eslesmeler}) -- bu cozucu "
+            "kuplaji modellemiyor, bagimsiz bobin gibi cozmek sessizce yanlis cevap uretir"
+        )
+
     # Sayfanin duz metni -- export_sadiku_test_set.py PNG'nin yanina ayni
     # adla .txt yaziyor (bkz. o script + app/circuit/page_text.py). Yoksa
     # (Fiore figurleri, ya da eski bir extraction) sessizce atlanir --

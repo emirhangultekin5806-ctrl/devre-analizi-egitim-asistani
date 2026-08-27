@@ -1022,3 +1022,48 @@ def test_sourceless_two_storage_elements_is_not_a_time_constant_question(tmp_pat
     )
     with pytest.raises(sfe.SolveFromExtractionError):
         sfe.solve_extraction(data, verbose=False)
+
+
+def test_coupled_windings_are_refused_instead_of_solved_wrong(tmp_path, monkeypatch):
+    """OLCULDU (1-100/31.png): yan yana iki sargi = karsilikli enduktans.
+    Cozucu kuplaji modellemiyor; 9 degerin 9'u DOGRU okundugu halde cevap
+    yanlisti ve power_balance ~0 oldugu icin "cozuldu" diye raporlanmisti.
+    Sessiz yanlis cevap yerine acikca reddetmeli."""
+    readings = {
+        "source_v1": {"value": 10.0, "phase_degrees": 0, "frequency_hz": None},
+        "inductor1": {"value": 1.0, "phase_degrees": 0, "frequency_hz": None},
+        "inductor2": {"value": 2.0, "phase_degrees": 0, "frequency_hz": None},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "source_v1": {"kind": "source_v", "nets": [0, 1]},
+            "inductor1": {"kind": "inductor", "nets": [1, 0]},
+            "inductor2": {"kind": "inductor", "nets": [2, 3]},
+        },
+    )
+    data["coupled_winding_pairs"] = [["inductor1", "inductor2"]]
+    with pytest.raises(sfe.SolveFromExtractionError, match="karsilikli enduktans"):
+        sfe.solve_extraction(data, verbose=False)
+
+
+def test_extraction_without_the_coupling_field_still_solves(tmp_path, monkeypatch):
+    """Eski extraction.json'larda bu alan YOK -- eksikligi devreyi
+    reddettirmemeli (geriye donuk uyumluluk)."""
+    readings = {
+        "source_v1": {"value": 10.0, "phase_degrees": 0, "frequency_hz": None},
+        "resistor1": {"value": 5.0, "phase_degrees": 0, "frequency_hz": None},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "ground": {"kind": "ground", "nets": [0]},
+            "source_v1": {"kind": "source_v", "nets": [0, 1]},
+            "resistor1": {"kind": "resistor", "nets": [1, 0]},
+        },
+    )
+    assert "coupled_winding_pairs" not in data
+    out = sfe.solve_extraction(data, verbose=False)
+    assert abs(out["results"]["resistor1"].current) == pytest.approx(2.0)
