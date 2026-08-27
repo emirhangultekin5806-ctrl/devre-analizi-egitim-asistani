@@ -1048,6 +1048,54 @@ def test_coupled_windings_are_refused_instead_of_solved_wrong(tmp_path, monkeypa
         sfe.solve_extraction(data, verbose=False)
 
 
+def test_polarity_unreliable_sources_are_refused_instead_of_solved_wrong(tmp_path, monkeypatch):
+    """OLCULDU (Test Sorulari/Soru14): sinif duzeltmesi (source_i -> source_v,
+    bkz. devre-yolo-dedektor/label_assign.py kind_from_unit) dogru sayida ve
+    dogru degerde kaynak buldu ama yon eski (yanlis) sinifa gore okunmustu --
+    akim 11.33 A cikti, kitabin cevabi 2 A. Sessiz yanlis cevap yerine
+    acikca reddetmeli."""
+    readings = {
+        "source_v1": {"value": 20.0, "phase_degrees": 0, "frequency_hz": None},
+        "source_i1": {"value": 10.0, "phase_degrees": 0, "frequency_hz": None},
+        "source_i2": {"value": -4.0, "phase_degrees": 0, "frequency_hz": None},
+        "resistor1": {"value": 3.0, "phase_degrees": 0, "frequency_hz": None},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "source_v1": {"kind": "source_v", "nets": [0, 2]},
+            "source_i1": {"kind": "source_v", "nets": [1, 0]},
+            "source_i2": {"kind": "source_v", "nets": [3, 2]},
+            "resistor1": {"kind": "resistor", "nets": [1, 3]},
+        },
+    )
+    data["polarity_unreliable"] = ["source_i1", "source_i2"]
+    with pytest.raises(sfe.SolveFromExtractionError, match="yonu guvenilmez"):
+        sfe.solve_extraction(data, verbose=False)
+
+
+def test_extraction_without_the_polarity_field_still_solves(tmp_path, monkeypatch):
+    """Eski extraction.json'larda bu alan YOK -- eksikligi devreyi
+    reddettirmemeli (geriye donuk uyumluluk)."""
+    readings = {
+        "source_v1": {"value": 10.0, "phase_degrees": 0, "frequency_hz": None},
+        "resistor1": {"value": 5.0, "phase_degrees": 0, "frequency_hz": None},
+    }
+    monkeypatch.setattr(sfe, "read_component_value", _fake_reader(readings))
+    data = _extraction(
+        tmp_path,
+        {
+            "ground": {"kind": "ground", "nets": [0]},
+            "source_v1": {"kind": "source_v", "nets": [0, 1]},
+            "resistor1": {"kind": "resistor", "nets": [1, 0]},
+        },
+    )
+    assert "polarity_unreliable" not in data
+    out = sfe.solve_extraction(data, verbose=False)
+    assert abs(out["results"]["resistor1"].current) == pytest.approx(2.0)
+
+
 def test_extraction_without_the_coupling_field_still_solves(tmp_path, monkeypatch):
     """Eski extraction.json'larda bu alan YOK -- eksikligi devreyi
     reddettirmemeli (geriye donuk uyumluluk)."""

@@ -199,6 +199,23 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             "kuplaji modellemiyor, bagimsiz bobin gibi cozmek sessizce yanlis cevap uretir"
         )
 
+    # SINIF DUZELTMESI, YON GUVENSIZ: devre-yolo-dedektor/extract_for_solve.py
+    # bir elemanin sinifini (orn. source_i -> source_v) etiketin biriminden
+    # duzeltebiliyor, ama yon/kutup bilgisi bundan COK ONCE, ESKI (yanlis)
+    # sinifa gore okunmustu -- source_v'nin +/- okuyucusuyla source_i'nin ok-
+    # yonu okuyucusu FARKLI GORSEL isarete bakar. OLCULDU (Test Sorulari/
+    # Soru14): sinif duzeltmesi 3 kaynagi da dogru buldu ama akim 11.33 A
+    # cikti, kitabin cevabi 2 A -- guclu ama YANLIS TEMELDE bir eslesme.
+    # Ayni "sessizce degil reddet" deseni (bkz. karsilikli enduktans yukarida).
+    unreliable = data.get("polarity_unreliable") or []
+    if unreliable:
+        isimler = ", ".join(unreliable)
+        raise SolveFromExtractionError(
+            f"sinifi duzeltilen elemanlarin yonu guvenilmez ({isimler}) -- yon eski "
+            "sinifa gore okunmustu, farkli isarete (ok/+-) bakan bir okuyucu kullanilmis "
+            "olabilir, sessizce yanlis cevap uretmemek icin reddedildi"
+        )
+
     # Sayfanin duz metni -- export_sadiku_test_set.py PNG'nin yanina ayni
     # adla .txt yaziyor (bkz. o script + app/circuit/page_text.py). Yoksa
     # (Fiore figurleri, ya da eski bir extraction) sessizce atlanir --
