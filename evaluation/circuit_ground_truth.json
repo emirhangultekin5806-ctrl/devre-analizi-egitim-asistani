@@ -1,0 +1,81 @@
+{
+  "_aciklama": [
+    "Sekilde YAZAN degerler -- pipeline'in okumasi gereken dogru cevap.",
+    "Her devre elle dogrulandi: goruntu acildi, elemanlar sayildi, degerler okundu.",
+    "'components' bir SAYIM+DEGER coklugu; eleman ADI kosudan kosuya degistigi",
+    "icin isimle degil, tur basina deger listesiyle karsilastirilir.",
+    "'verdict': solvable = sayisal cozulebilir; out_of_scope = cozucu bu devreyi",
+    "cozemez, COZDUGUNU soylerse bu bir HATADIR (sessiz yanlis cevap).",
+    "Empedans degerleri BUYUKLUK (Ω) olarak yazilir; isaret/faz ayri alanda",
+    "tasinir ve bu dosya henuz onu dogrulamaz -- bkz. 'faz' notlari."
+  ],
+  "1-100__7": {
+    "sekil": "Figure P9.46",
+    "verdict": "solvable",
+    "components": {
+      "resistor": [20, 40],
+      "impedance": [20, 16],
+      "current_source": [0.4472135955]
+    },
+    "not": "Kondansator -j20 Ω (faz -90), bobin j16 Ω (faz +90), kaynak 0.4+j0.2 A (buyukluk 0.4472, faz 26.57 derece). Faz bu dosyada DOGRULANMIYOR."
+  },
+  "1-100__31": {
+    "sekil": "Figure 9.39",
+    "verdict": "out_of_scope",
+    "sebep": "KARSILIKLI ENDUKTANS (j1200 Ω, noktali sargi cifti). Cozucu eslesmeyi modellemiyor; degerlerin hepsi dogru okunsa bile cevap yanlis cikar.",
+    "components": {
+      "resistor": [500, 200, 100, 800],
+      "impedance": [100, 3600, 1600, 2500],
+      "voltage_source": [300]
+    },
+    "not": "9 degerin 9'u dogru okundu; eksik olan j1200 karsilikli endüktans."
+  },
+  "1-100__58": {
+    "sekil": "5V/1V/8V + 30i1 bagimli kaynak",
+    "verdict": "solvable",
+    "components": {
+      "resistor": [54000, 6000, 1800],
+      "voltage_source": [5, 1, 8],
+      "ccvs": [30]
+    },
+    "not": "Bagimli kaynak 30*i1, i1 54 kΩ direncin akimi -- kontrol elemani eslesmesi ayrica dogrulanmali."
+  },
+  "1-100__65": {
+    "sekil": "Figure 3.34",
+    "verdict": "solvable",
+    "components": {
+      "resistor": [5, 50, 10, 12.5, 40, 37.5],
+      "voltage_source": [40]
+    },
+    "not": "OLCULDU 2026-08-26: pipeline 6 direncin sadece 2'sini (10 ve 50) buldu ve devreyi yine de 'cozdu'. Guc dengesi tuttu, cevap yanlisti."
+  },
+  "101-131__103": {
+    "sekil": "t=0 anahtarli RL",
+    "verdict": "solvable",
+    "components": {
+      "resistor": [4, 8, 6],
+      "inductor": [1],
+      "voltage_source": [20]
+    },
+    "not": "Gecici rejim: anahtar t=0'da konum degistiriyor."
+  },
+  "101-131__120": {
+    "sekil": "Vs 10<0 V, 4 Ω + j2 Ω + (-j5 Ω)",
+    "verdict": "solvable",
+    "components": {
+      "resistor": [4],
+      "impedance": [2, 5],
+      "voltage_source": [10]
+    },
+    "not": "Bobin j2 Ω (faz +90), kondansator -j5 Ω (faz -90)."
+  },
+  "132-170__157": {
+    "sekil": "20V/30V iki kaynakli koprulu direnc agi",
+    "verdict": "solvable",
+    "components": {
+      "resistor": [7500, 8000, 20000, 5000, 10000, 15000, 3000],
+      "voltage_source": [20, 30]
+    },
+    "not": "7 direncin 7'si ve iki kaynak dogru okundu."
+  }
+}
