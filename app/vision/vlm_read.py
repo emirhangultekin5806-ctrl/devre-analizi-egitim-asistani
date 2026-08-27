@@ -109,7 +109,15 @@ _VALUE_JSON_RE = re.compile(r"\{.*\}", re.DOTALL)
 # YAZIDAKI HAM SAYI ve birim ADI isteniyor.
 _UNIT_MULTIPLIERS = {
     "ohm": 1.0, "ω": 1.0, "kohm": 1e3, "kω": 1e3, "megaohm": 1e6,
-    "v": 1.0, "kv": 1e3, "mv": 1e-3,
+    # "Vp" = TEPE (peak) volt. Bu cozucude kaynak degeri zaten GENLIK olarak
+    # kullaniliyor (bkz. app/circuit/ac.py: amplitude=element.value), yani
+    # carpan 1.0 dogru. OLCULDU (132-170/167.png, 5 kez): "10 Vp" tanimsiz
+    # birim diye reddediliyordu.
+    #
+    # "Vpp" (tepeden tepeye) BILEREK EKLENMEDI: genligin IKI KATIDIR, 1.0
+    # ile almak sessizce 2 kat yanlis cevap verir. Tanimsiz kalirsa acikca
+    # hata verir -- bu domainde sessiz yanlis cevaptan iyidir.
+    "v": 1.0, "kv": 1e3, "mv": 1e-3, "vp": 1.0,
     "a": 1.0, "ma": 1e-3, "ua": 1e-6, "µa": 1e-6,
     "f": 1.0, "uf": 1e-6, "µf": 1e-6, "nf": 1e-9, "pf": 1e-12,
     "h": 1.0, "mh": 1e-3, "uh": 1e-6, "µh": 1e-6,

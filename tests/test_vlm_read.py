@@ -109,6 +109,19 @@ def test_known_units_convert_correctly():
     assert _unit_multiplier("") == 1.0
 
 
+def test_peak_volts_is_a_volt_but_peak_to_peak_is_refused():
+    """OLCULDU (132-170/167.png, 5 kez): "10 Vp" tanimsiz birim diye
+    reddediliyordu. Kaynak degeri bu cozucude zaten GENLIK, yani Vp icin
+    carpan 1.0 dogru.
+
+    "Vpp" (tepeden tepeye) BILEREK tanimsiz birakildi: genligin IKI KATI,
+    1.0 ile almak sessizce 2 kat yanlis cevap verirdi."""
+    assert _unit_multiplier("Vp") == 1.0
+    assert _unit_multiplier("vp") == 1.0
+    with pytest.raises(ValueError, match="bilinmeyen birim"):
+        _unit_multiplier("Vpp")
+
+
 def test_milliohm_and_megaohm_distinguished_by_case():
     """DENETIMDE BULUNDU (2026-08-21), kullanici miliohm'un GERCEKTEN
     kullanildigini teyit etti: eskiden "mΩ" ve "MΩ" ikisi de kucuk harfe
