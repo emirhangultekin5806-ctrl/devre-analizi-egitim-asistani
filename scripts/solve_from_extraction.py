@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import base64
 import cmath
+import dataclasses
 import json
 import math
 import sys
@@ -47,6 +48,7 @@ from app.circuit.solve import (  # noqa: E402
 from app.circuit.theorems import thevenin_resistance  # noqa: E402
 from app.circuit.topology import equivalent_impedance, equivalent_resistance  # noqa: E402
 from app.circuit.transient import rc_step_response, rl_step_response  # noqa: E402
+from app.circuit.unknown_value import solve_unknown_resistor  # noqa: E402
 from app.vision.vlm_read import (  # noqa: E402
     VLMReadError,
     is_ohm_unit,
@@ -259,6 +261,11 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
     switches: list[dict] = []
     # Uzerinden tel gecirilmis (iki ucu ayni dugumde) elemanlar.
     shorted: list[tuple[str, str, str]] = []
+    # Kendi degeri sekilde YOK ama uzerindeki dal gerilimi cizili (bkz.
+    # app/circuit/unknown_value.py modul docstring'i) -- OLCULDU (Test
+    # Sorulari/Soru15): "R'yi bul" sorusu, R'nin sekilde yazmasi zaten
+    # anlamsiz olurdu. {eleman_adi: ham_etiket_metni ("10 V")}.
+    unknown_branch_voltage_hints: dict[str, str] = {}
     # Ω ile yazildigi icin reaktansa cevrilen bobin/kondansatorler -- gecici
     # rejimde (anahtarli devre) bu FIZIKSEL OLARAK IMKANSIZ, asagida kontrol
     # edilir (bkz. "if switches:" blogu).
@@ -371,6 +378,20 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             print(f"  {name}: etiketten dogrudan okundu ({ocr_hint!r}), VLM atlandi")
         if reading is None:
             label_crop = comp.get("value_label_crop")
+            branch_hint = comp.get("known_branch_voltage_hint")
+            if label_crop is None and branch_hint and kind == "resistor":
+                # Kendi degeri sekilde YOK (aranan o, bkz. Soru15) -- deger
+                # yerine PLACEHOLDER (None) eklenir, asagida netlist kurulduktan
+                # SONRA app/circuit/unknown_value.py ile bulunur ve bu Element
+                # degistirilir (bkz. "BILINMEYEN DIRENC" blogu, netlist =
+                # Netlist(elements) satirindan hemen sonra).
+                unknown_branch_voltage_hints[name] = branch_hint
+                elements.append(Element(name=name, kind="resistor", nodes=node_pair, value=None))
+                element_log.append({"name": name, "kind": "resistor", "value": None, "nodes": node_pair})
+                if verbose:
+                    print(f"  {name} (resistor): deger BILINMIYOR, dal gerilimi = {branch_hint} "
+                          f"[{node_pair[0]} <-> {node_pair[1]}] (asagida cozulecek)")
+                continue
             if label_crop is None:
                 raise SolveFromExtractionError(
                     f"{name}: bu elemana hicbir deger etiketi eslesmedi -- sekilde degeri "
@@ -670,6 +691,44 @@ def solve_extraction(data: dict, reference: str | None = None, verbose: bool = T
             print("  (saf fazor devresi -- empedanslar/fazlar verilmis, frekans gerekmiyor)")
 
     netlist = Netlist(elements)
+
+    # BILINMEYEN DIRENC: kendi degeri sekilde YOK (aranan o, bkz. Test
+    # Sorulari/Soru15), onun yerine uzerindeki dal gerilimi cizili. Kullanici
+    # ACIKCA REDDETTI: bilinmeyen elemanin yerine bir kaynak KOYMAK ("yerine
+    # kaynak koymak soruyu bozar") -- bu yuzden app/circuit/unknown_value.py
+    # ngspice/solve_dc'ye HIC gitmez, kendi KCL/KVL denklemlerini kurar (bkz.
+    # o modulun docstring'i). Bulunan deger normal Element'e YAZILIR, sonra
+    # devrenin geri kalani HER ZAMANKI solve_dc/element_results yoluyla
+    # cozulur -- ozel bir cikti yolu degil, tek eksik satiri doldurup normal
+    # akisa devam eder.
+    if unknown_branch_voltage_hints:
+        if len(unknown_branch_voltage_hints) > 1:
+            raise SolveFromExtractionError(
+                f"birden fazla elemanin degeri bilinmiyor: {sorted(unknown_branch_voltage_hints)} -- "
+                "su an yalnizca TEK bilinmeyen destekleniyor"
+            )
+        (unknown_name, hint_text), = unknown_branch_voltage_hints.items()
+        reading = parse_ocr_value_hint(hint_text)
+        if reading is None:
+            raise SolveFromExtractionError(
+                f"{unknown_name}: dal gerilimi etiketi ({hint_text!r}) ayristirilamadi"
+            )
+        try:
+            resistance = solve_unknown_resistor(
+                netlist, unknown_name, abs(reading["value"]), reference=reference
+            )
+        except SolverError as exc:
+            raise SolveFromExtractionError(f"{unknown_name}: bilinmeyen direnc cozulemedi -- {exc}") from exc
+        if verbose:
+            print(f"  {unknown_name}: deger dal geriliminden ({hint_text}) bulundu -> {resistance:g} Ω")
+        elements = [
+            dataclasses.replace(e, value=resistance) if e.name == unknown_name else e
+            for e in elements
+        ]
+        for entry in element_log:
+            if entry["name"] == unknown_name:
+                entry["value"] = resistance
+        netlist = Netlist(elements)
 
     # Kaynaksiz devre: "Req/Geq bul" tarzi sorular (Fiore/Sadiku'da sik) --
     # bunlar gecersiz DEGIL, sadece nodal-analiz + kaynak yerine seri/paralel
